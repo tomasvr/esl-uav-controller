@@ -13,6 +13,34 @@
  *------------------------------------------------------------------
  */
 
+
+/* --- PRINTF_BYTE_TO_BINARY macro's --- */
+#define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
+#define PRINTF_BYTE_TO_BINARY_INT8(i)    \
+    (((i) & 0x80ll) ? '1' : '0'), \
+    (((i) & 0x40ll) ? '1' : '0'), \
+    (((i) & 0x20ll) ? '1' : '0'), \
+    (((i) & 0x10ll) ? '1' : '0'), \
+    (((i) & 0x08ll) ? '1' : '0'), \
+    (((i) & 0x04ll) ? '1' : '0'), \
+    (((i) & 0x02ll) ? '1' : '0'), \
+    (((i) & 0x01ll) ? '1' : '0')
+
+#define PRINTF_BINARY_PATTERN_INT16 \
+    PRINTF_BINARY_PATTERN_INT8              PRINTF_BINARY_PATTERN_INT8
+#define PRINTF_BYTE_TO_BINARY_INT16(i) \
+    PRINTF_BYTE_TO_BINARY_INT8((i) >> 8),   PRINTF_BYTE_TO_BINARY_INT8(i)
+#define PRINTF_BINARY_PATTERN_INT32 \
+    PRINTF_BINARY_PATTERN_INT16             PRINTF_BINARY_PATTERN_INT16
+#define PRINTF_BYTE_TO_BINARY_INT32(i) \
+    PRINTF_BYTE_TO_BINARY_INT16((i) >> 16), PRINTF_BYTE_TO_BINARY_INT16(i)
+#define PRINTF_BINARY_PATTERN_INT64    \
+    PRINTF_BINARY_PATTERN_INT32             PRINTF_BINARY_PATTERN_INT32
+#define PRINTF_BYTE_TO_BINARY_INT64(i) \
+    PRINTF_BYTE_TO_BINARY_INT32((i) >> 32), PRINTF_BYTE_TO_BINARY_INT32(i)
+/* --- end macros --- */
+
+
 #include "in4073.h"
 
 
@@ -39,44 +67,80 @@ bool command_allowed (void){
  * process_key -- process command keys
  *------------------------------------------------------------------
  */
-void process_key(uint8_t c)
+void process_key(uint32_t c)
 {
-	switch (c)
+	// printf("The value received is: "
+ 	//            PRINTF_BINARY_PATTERN_INT32 "\n",
+ 	//            PRINTF_BYTE_TO_BINARY_INT32(c));
+	
+	//if (c&0xf0000000) printf("The command is not control command.\n");
+	
+	switch (c) 	// control signal switch
 	{
-		// case 'q':
-		// 	ae[0] += 10;
-		// 	break;
-		// case 'a':
-		// 	ae[0] -= 10;
-		// 	if (ae[0] < 0) ae[0] = 0;
-		// 	break;
-		// case 'w':
-		// 	ae[1] += 10;
-		// 	break;
-		// case 's':
-		// 	ae[1] -= 10;
-		// 	if (ae[1] < 0) ae[1] = 0;
-		// 	break;
-		// case 'e':
-		// 	ae[2] += 10;
-		// 	break;
-		// case 'd':
-		// 	ae[2] -= 10;
-		// 	if (ae[2] < 0) ae[2] = 0;
-		// 	break;
-		// case 'r':
-		// 	ae[3] += 10;
-		// 	break;
-		// case 'f':
-		// 	ae[3] -= 10;
-		// 	if (ae[3] < 0) ae[3] = 0;
-		// 	break;
+		case 'u':			// lift up	
+			ae[0] += 10;
+			ae[1] += 10;
+			ae[2] += 10;
+			ae[3] += 10;
+			break;
+		case 'd': 			// lift down
+			//printf("Value is %ld\n", c);
+			ae[0] -= 10;
+			if (ae[0] < 0) ae[0] = 0;
+			ae[1] -= 10;
+			if (ae[1] < 0) ae[1] = 0;
+			ae[2] -= 10;
+			if (ae[2] < 0) ae[2] = 0;
+			ae[3] -= 10;
+			if (ae[3] < 0) ae[3] = 0;
+			break;
+		case 'A':			// pitch down
+			//printf("Value is %ld\n", c);
+			ae[0] -= 10;
+			if (ae[0] < 0) ae[0] = 0;
+			ae[2] += 10;
+			break;
+		case 'B':			// pitch up
+			//printf("Value is %ld\n", c);
+			ae[0] += 10;
+			ae[2] -= 10;
+			if (ae[2] < 0) ae[2] = 0;
+			break;
+		case 'C':			// roll down
+			//printf("Value is %ld\n", c);
+			ae[1] -= 10;
+			if (ae[1] < 0) ae[1] = 0;
+			ae[3] += 10;
+			break;
+		case 'D':			// roll up
+			//printf("Value is %ld\n", c);
+			ae[1] += 10;
+			ae[3] -= 10;
+			if (ae[3] < 0) ae[3] = 0;
+			break;
+		case 'q': 			// yaw down(left)
+			//printf("Value is %ld\n", c);
+			ae[1] += 10;
+			ae[3] += 10;
+			ae[0] -= 10;
+			if (ae[0] < 0) ae[0] = 0;
+			ae[2] -= 10;
+			if (ae[2] < 0) ae[2] = 0;
+			break;
+		case 'w': 			// yaw up(right)
+			//printf("Value is %ld\n", c);
+			ae[0] += 10;
+			ae[2] += 10;
+			ae[1] -= 10;
+			if (ae[1] < 0) ae[1] = 0;
+			ae[3] -= 10;
+			if (ae[3] < 0) ae[3] = 0;
+			break;
 		case 27:
 			demo_done = true;
 			break;
 		case 48:
 			g_current_state = SAFE_ST;
-			printf("%d is entered.\n", c);
 			break;
 		case 49:
 			g_current_state = PANIC_ST;
