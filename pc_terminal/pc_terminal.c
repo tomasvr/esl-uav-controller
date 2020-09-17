@@ -7,6 +7,34 @@
  *------------------------------------------------------------
  */
 
+
+/* --- PRINTF_BYTE_TO_BINARY macro's --- */
+#define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
+#define PRINTF_BYTE_TO_BINARY_INT8(i)    \
+    (((i) & 0x80ll) ? '1' : '0'), \
+    (((i) & 0x40ll) ? '1' : '0'), \
+    (((i) & 0x20ll) ? '1' : '0'), \
+    (((i) & 0x10ll) ? '1' : '0'), \
+    (((i) & 0x08ll) ? '1' : '0'), \
+    (((i) & 0x04ll) ? '1' : '0'), \
+    (((i) & 0x02ll) ? '1' : '0'), \
+    (((i) & 0x01ll) ? '1' : '0')
+
+#define PRINTF_BINARY_PATTERN_INT16 \
+    PRINTF_BINARY_PATTERN_INT8              PRINTF_BINARY_PATTERN_INT8
+#define PRINTF_BYTE_TO_BINARY_INT16(i) \
+    PRINTF_BYTE_TO_BINARY_INT8((i) >> 8),   PRINTF_BYTE_TO_BINARY_INT8(i)
+#define PRINTF_BINARY_PATTERN_INT32 \
+    PRINTF_BINARY_PATTERN_INT16             PRINTF_BINARY_PATTERN_INT16
+#define PRINTF_BYTE_TO_BINARY_INT32(i) \
+    PRINTF_BYTE_TO_BINARY_INT16((i) >> 16), PRINTF_BYTE_TO_BINARY_INT16(i)
+#define PRINTF_BINARY_PATTERN_INT64    \
+    PRINTF_BINARY_PATTERN_INT32             PRINTF_BINARY_PATTERN_INT32
+#define PRINTF_BYTE_TO_BINARY_INT64(i) \
+    PRINTF_BYTE_TO_BINARY_INT32((i) >> 32), PRINTF_BYTE_TO_BINARY_INT32(i)
+/* --- end macros --- */
+
+
 #include <stdio.h>
 #include <termios.h>
 #include <unistd.h>
@@ -161,7 +189,7 @@ int 	rs232_getchar()
 }
 
 
-int 	rs232_putchar(char c)
+int 	rs232_putchar(int c) 			// change char to uint32_t
 {
 	int result;
 
@@ -174,6 +202,68 @@ int 	rs232_putchar(char c)
 }
 
 
+uint32_t messg_encode(int c){
+	uint32_t messg;
+	switch(c){
+		
+		case 'a':
+			messg = 'u'; // keyboard 'a' pressed, drone lift up
+			// messg = 0b11111111111111111111111111110101; // test messg to see how many bit we can send
+			// printf("The packet to send is: "PRINTF_BINARY_PATTERN_INT32 "\n",PRINTF_BYTE_TO_BINARY_INT32(messg));
+			break;
+
+		case 'z':
+			messg = 'd'; // keyboard 'z' pressed, drone lift down
+			break;
+
+		case 'A':
+			messg = 'A'; // keyboard '↑' pressed, drone pitch down
+			break;
+
+		case 'B':
+			messg = 'B'; // keyboard '↓' pressed, drone pitch up
+			break;
+
+		case 'C':
+			messg = 'C'; // keyboard '->' pressed, drone roll down
+			break;
+
+		case 'D':
+			messg = 'D'; // keyboard '<-' pressed, drone roll up
+			break;
+
+		case 'q':
+			messg = 'q'; // keyboard 'q' pressed, drone yaw down(left)
+			break;
+		case 'w':
+			messg = 'w'; // keyboard 'w' pressed, drone yaw up(right)
+			break;
+
+		case 27:
+			messg = 27;
+			break;
+
+		case 48:
+			messg = 48;
+			break;
+
+		case 49:
+			messg = 49;
+			break;
+
+		case 50:
+			messg = 50;
+			break;
+
+		default:
+			messg = -1;
+
+	}
+
+	return messg;
+
+}
+
 /*----------------------------------------------------------------
  * main -- execute terminal
  *----------------------------------------------------------------
@@ -182,13 +272,14 @@ int main(int argc, char **argv)
 {
 	int	c;
 
+
 	term_puts("\nTerminal program - Embedded Real-Time Systems\n");
 
 	term_initio();
 	rs232_open();
 
 	term_puts("Type ^C to exit\n");
-
+	
 	/* discard any incoming text
 	 */
 	while ((c = rs232_getchar_nb()) != -1)
@@ -198,8 +289,19 @@ int main(int argc, char **argv)
 	 */
 	for (;;)
 	{
-		if ((c = term_getchar_nb()) != -1)
-			rs232_putchar(c);
+		if ((c = term_getchar_nb()) != -1){
+
+			// distinguish the characters and arrows
+			if (c == '\033') { // if the first value is esc
+			    term_getchar_nb(); // skip the [
+			    c = term_getchar_nb();
+			    if (c!='A' && c!='B' && c!='C' && c!='D') rs232_putchar(messg_encode(27));
+			}
+
+			// distinguish the arrows with ESC
+			rs232_putchar(messg_encode(c));
+			//printf("Message sent!\n");
+		}
 
 		if ((c = rs232_getchar_nb()) != -1)
 			term_putchar(c);
