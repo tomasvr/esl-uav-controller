@@ -43,7 +43,7 @@
 
 #include "in4073.h"
 
-
+int FRAG_COUNT = 0;
 enum State {
 		SAFE_ST, 
 		PANIC_ST,
@@ -67,92 +67,110 @@ bool command_allowed (void){
  * process_key -- process command keys
  *------------------------------------------------------------------
  */
-void process_key(uint32_t c)
+void process_key(uint8_t c)
 {
-	// printf("The value received is: "
- 	//            PRINTF_BINARY_PATTERN_INT32 "\n",
- 	//            PRINTF_BYTE_TO_BINARY_INT32(c));
+	//printf("The value received is: "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(c));
 	
-	//if (c&0xf0000000) printf("The command is not control command.\n");
-	
-	switch (c) 	// control signal switch
-	{
-		case 'u':			// lift up	
-			ae[0] += 10;
-			ae[1] += 10;
-			ae[2] += 10;
-			ae[3] += 10;
-			break;
-		case 'd': 			// lift down
-			//printf("Value is %ld\n", c);
-			ae[0] -= 10;
-			if (ae[0] < 0) ae[0] = 0;
-			ae[1] -= 10;
-			if (ae[1] < 0) ae[1] = 0;
-			ae[2] -= 10;
-			if (ae[2] < 0) ae[2] = 0;
-			ae[3] -= 10;
-			if (ae[3] < 0) ae[3] = 0;
-			break;
-		case 'A':			// pitch down
-			//printf("Value is %ld\n", c);
-			ae[0] -= 10;
-			if (ae[0] < 0) ae[0] = 0;
-			ae[2] += 10;
-			break;
-		case 'B':			// pitch up
-			//printf("Value is %ld\n", c);
-			ae[0] += 10;
-			ae[2] -= 10;
-			if (ae[2] < 0) ae[2] = 0;
-			break;
-		case 'C':			// roll down
-			//printf("Value is %ld\n", c);
-			ae[1] -= 10;
-			if (ae[1] < 0) ae[1] = 0;
-			ae[3] += 10;
-			break;
-		case 'D':			// roll up
-			//printf("Value is %ld\n", c);
-			ae[1] += 10;
-			ae[3] -= 10;
-			if (ae[3] < 0) ae[3] = 0;
-			break;
-		case 'q': 			// yaw down(left)
-			//printf("Value is %ld\n", c);
-			ae[1] += 10;
-			ae[3] += 10;
-			ae[0] -= 10;
-			if (ae[0] < 0) ae[0] = 0;
-			ae[2] -= 10;
-			if (ae[2] < 0) ae[2] = 0;
-			break;
-		case 'w': 			// yaw up(right)
-			//printf("Value is %ld\n", c);
-			ae[0] += 10;
-			ae[2] += 10;
-			ae[1] -= 10;
-			if (ae[1] < 0) ae[1] = 0;
-			ae[3] -= 10;
-			if (ae[3] < 0) ae[3] = 0;
-			break;
-		case 27:
-			demo_done = true;
-			break;
-		case 48:
-			g_current_state = SAFE_ST;
-			break;
-		case 49:
-			g_current_state = PANIC_ST;
-			break;
-		case 50:
-			if (command_allowed()){
-				g_current_state = MANUAL_ST;
-			}
-			break;
-		default:
-			nrf_gpio_pin_toggle(RED);
+	if (c == 0x55 && FRAG_COUNT == 0) {
+		printf("Detect a starter of the packet, start receiving...\n");
+		FRAG_COUNT = 3;
+		return;
 	}
+	while (FRAG_COUNT > 0){
+		printf("The %d byte is: \n", 4-FRAG_COUNT);
+		printf("   		 "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(c));
+		FRAG_COUNT--;
+		return;
+	}
+	return;
+
+
+
+
+
+
+
+
+
+
+	// switch (c) 	// control signal switch
+	// {
+	// 	case 'u':			// lift up	
+	// 		ae[0] += 10;
+	// 		ae[1] += 10;
+	// 		ae[2] += 10;
+	// 		ae[3] += 10;
+	// 		break;
+	// 	case 'd': 			// lift down
+	// 		//printf("Value is %ld\n", c);
+	// 		ae[0] -= 10;
+	// 		if (ae[0] < 0) ae[0] = 0;
+	// 		ae[1] -= 10;
+	// 		if (ae[1] < 0) ae[1] = 0;
+	// 		ae[2] -= 10;
+	// 		if (ae[2] < 0) ae[2] = 0;
+	// 		ae[3] -= 10;
+	// 		if (ae[3] < 0) ae[3] = 0;
+	// 		break;
+	// 	case 'A':			// pitch down
+	// 		//printf("Value is %ld\n", c);
+	// 		ae[0] -= 10;
+	// 		if (ae[0] < 0) ae[0] = 0;
+	// 		ae[2] += 10;
+	// 		break;
+	// 	case 'B':			// pitch up
+	// 		//printf("Value is %ld\n", c);
+	// 		ae[0] += 10;
+	// 		ae[2] -= 10;
+	// 		if (ae[2] < 0) ae[2] = 0;
+	// 		break;
+	// 	case 'C':			// roll down
+	// 		//printf("Value is %ld\n", c);
+	// 		ae[1] -= 10;
+	// 		if (ae[1] < 0) ae[1] = 0;
+	// 		ae[3] += 10;
+	// 		break;
+	// 	case 'D':			// roll up
+	// 		//printf("Value is %ld\n", c);
+	// 		ae[1] += 10;
+	// 		ae[3] -= 10;
+	// 		if (ae[3] < 0) ae[3] = 0;
+	// 		break;
+	// 	case 'q': 			// yaw down(left)
+	// 		//printf("Value is %ld\n", c);
+	// 		ae[1] += 10;
+	// 		ae[3] += 10;
+	// 		ae[0] -= 10;
+	// 		if (ae[0] < 0) ae[0] = 0;
+	// 		ae[2] -= 10;
+	// 		if (ae[2] < 0) ae[2] = 0;
+	// 		break;
+	// 	case 'w': 			// yaw up(right)
+	// 		//printf("Value is %ld\n", c);
+	// 		ae[0] += 10;
+	// 		ae[2] += 10;
+	// 		ae[1] -= 10;
+	// 		if (ae[1] < 0) ae[1] = 0;
+	// 		ae[3] -= 10;
+	// 		if (ae[3] < 0) ae[3] = 0;
+	// 		break;
+	// 	case 27:
+	// 		demo_done = true;
+	// 		break;
+	// 	case 48:
+	// 		g_current_state = SAFE_ST;
+	// 		break;
+	// 	case 49:
+	// 		g_current_state = PANIC_ST;
+	// 		break;
+	// 	case 50:
+	// 		if (command_allowed()){
+	// 			g_current_state = MANUAL_ST;
+	// 		}
+	// 		break;
+	// 	default:
+	// 		nrf_gpio_pin_toggle(RED);
+	// }
 }
 
 
