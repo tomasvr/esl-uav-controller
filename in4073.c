@@ -59,6 +59,7 @@ void process_key(uint8_t c)
 	}
 }
 
+
 /*------------------------------------------------------------------
  * main -- everything you need is here :)
  *------------------------------------------------------------------
@@ -77,6 +78,15 @@ int main(void)
 
 	uint32_t counter = 0;
 	demo_done = false;
+	uint8_t flash_counter = 0;
+	uint8_t address_init = 0x000000;
+	uint8_t address_counter = 0;
+	uint8_t  phi_store[20] = {0};
+	uint8_t phi_restore_counter = 0;
+	uint8_t flash_restore_count = 0;
+	uint16_t phi_restore[10] = {0};
+    
+    flash_chip_erase();
 
 	while (!demo_done)
 	{
@@ -85,18 +95,54 @@ int main(void)
 		if (check_timer_flag()) 
 		{
 			if (counter++%20 == 0) nrf_gpio_pin_toggle(BLUE);
+			nrf_gpio_pin_toggle(YELLOW);
 
 			adc_request_sample();
 			read_baro();
+
 
 			printf("%10ld | ", get_time_us());
 			printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
 			printf("%6d %6d %6d | ", phi, theta, psi);
 			printf("%6d %6d %6d | ", sp, sq, sr);
-			printf("%4d | %4ld | %6ld \n", bat_volt, temperature, pressure);
+			printf("%4d | %4ld | %6ld ", bat_volt, temperature, pressure);
+
+				//for(flash_counter = 0; flash_counter < 10; flash_counter++)
+			//{
+				phi_store[flash_counter] = phi >> 8;
+				phi_store[flash_counter+1] = phi & 0xFF;
+				flash_counter = flash_counter + 2;
+			//}
+
+			//flash_counter = 0;
+			
+			flash_write_bytes(address_init + address_counter, &phi_store[address_counter], 2);
+
+			if(flash_read_status(&phi_store[address_counter]) & flash_read_status(&phi_store[address_counter+1]))
+			{
+			flash_read_bytes(address_init + address_counter, &phi_store[address_counter], 2);
+			}
+			address_counter = address_counter + 2;
+
+			//while(phi_restore_counter < 10 && flash_counter < 20)
+			//{
+
+				phi_restore[phi_restore_counter] = phi_store[flash_restore_count];
+				phi_restore[phi_restore_counter] <<= 8;
+				phi_restore[phi_restore_counter] |= phi_store[flash_restore_count + 1];
+				printf("| %6d\n", phi_restore[phi_restore_counter]);
+				phi_restore_counter++;
+				flash_restore_count = flash_restore_count + 2;
+			//}
+			//flash_counter = 0;
+			//flash_write_byte(0x000000, phi >> 8);
+			//flash_write_byte(0x000001, phi & 0xFF);
 
 			clear_timer_flag();
 		}
+
+
+
 
 		if (check_sensor_int_flag()) 
 		{
