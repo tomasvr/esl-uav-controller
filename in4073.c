@@ -44,7 +44,7 @@
 #include "in4073.h"
 
 int FRAG_COUNT = 0;
-enum State {
+enum STATE {
 		SAFE_ST, 
 		PANIC_ST,
 		MANUAL_ST,
@@ -53,7 +53,48 @@ enum State {
 		FULLCONTROL_ST
 	};
 
-enum State g_current_state = SAFE_ST;
+enum COMM_TYPE {
+		CTRL_COMM,
+		MODE_SW_COMM,
+		BAT_INFO,
+		SYS_LOG,
+		NO_COMM
+	};
+
+
+enum M0_CRTL{
+		M0_UP,
+		M0_REMAIN,
+		M0_DOWN
+	};
+
+enum M1_CRTL{		
+		M1_UP,
+		M1_REMAIN,
+		M1_DOWN,
+	};
+
+enum M2_CRTL{	
+		M2_UP,
+		M2_REMAIN,
+		M2_DOWN,
+	};
+
+enum M3_CRTL{
+		M3_UP,
+		M3_REMAIN,
+		M3_DOWN
+	};
+
+enum STATE g_current_state = SAFE_ST;
+
+enum M0_CRTL g_current_m0_state = M0_REMAIN;
+enum M1_CRTL g_current_m1_state = M1_REMAIN;
+enum M2_CRTL g_current_m2_state = M2_REMAIN;
+enum M3_CRTL g_current_m3_state = M3_REMAIN;
+
+enum COMM_TYPE g_current_comm_type = NO_COMM;
+
 
 bool command_allowed (void){
 	bool res = false;
@@ -62,7 +103,47 @@ bool command_allowed (void){
 	return res;
 }
 
+/*------------------------------------------------------------------
+ * messg_decode -- decode messages
+ *------------------------------------------------------------------
+ */
+void messg_decode(uint8_t messg){
+	
+	printf("The %d byte is: \n", 4-FRAG_COUNT);
+	printf("   		 "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
+	
+	if (FRAG_COUNT == 3){
+		if (!(messg & 0xf0)) {
+			g_current_comm_type = CTRL_COMM;	
+		} 
+	}
+	if (FRAG_COUNT == 2){
+		if (g_current_comm_type == CTRL_COMM){
+			uint8_t m0_ctrl = messg & 0xf0; 		// 0bxxxx0000
+			uint8_t m1_ctrl = messg & 0x0f; 		// 0b0000xxxx
+			if ((m0_ctrl >> 5)&1 && (m0_ctrl >> 4)&1) g_current_m0_state = M0_UP;
+			if (((m0_ctrl >> 5)&1) == 1 && ((m0_ctrl >> 4)&1) == 0) g_current_m0_state = M0_DOWN;
+			if (((m0_ctrl >> 5)&1) == 0) g_current_m0_state = M0_REMAIN;
 
+			if ((m1_ctrl >> 1)&1 && (m1_ctrl>>0)&1) g_current_m1_state = M1_UP;
+			if (((m1_ctrl >> 1)&1) == 1 && ((m1_ctrl >> 0)&1) == 0) g_current_m1_state = M1_DOWN;
+			if (((m1_ctrl >> 1)&1) == 0) g_current_m1_state = M1_REMAIN;
+		}
+	}
+	if (FRAG_COUNT == 1){
+		if (g_current_comm_type == CTRL_COMM){
+			uint8_t m2_ctrl = messg & 0xf0;
+			uint8_t m3_ctrl = messg & 0x0f;
+			if ((m2_ctrl >> 5)&1 && (m2_ctrl >> 4)&1) g_current_m2_state = M2_UP;
+			if (((m2_ctrl >> 5)&1) == 1 && ((m2_ctrl >> 4)&1) == 0) g_current_m2_state = M2_DOWN;
+			if (((m2_ctrl >> 5)&1) == 0) g_current_m2_state = M2_REMAIN;
+
+			if ((m3_ctrl >> 1)&1 && (m3_ctrl>>0)&1) g_current_m3_state = M3_UP;
+			if (((m3_ctrl >> 1)&1) == 1 && ((m3_ctrl >> 0)&1) == 0) g_current_m3_state = M3_DOWN;
+			if (((m3_ctrl >> 1)&1) == 0) g_current_m3_state = M3_REMAIN;
+		}
+	}
+}
 /*------------------------------------------------------------------
  * process_key -- process command keys
  *------------------------------------------------------------------
@@ -77,21 +158,14 @@ void process_key(uint8_t c)
 		return;
 	}
 	while (FRAG_COUNT > 0){
-		printf("The %d byte is: \n", 4-FRAG_COUNT);
-		printf("   		 "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(c));
+		messg_decode(c);
+		if (FRAG_COUNT == 1) printf("Packet received. The received message --command type %d --state %d --m0_action %d --m1_action %d --m2_action %d --m3_action %d\n",
+								g_current_comm_type, g_current_state, g_current_m0_state, g_current_m1_state, g_current_m2_state, g_current_m3_state);
 		FRAG_COUNT--;
 		return;
 	}
+
 	return;
-
-
-
-
-
-
-
-
-
 
 	// switch (c) 	// control signal switch
 	// {
@@ -173,6 +247,73 @@ void process_key(uint8_t c)
 	// }
 }
 
+void ctrl_action(){
+	switch (g_current_m0_state){			//M0
+		case M0_UP:
+			ae[0] += 10;
+			printf("M0 goes up.\n");
+			break;
+		case M0_REMAIN:
+			break;
+		case M0_DOWN:
+			ae[0] -= 10;
+			break;
+		default:
+			break;
+	}
+
+	switch (g_current_m1_state){			//M1
+		case M1_UP:
+			ae[1] += 10;
+			break;
+		case M1_REMAIN:
+			break;
+		case M1_DOWN:
+			ae[1] -= 10;
+			break;
+		default:
+			break;
+	}
+	switch (g_current_m2_state){			//M2
+		case M2_UP:
+			ae[2] += 10;
+			break;
+		case M2_REMAIN:
+			break;
+		case M2_DOWN:
+			ae[2] -= 10;
+			break;
+		default:
+			break;
+	}
+
+	switch (g_current_m3_state){			//M3
+		case M3_UP:
+			ae[3] += 10;
+			break;
+		case M3_REMAIN:
+			break;
+		case M3_DOWN:
+			ae[3] -= 10;
+			break;
+		default:
+			break;
+	}
+}
+
+void reset_motor_state(){
+	g_current_m0_state = M0_REMAIN;
+	g_current_m1_state = M1_REMAIN;
+	g_current_m2_state = M2_REMAIN;
+	g_current_m3_state = M3_REMAIN;
+}
+
+void execute (){
+	if (g_current_comm_type == CTRL_COMM){
+		ctrl_action();
+		reset_motor_state();
+	}
+}
 
 
 /*------------------------------------------------------------------
@@ -198,7 +339,7 @@ int main(void)
 	while (!demo_done)
 	{
 		if (rx_queue.count) process_key( dequeue(&rx_queue) );
-
+		execute();
 		if (check_timer_flag()) 
 		{
 			if (counter++%20 == 0) nrf_gpio_pin_toggle(BLUE);
