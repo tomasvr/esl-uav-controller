@@ -21,7 +21,11 @@
 #include "app_util_platform.h"
 #include <math.h>
 
-#define RED		22
+// custom includes
+#include "logging.h"
+#include "comm.h"
+
+#define RED			22
 #define YELLOW		24
 #define GREEN		28
 #define BLUE		30
