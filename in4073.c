@@ -55,7 +55,8 @@ enum STATE {
 		MANUAL_ST,
 		CALIBRATION_ST,
 		YAWCONTROL_ST,
-		FULLCONTROL_ST
+		FULLCONTROL_ST,
+		NO_WHERE
 	};
 
 // the command types during communication
@@ -94,6 +95,7 @@ enum M3_CRTL{
 
 
 enum STATE g_current_state = SAFE_ST;
+enum STATE g_dest_state = NO_WHERE;
 enum M0_CRTL g_current_m0_state = M0_REMAIN;
 enum M1_CRTL g_current_m1_state = M1_REMAIN;
 enum M2_CRTL g_current_m2_state = M2_REMAIN;
@@ -119,24 +121,24 @@ int check_mode_sync (uint8_t state){
 		enum STATE tstate = SAFE_ST;
 		if (g_current_state != tstate) mode_synced = 0;
 	}
-	if (state == 0x01){					// 0001 -> MANUAL_ST
+	if (state == 0x02){					// 0001 -> MANUAL_ST
 		enum STATE tstate = MANUAL_ST;
 		if (g_current_state != tstate) mode_synced = 0;
 	}
-	if (state == 0x02){					// 0010 -> CALIBRATION_ST
+	if (state == 0x03){					// 0010 -> CALIBRATION_ST
 		enum STATE tstate = CALIBRATION_ST;
 		if (g_current_state != tstate) mode_synced = 0;
 	}
-	if (state == 0x03){					// 0011 -> YAWCONTROL_ST
+	if (state == 0x04){					// 0011 -> YAWCONTROL_ST
 		enum STATE tstate = YAWCONTROL_ST;
 		if (g_current_state != tstate) mode_synced = 0;
 	}
-	if (state == 0x04){					// 0100 -> FULLCONTROL_ST
+	if (state == 0x05){					// 0100 -> FULLCONTROL_ST
 		enum STATE tstate = FULLCONTROL_ST;
 		if (g_current_state != tstate) mode_synced = 0;
 	}
-	if (state == 0x00){					// 0000 -> SAFE_ST
-		enum STATE tstate = SAFE_ST;
+	if (state == 0x08){					// 0000 -> SAFE_ST
+		enum STATE tstate = PANIC_ST;
 		if (g_current_state != tstate) mode_synced = 0;
 	}
 	
@@ -186,6 +188,19 @@ int find_motor_state(uint8_t messg){
 		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m3_state = M3_REMAIN;
 		result = 1;
 	} 
+	return result;
+}
+
+int find_dest_state(uint8_t messg){
+	int result = 1;
+	printf("The value received is: "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
+	if (messg == 0x00) g_dest_state = SAFE_ST;
+	else if (messg == 0x80) g_dest_state = PANIC_ST;
+	else if (messg == 0x10) g_dest_state = MANUAL_ST;
+	else if (messg == 0x20) g_dest_state = CALIBRATION_ST;
+	else if (messg == 0x30) g_dest_state = YAWCONTROL_ST;
+	else if (messg == 0x40) g_dest_state = FULLCONTROL_ST;
+	else result = 0;
 	return result;
 }
 
@@ -242,6 +257,25 @@ void messg_decode(uint8_t messg){
 	 		result = find_motor_state(messg);
 	 		assert(result == 1 && "Fail to find the motor state.");
 	 	}
+	 	/*--------------------------------------------------------------
+		 * if the command is MODE_SW_TYPE, two field in this byte: 
+		 * 		  ----------------------		 ----------------------
+		 * FRAG_2 |DEST_STATE||  all 0 |  FRAG_1 |  all 0  ||  all 0  |                
+		 * 		  ----------------------         ----------------------
+		 * FRAG_2:
+		 * first 4 bits -> the destination state { SAFE_ST , PANIC_ST , MANUAL_ST , CALIBRATION_ST , YAWCONTROL_ST , FULLCONTROL_ST }
+		 * last 4 bits 	-> default 0
+		 * FRAG_1:
+		 * first 4 bits -> default 0
+		 * last 4 bits 	-> default 0
+		 *--------------------------------------------------------------
+		 */
+	 	if (g_current_comm_type == MODE_SW_COMM && FRAG_COUNT == 2){
+	 		int result;
+	 		result = find_dest_state(messg);
+	 		assert(result == 1 && "Fail to find the destination mode.");
+	 	}
+
 	}
 	return;
 }
@@ -396,6 +430,45 @@ void ctrl_action(){
 	}
 }
 
+void mode_sw_action(){
+	if (g_current_state == SAFE_ST){
+		if (g_dest_state == PANIC_ST) {
+			printf("Can not switch to PANIC MODE while in SAFE MODE!\n");
+			return;
+		}
+		g_current_state = g_dest_state;
+		return;
+	} 
+	if (g_current_state == PANIC_ST){
+		if (g_dest_state != SAFE_ST){
+			printf("Can not switch to other modes else than SAFE MODE while in PANIC MODE.\n");
+			return;
+		}
+		return;
+	}
+	if (g_current_state != SAFE_ST && g_current_state != PANIC_ST){
+		if (g_dest_state == PANIC_ST || g_dest_state == g_current_state){
+			g_current_state = g_dest_state;
+			return;
+		}else{
+			printf("Can not directly switch to other modes else than PANIC MODE in the current mode.\n");
+			return;
+		}
+	}
+	// if(g_dest_state == SAFE_ST){
+	// 	printf("Can not directly switch to SAFE MODE in the current mode.\n");
+	// 	return;
+	// }else if (g_dest_state == PANIC_ST){
+	// 	g_current_state = g_dest_state;
+	// 	return;
+	// }else{
+	// 	printf("Can not directly switch to other modes else than PANIC MODE in the current mode.\n");
+	// 	return;
+	// }
+
+	
+}
+
 void reset_motor_state(){
 	g_current_m0_state = M0_REMAIN;
 	g_current_m1_state = M1_REMAIN;
@@ -408,6 +481,12 @@ void execute (){
 		ctrl_action();
 		reset_motor_state();
 	}
+
+	if (g_current_comm_type == MODE_SW_COMM && g_dest_state != NO_WHERE){
+		mode_sw_action();
+		g_dest_state = NO_WHERE;
+	}
+	
 }
 
 
@@ -455,6 +534,10 @@ int main(void)
 		{
 			get_dmp_data();
 			run_filters_and_control();
+		}
+		if (g_current_state == PANIC_ST){
+			nrf_delay_ms(3000);
+			g_current_state = SAFE_ST;
 		}
 	}	
 

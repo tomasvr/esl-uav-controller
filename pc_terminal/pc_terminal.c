@@ -201,6 +201,43 @@ int 	rs232_putchar(int c) 			// change char to uint32_t
 	return result;
 }
 
+// the states that our QR has
+enum STATE {
+		SAFE_ST, 
+		PANIC_ST,
+		MANUAL_ST,
+		CALIBRATION_ST,
+		YAWCONTROL_ST,
+		FULLCONTROL_ST,
+		NO_WHERE
+	};
+enum STATE g_current_state = SAFE_ST;
+
+uint32_t append_current_mode(uint32_t messg){
+
+	switch(g_current_state){
+		case 0:
+			messg |= 0x00000000;
+			break;
+		case 1:
+			messg |= 0x00000800;
+			break;
+		case 2:
+			messg |= 0x00000200;
+			break;
+		case 3:
+			messg |= 0x00000300;
+			break;
+		case 4:
+			messg |= 0x00000400;
+			break;
+		case 5:
+			messg |= 0x00000500;
+			break;
+	}
+	printf("The packet to send is: "PRINTF_BINARY_PATTERN_INT32 "\n",PRINTF_BYTE_TO_BINARY_INT32(messg)); // 0000 0000 1000 0000 0001 0010 0101 0101
+	return messg;
+}
 
 uint32_t messg_encode(int c){
 	uint32_t messg;
@@ -209,6 +246,7 @@ uint32_t messg_encode(int c){
 		case 'a':
 			//messg = 'u'; // keyboard 'a' pressed, drone lift up
 			messg = 0b10111111001101110000000001010101; // test messg to see how many bit we can send
+			messg = append_current_mode(messg); 
 			//printf("The packet to send is: "PRINTF_BINARY_PATTERN_INT32 "\n",PRINTF_BYTE_TO_BINARY_INT32(messg));
 			break;
 
@@ -239,20 +277,28 @@ uint32_t messg_encode(int c){
 			messg = 'w'; // keyboard 'w' pressed, drone yaw up(right)
 			break;
 
-		case 27:
-			messg = 27;
+		case 27: // keyboard 'ESC' pressed, dorne switches to PANIC_ST
+			messg = 0b00000000100000000001000001010101;
+			messg = append_current_mode(messg); 
+			g_current_state = SAFE_ST;
 			break;
 
-		case 48:
-			messg = 48;
+		case 48: // keyboard '0' pressed, dorne switches to SAFE_ST
+			messg = 0b00000000000000000001000001010101;
+			messg = append_current_mode(messg); 
+			g_current_state = SAFE_ST;
 			break;
 
-		case 49:
-			messg = 49;
+		case 49: // keyboard '1' pressed, dorne switches to PANIC_ST
+			messg = 0b00000000100000000001000001010101;
+			messg = append_current_mode(messg); 
+			g_current_state = SAFE_ST;
 			break;
 
-		case 50:
-			messg = 50;
+		case 50: // keyboard '2' pressed dorne switches to MANUAL_ST
+			messg = 0b00000000000100000001000001010101;
+			messg = append_current_mode(messg); 
+			g_current_state = MANUAL_ST;
 			break;
 
 		default:
