@@ -208,8 +208,8 @@ uint32_t messg_encode(int c){
 		
 		case 'a':
 			//messg = 'u'; // keyboard 'a' pressed, drone lift up
-			messg = 0b10111111001101110000000101010101; // test messg to see how many bit we can send
-			printf("The packet to send is: "PRINTF_BINARY_PATTERN_INT32 "\n",PRINTF_BYTE_TO_BINARY_INT32(messg));
+			messg = 0b10111111001101110000000001010101; // test messg to see how many bit we can send
+			//printf("The packet to send is: "PRINTF_BINARY_PATTERN_INT32 "\n",PRINTF_BYTE_TO_BINARY_INT32(messg));
 			break;
 
 		case 'z':

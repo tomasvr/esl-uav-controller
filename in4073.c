@@ -39,11 +39,16 @@
 #define PRINTF_BYTE_TO_BINARY_INT64(i) \
     PRINTF_BYTE_TO_BINARY_INT32((i) >> 32), PRINTF_BYTE_TO_BINARY_INT32(i)
 /* --- end macros --- */
+//printf("The value received is: "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(c));
 
 
 #include "in4073.h"
+#include <assert.h>
 
+// each packet includes 4 fragments
 int FRAG_COUNT = 0;
+
+// the states that our QR has
 enum STATE {
 		SAFE_ST, 
 		PANIC_ST,
@@ -53,6 +58,7 @@ enum STATE {
 		FULLCONTROL_ST
 	};
 
+// the command types during communication
 enum COMM_TYPE {
 		CTRL_COMM,
 		MODE_SW_COMM,
@@ -61,46 +67,126 @@ enum COMM_TYPE {
 		NO_COMM
 	};
 
-
+// the stats that motor 0 has
 enum M0_CRTL{
 		M0_UP,
 		M0_REMAIN,
 		M0_DOWN
 	};
-
+// the states that motor 1 has
 enum M1_CRTL{		
 		M1_UP,
 		M1_REMAIN,
 		M1_DOWN,
 	};
-
+// the states that motor 2 has
 enum M2_CRTL{	
 		M2_UP,
 		M2_REMAIN,
 		M2_DOWN,
 	};
-
+// the states that motor 3 has
 enum M3_CRTL{
 		M3_UP,
 		M3_REMAIN,
 		M3_DOWN
 	};
 
-enum STATE g_current_state = SAFE_ST;
 
+enum STATE g_current_state = SAFE_ST;
 enum M0_CRTL g_current_m0_state = M0_REMAIN;
 enum M1_CRTL g_current_m1_state = M1_REMAIN;
 enum M2_CRTL g_current_m2_state = M2_REMAIN;
 enum M3_CRTL g_current_m3_state = M3_REMAIN;
-
 enum COMM_TYPE g_current_comm_type = NO_COMM;
 
 
+/*------------------------------------------------------------------
+ * to decided if the command can be execute or not in the current mode
+ *------------------------------------------------------------------
+ */
 bool command_allowed (void){
 	bool res = false;
 	if (g_current_state != PANIC_ST)
 		res = true;
 	return res;
+}
+
+int check_mode_sync (uint8_t state){
+	int mode_synced = 1; 
+
+	if (state == 0x00){					// 0000 -> SAFE_ST
+		enum STATE tstate = SAFE_ST;
+		if (g_current_state != tstate) mode_synced = 0;
+	}
+	if (state == 0x01){					// 0001 -> MANUAL_ST
+		enum STATE tstate = MANUAL_ST;
+		if (g_current_state != tstate) mode_synced = 0;
+	}
+	if (state == 0x02){					// 0010 -> CALIBRATION_ST
+		enum STATE tstate = CALIBRATION_ST;
+		if (g_current_state != tstate) mode_synced = 0;
+	}
+	if (state == 0x03){					// 0011 -> YAWCONTROL_ST
+		enum STATE tstate = YAWCONTROL_ST;
+		if (g_current_state != tstate) mode_synced = 0;
+	}
+	if (state == 0x04){					// 0100 -> FULLCONTROL_ST
+		enum STATE tstate = FULLCONTROL_ST;
+		if (g_current_state != tstate) mode_synced = 0;
+	}
+	if (state == 0x00){					// 0000 -> SAFE_ST
+		enum STATE tstate = SAFE_ST;
+		if (g_current_state != tstate) mode_synced = 0;
+	}
+	
+	return mode_synced;
+}
+
+int find_comm_type (uint8_t comm_type){
+	int find_comm = 1;
+	if (comm_type == 0x00) {			// 0000 -> CTRL_COMM
+		g_current_comm_type = CTRL_COMM;	
+	}else if(comm_type == 0x10){		// 0001 -> MODE_SW_COMM
+		g_current_comm_type = MODE_SW_COMM;
+	}else if(comm_type == 0x80){		// 1000 -> BAT_INFO
+		g_current_comm_type = BAT_INFO;
+	}else if(comm_type == 0x90){		// 1001 -> SYS_LOG
+		g_current_comm_type = SYS_LOG;
+	}else find_comm = 0;
+	return find_comm;
+}
+
+int find_motor_state(uint8_t messg){
+	uint8_t m_ctrl_1 = messg & 0xf0; 		
+	uint8_t m_ctrl_2 = messg & 0x0f;
+	int result = 0;
+	// find motor state of motor 0 
+	if (m_ctrl_1>>6 == 0) {				// 0000 -> M0
+		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) g_current_m0_state = M0_UP;
+		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) g_current_m0_state = M0_DOWN;
+		if (((m_ctrl_1 >> 5)&1) == 0) g_current_m0_state = M0_REMAIN;
+		result = 1;
+	}
+	if (m_ctrl_1>>6 == 2) {				// 0010 -> M2
+		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) g_current_m2_state = M2_UP;
+		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) g_current_m2_state = M2_DOWN;
+		if (((m_ctrl_1 >> 5)&1) == 0) g_current_m2_state = M2_REMAIN;
+		result = 1;
+	}
+	if (m_ctrl_2>>2 == 1) {				// 0001 -> M1
+		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) g_current_m1_state = M1_UP;
+		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) g_current_m1_state = M1_DOWN;
+		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m1_state = M1_REMAIN;
+		result = 1;
+	}
+	if (m_ctrl_2>>2 == 3) {				// 0011 -> M3
+		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) g_current_m3_state = M3_UP;
+		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) g_current_m3_state = M3_DOWN;
+		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m3_state = M3_REMAIN;
+		result = 1;
+	} 
+	return result;
 }
 
 /*------------------------------------------------------------------
@@ -109,62 +195,72 @@ bool command_allowed (void){
  */
 void messg_decode(uint8_t messg){
 	
-	printf("The %d byte is: \n", 4-FRAG_COUNT);
-	printf("   		 "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
-	
+	// printf("The %d byte is: \n", 4-FRAG_COUNT);			// print out each fragment QR receives
+	// printf("   		 "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
+	/*--------------------------------------------------------------
+	 * decode the first frag, two field in this byte: 
+	 * 		----------------------
+	 * 		| C C C C || M M M M |                  
+	 * 		----------------------
+	 * first 4 bits -> command type { CTRL_COMM , MODE_SW_COMM , BAT_INFO , SYS_LOG , NO_COMM }
+	 * last 4 bits 	-> mode/state { SAFE_ST , PANIC_ST , MANUAL_ST , CALIBRATION_ST , YAWCONTROL_ST , FULLCONTROL_ST }
+	 *--------------------------------------------------------------
+	 */
 	if (FRAG_COUNT == 3){
-		if (!(messg & 0xf0)) {
-			g_current_comm_type = CTRL_COMM;	
-		} 
-	}
-	if (FRAG_COUNT == 2){
-		if (g_current_comm_type == CTRL_COMM){
-			uint8_t m0_ctrl = messg & 0xf0; 		// 0bxxxx0000
-			uint8_t m1_ctrl = messg & 0x0f; 		// 0b0000xxxx
-			if ((m0_ctrl >> 5)&1 && (m0_ctrl >> 4)&1) g_current_m0_state = M0_UP;
-			if (((m0_ctrl >> 5)&1) == 1 && ((m0_ctrl >> 4)&1) == 0) g_current_m0_state = M0_DOWN;
-			if (((m0_ctrl >> 5)&1) == 0) g_current_m0_state = M0_REMAIN;
+		uint8_t comm_type = messg & 0xf0;
+		uint8_t state = messg & 0x0f;
 
-			if ((m1_ctrl >> 1)&1 && (m1_ctrl>>0)&1) g_current_m1_state = M1_UP;
-			if (((m1_ctrl >> 1)&1) == 1 && ((m1_ctrl >> 0)&1) == 0) g_current_m1_state = M1_DOWN;
-			if (((m1_ctrl >> 1)&1) == 0) g_current_m1_state = M1_REMAIN;
-		}
-	}
-	if (FRAG_COUNT == 1){
-		if (g_current_comm_type == CTRL_COMM){
-			uint8_t m2_ctrl = messg & 0xf0;
-			uint8_t m3_ctrl = messg & 0x0f;
-			if ((m2_ctrl >> 5)&1 && (m2_ctrl >> 4)&1) g_current_m2_state = M2_UP;
-			if (((m2_ctrl >> 5)&1) == 1 && ((m2_ctrl >> 4)&1) == 0) g_current_m2_state = M2_DOWN;
-			if (((m2_ctrl >> 5)&1) == 0) g_current_m2_state = M2_REMAIN;
+		int result = find_comm_type(comm_type);
+		assert(result == 1 && "No such command found.");
 
-			if ((m3_ctrl >> 1)&1 && (m3_ctrl>>0)&1) g_current_m3_state = M3_UP;
-			if (((m3_ctrl >> 1)&1) == 1 && ((m3_ctrl >> 0)&1) == 0) g_current_m3_state = M3_DOWN;
-			if (((m3_ctrl >> 1)&1) == 0) g_current_m3_state = M3_REMAIN;
-		}
+		result = check_mode_sync(state);
+		assert(result == 1 && "The mode in QR is not sync with PC."); // might have to enter the panic mode?????????????????
 	}
+
+	/*--------------------------------------------------------------
+	 * decode the second and the thrid frag, fields in these byte are depend on the  
+	 * command type received in the previous byte.
+	 *--------------------------------------------------------------
+	 */
+	if (FRAG_COUNT == 2 || FRAG_COUNT == 1){
+		/*--------------------------------------------------------------
+		 * if the command is CTRL_TYPE, two field in this byte: 
+		 * 		  ----------------------		 ----------------------
+		 * FRAG_2 | 0 0 0 0 || 1 1 1 1 |  FRAG_1 | 2 2 2 2 || 3 3 3 3 |                
+		 * 		  ----------------------         ----------------------
+		 * FRAG_2:
+		 * first 4 bits -> motor 0 state { M0_UP, M0_REMAIN , M0_DOWN }
+		 * last 4 bits 	-> motor 1 state { M1_UP, M1_REMAIN , M1_DOWN }
+		 * FRAG_1:
+		 * first 4 bits -> motor 2 state { M2_UP, M2_REMAIN , M2_DOWN }
+		 * last 4 bits 	-> motor 3 state { M3_UP, M3_REMAIN , M3_DOWN }
+		 *--------------------------------------------------------------
+		 */
+		 		
+	 	if (g_current_comm_type == CTRL_COMM){
+	 		int result;
+	 		result = find_motor_state(messg);
+	 		assert(result == 1 && "Fail to find the motor state.");
+	 	}
+	}
+	return;
 }
+
 /*------------------------------------------------------------------
  * process_key -- process command keys
  *------------------------------------------------------------------
  */
 void process_key(uint8_t c)
-{
-	//printf("The value received is: "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(c));
-	
-	if (c == 0x55 && FRAG_COUNT == 0) {
-		printf("Detect a starter of the packet, start receiving...\n");
+{	
+	if (c == 0x55 && FRAG_COUNT == 0 && g_current_state != PANIC_ST) {
 		FRAG_COUNT = 3;
 		return;
 	}
 	while (FRAG_COUNT > 0){
 		messg_decode(c);
-		if (FRAG_COUNT == 1) printf("Packet received. The received message --command type %d --state %d --m0_action %d --m1_action %d --m2_action %d --m3_action %d\n",
-								g_current_comm_type, g_current_state, g_current_m0_state, g_current_m1_state, g_current_m2_state, g_current_m3_state);
 		FRAG_COUNT--;
 		return;
 	}
-
 	return;
 
 	// switch (c) 	// control signal switch
@@ -251,7 +347,6 @@ void ctrl_action(){
 	switch (g_current_m0_state){			//M0
 		case M0_UP:
 			ae[0] += 10;
-			printf("M0 goes up.\n");
 			break;
 		case M0_REMAIN:
 			break;
