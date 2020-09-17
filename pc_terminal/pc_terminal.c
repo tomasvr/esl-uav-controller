@@ -194,10 +194,10 @@ int 	rs232_putchar(int c) 			// change char to uint32_t
 	int result;
 
 	do {
-		result = (int) write(fd_RS232, &c, 1);
+		result = (int) write(fd_RS232, &c, 4);
 	} while (result == 0);
 
-	assert(result == 1);
+	assert(result == 4);
 	return result;
 }
 
@@ -207,9 +207,9 @@ uint32_t messg_encode(int c){
 	switch(c){
 		
 		case 'a':
-			messg = 'u'; // keyboard 'a' pressed, drone lift up
-			// messg = 0b11111111111111111111111111110101; // test messg to see how many bit we can send
-			// printf("The packet to send is: "PRINTF_BINARY_PATTERN_INT32 "\n",PRINTF_BYTE_TO_BINARY_INT32(messg));
+			//messg = 'u'; // keyboard 'a' pressed, drone lift up
+			messg = 0b10111111001101110000000101010101; // test messg to see how many bit we can send
+			printf("The packet to send is: "PRINTF_BINARY_PATTERN_INT32 "\n",PRINTF_BYTE_TO_BINARY_INT32(messg));
 			break;
 
 		case 'z':
