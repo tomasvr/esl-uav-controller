@@ -115,31 +115,31 @@ bool command_allowed (void){
 }
 
 int check_mode_sync (uint8_t state){
-	int mode_synced = 1; 
+	int mode_synced = 0; 
 
 	if (state == 0x00){					// 0000 -> SAFE_ST
 		enum STATE tstate = SAFE_ST;
-		if (g_current_state != tstate) mode_synced = 0;
+		if (g_current_state == tstate) mode_synced = 1;
 	}
-	if (state == 0x02){					// 0001 -> MANUAL_ST
+	if (state == 0x01){					// 0001 -> MANUAL_ST
 		enum STATE tstate = MANUAL_ST;
-		if (g_current_state != tstate) mode_synced = 0;
+		if (g_current_state == tstate) mode_synced = 1;
 	}
-	if (state == 0x03){					// 0010 -> CALIBRATION_ST
+	if (state == 0x02){					// 0010 -> CALIBRATION_ST
 		enum STATE tstate = CALIBRATION_ST;
-		if (g_current_state != tstate) mode_synced = 0;
+		if (g_current_state == tstate) mode_synced = 1;
 	}
-	if (state == 0x04){					// 0011 -> YAWCONTROL_ST
+	if (state == 0x03){					// 0011 -> YAWCONTROL_ST
 		enum STATE tstate = YAWCONTROL_ST;
-		if (g_current_state != tstate) mode_synced = 0;
+		if (g_current_state == tstate) mode_synced = 1;
 	}
-	if (state == 0x05){					// 0100 -> FULLCONTROL_ST
+	if (state == 0x04){					// 0100 -> FULLCONTROL_ST
 		enum STATE tstate = FULLCONTROL_ST;
-		if (g_current_state != tstate) mode_synced = 0;
+		if (g_current_state == tstate) mode_synced = 1;
 	}
 	if (state == 0x08){					// 0000 -> SAFE_ST
 		enum STATE tstate = PANIC_ST;
-		if (g_current_state != tstate) mode_synced = 0;
+		if (g_current_state == tstate) mode_synced = 1;
 	}
 	
 	return mode_synced;
@@ -193,7 +193,6 @@ int find_motor_state(uint8_t messg){
 
 int find_dest_state(uint8_t messg){
 	int result = 1;
-	printf("The value received is: "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
 	if (messg == 0x00) g_dest_state = SAFE_ST;
 	else if (messg == 0x80) g_dest_state = PANIC_ST;
 	else if (messg == 0x10) g_dest_state = MANUAL_ST;
@@ -226,10 +225,10 @@ void messg_decode(uint8_t messg){
 		uint8_t state = messg & 0x0f;
 
 		int result = find_comm_type(comm_type);
-		assert(result == 1 && "No such command found.");
+		assert(result == 1 && "QR: No such command found.");
 
 		result = check_mode_sync(state);
-		assert(result == 1 && "The mode in QR is not sync with PC."); // might have to enter the panic mode?????????????????
+		assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?????????????????
 	}
 
 	/*--------------------------------------------------------------
@@ -255,7 +254,7 @@ void messg_decode(uint8_t messg){
 	 	if (g_current_comm_type == CTRL_COMM){
 	 		int result;
 	 		result = find_motor_state(messg);
-	 		assert(result == 1 && "Fail to find the motor state.");
+	 		assert(result == 1 && "QR: Fail to find the motor state.");
 	 	}
 	 	/*--------------------------------------------------------------
 		 * if the command is MODE_SW_TYPE, two field in this byte: 
@@ -273,7 +272,7 @@ void messg_decode(uint8_t messg){
 	 	if (g_current_comm_type == MODE_SW_COMM && FRAG_COUNT == 2){
 	 		int result;
 	 		result = find_dest_state(messg);
-	 		assert(result == 1 && "Fail to find the destination mode.");
+	 		assert(result == 1 && "QR: Fail to find the destination mode.");
 	 	}
 
 	}
@@ -295,86 +294,8 @@ void process_key(uint8_t c)
 		FRAG_COUNT--;
 		return;
 	}
+	nrf_gpio_pin_toggle(RED);
 	return;
-
-	// switch (c) 	// control signal switch
-	// {
-	// 	case 'u':			// lift up	
-	// 		ae[0] += 10;
-	// 		ae[1] += 10;
-	// 		ae[2] += 10;
-	// 		ae[3] += 10;
-	// 		break;
-	// 	case 'd': 			// lift down
-	// 		//printf("Value is %ld\n", c);
-	// 		ae[0] -= 10;
-	// 		if (ae[0] < 0) ae[0] = 0;
-	// 		ae[1] -= 10;
-	// 		if (ae[1] < 0) ae[1] = 0;
-	// 		ae[2] -= 10;
-	// 		if (ae[2] < 0) ae[2] = 0;
-	// 		ae[3] -= 10;
-	// 		if (ae[3] < 0) ae[3] = 0;
-	// 		break;
-	// 	case 'A':			// pitch down
-	// 		//printf("Value is %ld\n", c);
-	// 		ae[0] -= 10;
-	// 		if (ae[0] < 0) ae[0] = 0;
-	// 		ae[2] += 10;
-	// 		break;
-	// 	case 'B':			// pitch up
-	// 		//printf("Value is %ld\n", c);
-	// 		ae[0] += 10;
-	// 		ae[2] -= 10;
-	// 		if (ae[2] < 0) ae[2] = 0;
-	// 		break;
-	// 	case 'C':			// roll down
-	// 		//printf("Value is %ld\n", c);
-	// 		ae[1] -= 10;
-	// 		if (ae[1] < 0) ae[1] = 0;
-	// 		ae[3] += 10;
-	// 		break;
-	// 	case 'D':			// roll up
-	// 		//printf("Value is %ld\n", c);
-	// 		ae[1] += 10;
-	// 		ae[3] -= 10;
-	// 		if (ae[3] < 0) ae[3] = 0;
-	// 		break;
-	// 	case 'q': 			// yaw down(left)
-	// 		//printf("Value is %ld\n", c);
-	// 		ae[1] += 10;
-	// 		ae[3] += 10;
-	// 		ae[0] -= 10;
-	// 		if (ae[0] < 0) ae[0] = 0;
-	// 		ae[2] -= 10;
-	// 		if (ae[2] < 0) ae[2] = 0;
-	// 		break;
-	// 	case 'w': 			// yaw up(right)
-	// 		//printf("Value is %ld\n", c);
-	// 		ae[0] += 10;
-	// 		ae[2] += 10;
-	// 		ae[1] -= 10;
-	// 		if (ae[1] < 0) ae[1] = 0;
-	// 		ae[3] -= 10;
-	// 		if (ae[3] < 0) ae[3] = 0;
-	// 		break;
-	// 	case 27:
-	// 		demo_done = true;
-	// 		break;
-	// 	case 48:
-	// 		g_current_state = SAFE_ST;
-	// 		break;
-	// 	case 49:
-	// 		g_current_state = PANIC_ST;
-	// 		break;
-	// 	case 50:
-	// 		if (command_allowed()){
-	// 			g_current_state = MANUAL_ST;
-	// 		}
-	// 		break;
-	// 	default:
-	// 		nrf_gpio_pin_toggle(RED);
-	// }
 }
 
 void ctrl_action(){
@@ -386,6 +307,7 @@ void ctrl_action(){
 			break;
 		case M0_DOWN:
 			ae[0] -= 10;
+			if (ae[0] < 0) ae[0] = 0;
 			break;
 		default:
 			break;
@@ -399,6 +321,7 @@ void ctrl_action(){
 			break;
 		case M1_DOWN:
 			ae[1] -= 10;
+			if (ae[1] < 0) ae[1] = 0;
 			break;
 		default:
 			break;
@@ -411,6 +334,7 @@ void ctrl_action(){
 			break;
 		case M2_DOWN:
 			ae[2] -= 10;
+			if (ae[2] < 0) ae[2] = 0;
 			break;
 		default:
 			break;
@@ -424,6 +348,7 @@ void ctrl_action(){
 			break;
 		case M3_DOWN:
 			ae[3] -= 10;
+			if (ae[3] < 0) ae[3] = 0;
 			break;
 		default:
 			break;
@@ -433,7 +358,7 @@ void ctrl_action(){
 void mode_sw_action(){
 	if (g_current_state == SAFE_ST){
 		if (g_dest_state == PANIC_ST) {
-			printf("Can not switch to PANIC MODE while in SAFE MODE!\n");
+			printf("QR: Can not switch to PANIC MODE while in SAFE MODE!\n");
 			return;
 		}
 		g_current_state = g_dest_state;
@@ -441,7 +366,7 @@ void mode_sw_action(){
 	} 
 	if (g_current_state == PANIC_ST){
 		if (g_dest_state != SAFE_ST){
-			printf("Can not switch to other modes else than SAFE MODE while in PANIC MODE.\n");
+			printf("QR: an not switch to other modes else than SAFE MODE while in PANIC MODE.\n");
 			return;
 		}
 		return;
@@ -451,22 +376,10 @@ void mode_sw_action(){
 			g_current_state = g_dest_state;
 			return;
 		}else{
-			printf("Can not directly switch to other modes else than PANIC MODE in the current mode.\n");
+			printf("QR: Can not directly switch to other modes else than PANIC MODE in the current mode.\n");
 			return;
 		}
 	}
-	// if(g_dest_state == SAFE_ST){
-	// 	printf("Can not directly switch to SAFE MODE in the current mode.\n");
-	// 	return;
-	// }else if (g_dest_state == PANIC_ST){
-	// 	g_current_state = g_dest_state;
-	// 	return;
-	// }else{
-	// 	printf("Can not directly switch to other modes else than PANIC MODE in the current mode.\n");
-	// 	return;
-	// }
-
-	
 }
 
 void reset_motor_state(){
@@ -536,6 +449,7 @@ int main(void)
 			run_filters_and_control();
 		}
 		if (g_current_state == PANIC_ST){
+			printf("QR: Entered PANIC MODE.");
 			nrf_delay_ms(3000);
 			g_current_state = SAFE_ST;
 		}
