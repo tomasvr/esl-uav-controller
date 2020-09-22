@@ -65,6 +65,7 @@ enum COMM_TYPE {
 		MODE_SW_COMM,
 		BAT_INFO,
 		SYS_LOG,
+		ESC_COMM,
 		NO_COMM
 	};
 
@@ -96,12 +97,11 @@ enum M3_CRTL{
 
 enum STATE g_current_state = SAFE_ST;
 enum STATE g_dest_state = NO_WHERE;
+enum COMM_TYPE g_current_comm_type = NO_COMM;
 enum M0_CRTL g_current_m0_state = M0_REMAIN;
 enum M1_CRTL g_current_m1_state = M1_REMAIN;
 enum M2_CRTL g_current_m2_state = M2_REMAIN;
 enum M3_CRTL g_current_m3_state = M3_REMAIN;
-enum COMM_TYPE g_current_comm_type = NO_COMM;
-
 
 /*------------------------------------------------------------------
  * to decided if the command can be execute or not in the current mode
@@ -155,6 +155,8 @@ int find_comm_type (uint8_t comm_type){
 		g_current_comm_type = BAT_INFO;
 	}else if(comm_type == 0x90){		// 1001 -> SYS_LOG
 		g_current_comm_type = SYS_LOG;
+	}else if (comm_type == 0xf0){
+		g_current_comm_type = ESC_COMM;
 	}else find_comm = 0;
 	return find_comm;
 }
@@ -399,6 +401,11 @@ void execute (){
 		mode_sw_action();
 		g_dest_state = NO_WHERE;
 	}
+
+	if (g_current_comm_type == ESC_COMM){
+		demo_done = true;
+		g_current_comm_type = NO_COMM;
+	}
 	
 }
 
@@ -452,6 +459,10 @@ int main(void)
 			printf("QR: Entered PANIC MODE.");
 			nrf_delay_ms(3000);
 			g_current_state = SAFE_ST;
+			ae[0] = 0;
+			ae[1] = 0;
+			ae[2] = 0;
+			ae[3] = 0;
 		}
 	}	
 

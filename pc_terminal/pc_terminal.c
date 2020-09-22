@@ -40,6 +40,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <inttypes.h>
+#include <stdbool.h>
 
 /*------------------------------------------------------------
  * console I/O
@@ -213,6 +214,7 @@ enum STATE {
 	};
 enum STATE g_current_state = SAFE_ST;
 enum STATE g_dest_state = NO_WHERE;
+bool ESC = false;
 
 uint32_t append_current_mode(uint32_t messg){
 
@@ -242,6 +244,10 @@ uint32_t append_current_mode(uint32_t messg){
 
 
 void mode_sw_action(){
+	if (ESC) {
+		g_current_state = SAFE_ST;
+		return;
+	}
 	if (g_current_state == SAFE_ST){
 		if (g_dest_state == PANIC_ST) {
 			printf("TER: Can not switch to PANIC MODE while in SAFE MODE!\n");
@@ -313,17 +319,18 @@ uint32_t messg_encode(int c){
 			break;
 
 		case 27: // keyboard 'ESC' pressed, dorne switches to PANIC_ST
-			messg = 0b00000000100000000001000001010101;
+			messg = 0b00000000000000001111000001010101;
 			messg = append_current_mode(messg); 
-			g_dest_state = PANIC_ST;
+			ESC = true;
 			mode_sw_action();
-			g_dest_state = NO_WHERE;
 			break;
 
 		case 48: // keyboard '0' pressed, dorne switches to SAFE_ST
 			messg = 0b00000000000000000001000001010101;
 			messg = append_current_mode(messg); 
 			g_dest_state = SAFE_ST;
+			mode_sw_action();
+			g_dest_state = NO_WHERE;
 			break;
 
 		case 49: // keyboard '1' pressed, dorne switches to PANIC_ST
@@ -374,7 +381,7 @@ int main(int argc, char **argv)
 
 	/* send & receive
 	 */
-	for (;;)
+	while(true)
 	{
 		if ((c = term_getchar_nb()) != -1){
 
@@ -382,7 +389,9 @@ int main(int argc, char **argv)
 			if (c == '\033') { // if the first value is esc
 			    term_getchar_nb(); // skip the [
 			    c = term_getchar_nb();
-			    if (c!='A' && c!='B' && c!='C' && c!='D') rs232_putchar(messg_encode(27));
+			    if (c!='A' && c!='B' && c!='C' && c!='D') {
+			    	rs232_putchar(messg_encode(27));
+				}		 
 			}
 			if (g_current_state == PANIC_ST){
 				//delay_ms(300);
