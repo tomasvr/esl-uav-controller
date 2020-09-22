@@ -78,7 +78,7 @@ int main(void)
 
 	uint32_t counter = 0;
 	demo_done = false;
-
+/*
 	uint8_t flash_counter = 0;
 	uint8_t address_init = 0x000000;
 	uint8_t address_counter = 0;
@@ -86,7 +86,12 @@ int main(void)
 	uint8_t phi_restore_counter = 0;
 	uint8_t flash_restore_counter = 0;
 	uint16_t phi_restore[10] = {0};
-    
+*/
+	uint8_t address_init = 0x000000;
+	int8_t pressure_store[40] = {0};
+	int32_t pressure_restore[10] = {0};
+	uint8_t pressure_counter = 0;
+	uint8_t pressure_restore_counter = 0;    
     flash_chip_erase();
 
 	while (!demo_done)
@@ -108,7 +113,7 @@ int main(void)
 			printf("%6d %6d %6d | ", sp, sq, sr);
 			printf("%4d | %4ld | %6ld ", bat_volt, temperature, pressure);
 
-
+/*
 			phi_store[flash_counter] = phi >> 8;
 			phi_store[flash_counter+1] = phi & 0xFF;
 			flash_counter = flash_counter + 2;
@@ -116,19 +121,36 @@ int main(void)
 			
 			if(flash_write_bytes(address_init + address_counter, &phi_store[address_counter], 2))
 			printf("Write successfully!");
-
-			//if(flash_read_status(&phi_store[address_counter]) & flash_read_status(&phi_store[address_counter+1]))
 			
 			if(flash_read_bytes(address_init + address_counter, &phi_store[address_counter], 2))
 			printf("Read successfully!");
-			
+		
 			address_counter = address_counter + 2;
-
 
 			phi_restore[phi_restore_counter] = phi_store[flash_restore_counter] << 8 | phi_store[flash_restore_counter + 1];
 			printf("| %6d\n", phi_restore[phi_restore_counter]);
 			phi_restore_counter++;
 			flash_restore_counter = flash_restore_counter + 2;
+*/
+
+			pressure_store[pressure_counter] = (pressure >> 24);
+			pressure_store[pressure_counter+1] = (pressure >> 16);
+			pressure_store[pressure_counter+2] = (pressure >> 8);
+			pressure_store[pressure_counter+3] = pressure;
+			//pressure_counter = pressure_counter + 4;
+
+			if(flash_write_bytes(address_init + pressure_counter, &pressure_store[pressure_counter], 4))
+			printf("Write successfully!");
+
+			if(flash_read_bytes(address_init + pressure_counter, &pressure_store[pressure_counter], 4))
+			printf("Read successfully!");
+
+			pressure_restore[pressure_restore_counter] = (pressure_store[pressure_counter] << 24) | (pressure_store[pressure_counter+1] << 16) 
+			| (pressure_store[pressure_counter+2] << 8) | (pressure_store[pressure_counter+3]);
+			printf("| %6ld\n", pressure_restore[pressure_restore_counter]);
+			
+			pressure_restore_counter++;
+			pressure_counter = pressure_counter + 4;
 
 
 			clear_timer_flag();
