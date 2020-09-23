@@ -63,3 +63,15 @@ enum COMM_TYPE find_comm_type (uint8_t comm_type){
 	}else current_comm_type = NO_COMM;
 	return current_comm_type;
 }
+
+enum STATE find_dest_state(uint8_t messg){
+	enum STATE dest_state = NO_WHERE;
+	if (messg == 0x00) dest_state = SAFE_ST;
+	else if (messg == 0x80) dest_state = PANIC_ST;
+	else if (messg == 0x10) dest_state = MANUAL_ST;
+	else if (messg == 0x20) dest_state = CALIBRATION_ST;
+	else if (messg == 0x30) dest_state = YAWCONTROL_ST;
+	else if (messg == 0x40) dest_state = FULLCONTROL_ST;
+	else dest_state = NO_WHERE;
+	return dest_state;
+}

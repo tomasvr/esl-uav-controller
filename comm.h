@@ -65,4 +65,6 @@ int check_mode_sync (uint8_t state, enum STATE g_current_state);
 
 enum COMM_TYPE find_comm_type (uint8_t comm_type);
 
+enum STATE find_dest_state(uint8_t messg);
+
 #endif 

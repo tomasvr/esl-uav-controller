@@ -48,53 +48,6 @@
 // each packet includes 4 fragments
 int FRAG_COUNT = 0;
 
-// the states that our QR has
-// enum STATE {
-// 		SAFE_ST, 
-// 		PANIC_ST,
-// 		MANUAL_ST,
-// 		CALIBRATION_ST,
-// 		YAWCONTROL_ST,
-// 		FULLCONTROL_ST,
-// 		NO_WHERE
-// 	};
-
-// // the command types during communication
-// enum COMM_TYPE {
-// 		CTRL_COMM,
-// 		MODE_SW_COMM,
-// 		BAT_INFO,
-// 		SYS_LOG,
-// 		ESC_COMM,
-// 		NO_COMM
-// 	};
-
-// // the stats that motor 0 has
-// enum M0_CRTL{
-// 		M0_UP,
-// 		M0_REMAIN,
-// 		M0_DOWN
-// 	};
-// // the states that motor 1 has
-// enum M1_CRTL{		
-// 		M1_UP,
-// 		M1_REMAIN,
-// 		M1_DOWN,
-// 	};
-// // the states that motor 2 has
-// enum M2_CRTL{	
-// 		M2_UP,
-// 		M2_REMAIN,
-// 		M2_DOWN,
-// 	};
-// // the states that motor 3 has
-// enum M3_CRTL{
-// 		M3_UP,
-// 		M3_REMAIN,
-// 		M3_DOWN
-// 	};
-
-
 enum STATE g_current_state = SAFE_ST;
 enum STATE g_dest_state = NO_WHERE;
 enum COMM_TYPE g_current_comm_type = NO_COMM;
@@ -102,64 +55,6 @@ enum M0_CRTL g_current_m0_state = M0_REMAIN;
 enum M1_CRTL g_current_m1_state = M1_REMAIN;
 enum M2_CRTL g_current_m2_state = M2_REMAIN;
 enum M3_CRTL g_current_m3_state = M3_REMAIN;
-
-/*------------------------------------------------------------------
- * to decided if the command can be execute or not in the current mode
- *------------------------------------------------------------------
- */
-// bool command_allowed (void){
-// 	bool res = false;
-// 	if (g_current_state != PANIC_ST)
-// 		res = true;
-// 	return res;
-// }
-
-// int check_mode_sync (uint8_t state){
-// 	int mode_synced = 0; 
-
-// 	if (state == 0x00){					// 0000 -> SAFE_ST
-// 		enum STATE tstate = SAFE_ST;
-// 		if (g_current_state == tstate) mode_synced = 1;
-// 	}
-// 	if (state == 0x01){					// 0001 -> MANUAL_ST
-// 		enum STATE tstate = MANUAL_ST;
-// 		if (g_current_state == tstate) mode_synced = 1;
-// 	}
-// 	if (state == 0x02){					// 0010 -> CALIBRATION_ST
-// 		enum STATE tstate = CALIBRATION_ST;
-// 		if (g_current_state == tstate) mode_synced = 1;
-// 	}
-// 	if (state == 0x03){					// 0011 -> YAWCONTROL_ST
-// 		enum STATE tstate = YAWCONTROL_ST;
-// 		if (g_current_state == tstate) mode_synced = 1;
-// 	}
-// 	if (state == 0x04){					// 0100 -> FULLCONTROL_ST
-// 		enum STATE tstate = FULLCONTROL_ST;
-// 		if (g_current_state == tstate) mode_synced = 1;
-// 	}
-// 	if (state == 0x08){					// 0000 -> SAFE_ST
-// 		enum STATE tstate = PANIC_ST;
-// 		if (g_current_state == tstate) mode_synced = 1;
-// 	}
-	
-// 	return mode_synced;
-// }
-
-// int find_comm_type (uint8_t comm_type){
-// 	int find_comm = 1;
-// 	if (comm_type == 0x00) {			// 0000 -> CTRL_COMM
-// 		g_current_comm_type = CTRL_COMM;	
-// 	}else if(comm_type == 0x10){		// 0001 -> MODE_SW_COMM
-// 		g_current_comm_type = MODE_SW_COMM;
-// 	}else if(comm_type == 0x80){		// 1000 -> BAT_INFO
-// 		g_current_comm_type = BAT_INFO;
-// 	}else if(comm_type == 0x90){		// 1001 -> SYS_LOG
-// 		g_current_comm_type = SYS_LOG;
-// 	}else if (comm_type == 0xf0){
-// 		g_current_comm_type = ESC_COMM;
-// 	}else find_comm = 0;
-// 	return find_comm;
-// }
 
 int find_motor_state(uint8_t messg){
 	uint8_t m_ctrl_1 = messg & 0xf0; 		
@@ -190,18 +85,6 @@ int find_motor_state(uint8_t messg){
 		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m3_state = M3_REMAIN;
 		result = 1;
 	} 
-	return result;
-}
-
-int find_dest_state(uint8_t messg){
-	int result = 1;
-	if (messg == 0x00) g_dest_state = SAFE_ST;
-	else if (messg == 0x80) g_dest_state = PANIC_ST;
-	else if (messg == 0x10) g_dest_state = MANUAL_ST;
-	else if (messg == 0x20) g_dest_state = CALIBRATION_ST;
-	else if (messg == 0x30) g_dest_state = YAWCONTROL_ST;
-	else if (messg == 0x40) g_dest_state = FULLCONTROL_ST;
-	else result = 0;
 	return result;
 }
 
@@ -272,9 +155,7 @@ void messg_decode(uint8_t messg){
 		 *--------------------------------------------------------------
 		 */
 	 	if (g_current_comm_type == MODE_SW_COMM && FRAG_COUNT == 2){
-	 		int result;
-	 		result = find_dest_state(messg);
-	 		assert(result == 1 && "QR: Fail to find the destination mode.");
+	 		g_dest_state = find_dest_state(messg);
 	 	}
 
 	}
@@ -314,7 +195,6 @@ void ctrl_action(){
 		default:
 			break;
 	}
-
 	switch (g_current_m1_state){			//M1
 		case M1_UP:
 			ae[1] += 10;
@@ -341,7 +221,6 @@ void ctrl_action(){
 		default:
 			break;
 	}
-
 	switch (g_current_m3_state){			//M3
 		case M3_UP:
 			ae[3] += 10;
@@ -408,9 +287,7 @@ void execute (){
 		demo_done = true;
 		g_current_comm_type = NO_COMM;
 	}
-	
 }
-
 
 /*------------------------------------------------------------------
  * main -- everything you need is here :)
