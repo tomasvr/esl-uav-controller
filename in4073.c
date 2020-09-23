@@ -49,50 +49,50 @@
 int FRAG_COUNT = 0;
 
 // the states that our QR has
-enum STATE {
-		SAFE_ST, 
-		PANIC_ST,
-		MANUAL_ST,
-		CALIBRATION_ST,
-		YAWCONTROL_ST,
-		FULLCONTROL_ST,
-		NO_WHERE
-	};
+// enum STATE {
+// 		SAFE_ST, 
+// 		PANIC_ST,
+// 		MANUAL_ST,
+// 		CALIBRATION_ST,
+// 		YAWCONTROL_ST,
+// 		FULLCONTROL_ST,
+// 		NO_WHERE
+// 	};
 
-// the command types during communication
-enum COMM_TYPE {
-		CTRL_COMM,
-		MODE_SW_COMM,
-		BAT_INFO,
-		SYS_LOG,
-		ESC_COMM,
-		NO_COMM
-	};
+// // the command types during communication
+// enum COMM_TYPE {
+// 		CTRL_COMM,
+// 		MODE_SW_COMM,
+// 		BAT_INFO,
+// 		SYS_LOG,
+// 		ESC_COMM,
+// 		NO_COMM
+// 	};
 
-// the stats that motor 0 has
-enum M0_CRTL{
-		M0_UP,
-		M0_REMAIN,
-		M0_DOWN
-	};
-// the states that motor 1 has
-enum M1_CRTL{		
-		M1_UP,
-		M1_REMAIN,
-		M1_DOWN,
-	};
-// the states that motor 2 has
-enum M2_CRTL{	
-		M2_UP,
-		M2_REMAIN,
-		M2_DOWN,
-	};
-// the states that motor 3 has
-enum M3_CRTL{
-		M3_UP,
-		M3_REMAIN,
-		M3_DOWN
-	};
+// // the stats that motor 0 has
+// enum M0_CRTL{
+// 		M0_UP,
+// 		M0_REMAIN,
+// 		M0_DOWN
+// 	};
+// // the states that motor 1 has
+// enum M1_CRTL{		
+// 		M1_UP,
+// 		M1_REMAIN,
+// 		M1_DOWN,
+// 	};
+// // the states that motor 2 has
+// enum M2_CRTL{	
+// 		M2_UP,
+// 		M2_REMAIN,
+// 		M2_DOWN,
+// 	};
+// // the states that motor 3 has
+// enum M3_CRTL{
+// 		M3_UP,
+// 		M3_REMAIN,
+// 		M3_DOWN
+// 	};
 
 
 enum STATE g_current_state = SAFE_ST;
@@ -107,59 +107,59 @@ enum M3_CRTL g_current_m3_state = M3_REMAIN;
  * to decided if the command can be execute or not in the current mode
  *------------------------------------------------------------------
  */
-bool command_allowed (void){
-	bool res = false;
-	if (g_current_state != PANIC_ST)
-		res = true;
-	return res;
-}
+// bool command_allowed (void){
+// 	bool res = false;
+// 	if (g_current_state != PANIC_ST)
+// 		res = true;
+// 	return res;
+// }
 
-int check_mode_sync (uint8_t state){
-	int mode_synced = 0; 
+// int check_mode_sync (uint8_t state){
+// 	int mode_synced = 0; 
 
-	if (state == 0x00){					// 0000 -> SAFE_ST
-		enum STATE tstate = SAFE_ST;
-		if (g_current_state == tstate) mode_synced = 1;
-	}
-	if (state == 0x01){					// 0001 -> MANUAL_ST
-		enum STATE tstate = MANUAL_ST;
-		if (g_current_state == tstate) mode_synced = 1;
-	}
-	if (state == 0x02){					// 0010 -> CALIBRATION_ST
-		enum STATE tstate = CALIBRATION_ST;
-		if (g_current_state == tstate) mode_synced = 1;
-	}
-	if (state == 0x03){					// 0011 -> YAWCONTROL_ST
-		enum STATE tstate = YAWCONTROL_ST;
-		if (g_current_state == tstate) mode_synced = 1;
-	}
-	if (state == 0x04){					// 0100 -> FULLCONTROL_ST
-		enum STATE tstate = FULLCONTROL_ST;
-		if (g_current_state == tstate) mode_synced = 1;
-	}
-	if (state == 0x08){					// 0000 -> SAFE_ST
-		enum STATE tstate = PANIC_ST;
-		if (g_current_state == tstate) mode_synced = 1;
-	}
+// 	if (state == 0x00){					// 0000 -> SAFE_ST
+// 		enum STATE tstate = SAFE_ST;
+// 		if (g_current_state == tstate) mode_synced = 1;
+// 	}
+// 	if (state == 0x01){					// 0001 -> MANUAL_ST
+// 		enum STATE tstate = MANUAL_ST;
+// 		if (g_current_state == tstate) mode_synced = 1;
+// 	}
+// 	if (state == 0x02){					// 0010 -> CALIBRATION_ST
+// 		enum STATE tstate = CALIBRATION_ST;
+// 		if (g_current_state == tstate) mode_synced = 1;
+// 	}
+// 	if (state == 0x03){					// 0011 -> YAWCONTROL_ST
+// 		enum STATE tstate = YAWCONTROL_ST;
+// 		if (g_current_state == tstate) mode_synced = 1;
+// 	}
+// 	if (state == 0x04){					// 0100 -> FULLCONTROL_ST
+// 		enum STATE tstate = FULLCONTROL_ST;
+// 		if (g_current_state == tstate) mode_synced = 1;
+// 	}
+// 	if (state == 0x08){					// 0000 -> SAFE_ST
+// 		enum STATE tstate = PANIC_ST;
+// 		if (g_current_state == tstate) mode_synced = 1;
+// 	}
 	
-	return mode_synced;
-}
+// 	return mode_synced;
+// }
 
-int find_comm_type (uint8_t comm_type){
-	int find_comm = 1;
-	if (comm_type == 0x00) {			// 0000 -> CTRL_COMM
-		g_current_comm_type = CTRL_COMM;	
-	}else if(comm_type == 0x10){		// 0001 -> MODE_SW_COMM
-		g_current_comm_type = MODE_SW_COMM;
-	}else if(comm_type == 0x80){		// 1000 -> BAT_INFO
-		g_current_comm_type = BAT_INFO;
-	}else if(comm_type == 0x90){		// 1001 -> SYS_LOG
-		g_current_comm_type = SYS_LOG;
-	}else if (comm_type == 0xf0){
-		g_current_comm_type = ESC_COMM;
-	}else find_comm = 0;
-	return find_comm;
-}
+// int find_comm_type (uint8_t comm_type){
+// 	int find_comm = 1;
+// 	if (comm_type == 0x00) {			// 0000 -> CTRL_COMM
+// 		g_current_comm_type = CTRL_COMM;	
+// 	}else if(comm_type == 0x10){		// 0001 -> MODE_SW_COMM
+// 		g_current_comm_type = MODE_SW_COMM;
+// 	}else if(comm_type == 0x80){		// 1000 -> BAT_INFO
+// 		g_current_comm_type = BAT_INFO;
+// 	}else if(comm_type == 0x90){		// 1001 -> SYS_LOG
+// 		g_current_comm_type = SYS_LOG;
+// 	}else if (comm_type == 0xf0){
+// 		g_current_comm_type = ESC_COMM;
+// 	}else find_comm = 0;
+// 	return find_comm;
+// }
 
 int find_motor_state(uint8_t messg){
 	uint8_t m_ctrl_1 = messg & 0xf0; 		
@@ -226,10 +226,10 @@ void messg_decode(uint8_t messg){
 		uint8_t comm_type = messg & 0xf0;
 		uint8_t state = messg & 0x0f;
 
-		int result = find_comm_type(comm_type);
-		assert(result == 1 && "QR: No such command found.");
+		g_current_comm_type = find_comm_type(comm_type);
+		//assert( == 1 && "QR: No such command found.");
 
-		result = check_mode_sync(state);
+		int result = check_mode_sync(state, g_current_state);
 		assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?????????????????
 	}
 
@@ -395,11 +395,13 @@ void execute (){
 	if (g_current_comm_type == CTRL_COMM){
 		ctrl_action();
 		reset_motor_state();
+		// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
 	}
 
 	if (g_current_comm_type == MODE_SW_COMM && g_dest_state != NO_WHERE){
 		mode_sw_action();
 		g_dest_state = NO_WHERE;
+		g_current_comm_type = NO_COMM;
 	}
 
 	if (g_current_comm_type == ESC_COMM){

@@ -41,7 +41,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <stdbool.h>
-
+ 
 /*------------------------------------------------------------
  * console I/O
  *------------------------------------------------------------
@@ -212,6 +212,7 @@ enum STATE {
 		FULLCONTROL_ST,
 		NO_WHERE
 	};
+
 enum STATE g_current_state = SAFE_ST;
 enum STATE g_dest_state = NO_WHERE;
 bool ESC = false;
@@ -393,12 +394,14 @@ int main(int argc, char **argv)
 			    	rs232_putchar(messg_encode(27));
 				}		 
 			}
+			// distinguish the arrows with ESC
+			rs232_putchar(messg_encode(c));
+			
 			if (g_current_state == PANIC_ST){
 				//delay_ms(300);
 				g_current_state = SAFE_ST;
 			}
-			// distinguish the arrows with ESC
-			rs232_putchar(messg_encode(c));
+			
 			//printf("Message sent!\n");
 		}
 
