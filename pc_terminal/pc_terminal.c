@@ -34,6 +34,21 @@
     PRINTF_BYTE_TO_BINARY_INT32((i) >> 32), PRINTF_BYTE_TO_BINARY_INT32(i)
 /* --- end macros --- */
 
+// js
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+
+#include "joystick.h"
+
+#define NAME_LENGTH 128
+
 
 #include <stdio.h>
 #include <termios.h>
@@ -238,6 +253,8 @@ uint32_t append_current_mode(uint32_t messg){
 		case 5:
 			messg |= 0x00000400;
 			break;
+		default:
+			break;
 	}
 	//printf("TER: The packet to send is: "PRINTF_BINARY_PATTERN_INT32 "\n",PRINTF_BYTE_TO_BINARY_INT32(messg)); // 0000 0000 1000 0000 0001 0010 0101 0101
 	return messg;
@@ -319,7 +336,7 @@ uint32_t messg_encode(int c){
 			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 			break;
 
-		case 27: // keyboard 'ESC' pressed, dorne switches to PANIC_ST
+		case 27: // keyboard 'ESC' pressed, drone switches to PANIC_ST
 			messg = 0b00000000000000001111000001010101;
 			messg = append_current_mode(messg); 
 			ESC = true;
@@ -359,6 +376,113 @@ uint32_t messg_encode(int c){
 
 }
 
+/**
+ * @brief		encode js cmds & send to drone
+ *
+ * @author     	Zehang Wu
+ *
+ * @param      	axes:
+ *				buttons:
+ *				axis: reading values of js
+ *				button: reading values of js buttons
+ *
+ * @return     	0 if no error,
+ * 				-1 if there is error
+ */
+uint32_t messg_encode_send_js(unsigned char axes, unsigned char buttons, int *axis, char *button){
+	int i;
+	uint32_t messg;
+	if (axes) {
+		printf("Axes: ");
+		for (i = 0; i < axes; i++){
+			printf("%2d:%6d ", i, axis[i]);
+			if(i==0 && axis[i]!=0){
+				// roll
+				if(axis[i]<0){
+					// roll counterclockwise(?)
+					messg = 0b10001111000001100000000101010101; // keyboard '->' pressed, drone roll down, this command has a default mode -> MANUAL_ST
+					if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+
+				}
+				else if(axis[i]>0){
+					// roll clockwise(?)
+					messg = 0b10001110000001110000000101010101; // keyboard '<-' pressed, drone roll up, this command has a default mode -> MANUAL_ST
+					if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+
+				}
+			}
+			else if(i==1 && axis[i]!=0){
+				// pitch
+				if(axis[i]<0){
+					// pitch up(?)
+					messg = 0b10101100001101000000000101010101; // keyboard '↓' pressed, drone pitch up, this command has a default mode -> MANUAL_ST
+					if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+
+				}
+				else if(axis[i]>0){
+					// pitch down(?)
+					messg = 0b10111100001001000000000101010101; // keyboard '↑' pressed, drone pitch down, this command has a default mode -> MANUAL_ST
+					if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+
+				}
+
+			}
+			else if(i==2 && axis[i]!=0){
+				// yaw
+				if(axis[i]<0){
+					// yaw counterclockwise(?)
+					messg = 0b10101111001001110000000101010101; // keyboard 'q' pressed, drone yaw down(left), this command has a default mode -> MANUAL_ST
+					if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+
+				}
+				else if(axis[i]>0){
+					// yaw clockwise(?)
+					messg = 0b10111110001101100000000101010101; // keyboard 'w' pressed, drone yaw up(right), this command has a default mode -> MANUAL_ST
+					if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+				}
+
+			}
+			else if(i==3 && axis[i]!=0){
+				// lift
+				if(axis[i]<0){
+					// lift down(?)
+					messg = 0b10101110001001100000000101010101; // keyboard 'z' pressed, drone lift down, this command has a default mode -> MANUAL_ST
+					if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+				}
+				else if(axis[i]>0){
+					// lift up(?)
+					messg = 0b10111111001101110000000101010101; // keyboard 'a' pressed, drone lift up, this command has a default mode -> MANUAL_ST
+					if (g_current_state != SAFE_ST) messg = append_current_mode(messg); 
+				}
+
+			}
+			// else if(i==4 && axis[i]!=0){
+			// 	// small button on js (left&right)
+			// }
+			// else if(i==5 && axis[i]!=0){
+			// 	// small button on js (forward&backward)
+			// }
+			rs232_putchar(messg);
+		}
+	}
+
+	if (buttons) {
+		printf("Buttons: ");
+		for (i = 0; i < buttons; i++){
+			printf("%2d:%s ", i, button[i] ? "on " : "off");
+			if(i==0 && button[i]){
+				// js fire button pressed
+				messg = 0b00000000000000001111000001010101;
+				messg = append_current_mode(messg); 
+				ESC = true;
+				mode_sw_action();
+				rs232_putchar(messg);
+			}
+		}
+	}
+	return 0;
+}
+
 /*----------------------------------------------------------------
  * main -- execute terminal
  *----------------------------------------------------------------
@@ -374,46 +498,120 @@ int main(int argc, char **argv)
 	rs232_open();
 
 	term_puts("TER: Type ^C to exit\n");
+
+	// js: variable declaration
+	int fd;
+	unsigned char axes = 2;
+	unsigned char buttons = 2;
+	int version = 0x000800; // why 6 digits?
+	char name[NAME_LENGTH] = "Unknown";
+
+	// js: check input arguments & i/o control
+	if (argc < 2 || argc > 3 || !strcmp("--help", argv[1])) {
+		puts("");
+		puts("Usage: ./my_js [<mode>] <device>");
+		puts("");
+		puts("Modes:");
+		puts("  --normal           One-line mode showing immediate status");
+		// puts("  --old              Same as --normal, using 0.x interface");
+		// puts("  --event            Prints events as they come in");
+		// puts("  --nonblock         Same as --event, in nonblocking mode");
+		// puts("  --select           Same as --event, using select() call");
+		puts("");
+		exit(1);
+	}
+	if ((fd = open(argv[argc - 1], O_RDONLY)) < 0) { // 'open', 'openat', 'creat': open and possibly create a file(file descriptor)
+		perror("my_js");
+		exit(1);
+	}
+	ioctl(fd, JSIOCGVERSION, &version); // 'ioctl': control device
+	ioctl(fd, JSIOCGAXES, &axes);
+	ioctl(fd, JSIOCGBUTTONS, &buttons);
+	ioctl(fd, JSIOCGNAME(NAME_LENGTH), name);
+	printf("Joystick (%s) has %d axes and %d buttons. Driver version is %d.%d.%d.\n",
+		name, axes, buttons, version >> 16, (version >> 8) & 0xff, version & 0xff);
+	printf("Testing ... (interrupt to exit)\n");
+
 	
 	/* discard any incoming text
 	 */
 	while ((c = rs232_getchar_nb()) != -1)
 		fputc(c,stderr);
 
+	// js: enter normal mode
+	if (argc == 2 || !strcmp("--normal", argv[1])) {
+
+		// js: variables declaration
+		int *axis;
+		char *button;
+		struct js_event js;
+
+		axis = calloc(axes, sizeof(int));
+		button = calloc(buttons, sizeof(char));
+
 	/* send & receive
 	 */
-	while(true)
-	{
-		if ((c = term_getchar_nb()) != -1){
+		while(true)
+		{ 
+			/*
+			 *	comm: pc -> drone
+			 *
+			 */
+			if ((c = term_getchar_nb()) != -1){
 
-			// distinguish the characters and arrows
-			if (c == '\033') { // if the first value is esc
-			    term_getchar_nb(); // skip the [
-			    c = term_getchar_nb();
-			    if (c!='A' && c!='B' && c!='C' && c!='D') {
-			    	rs232_putchar(messg_encode(27));
-				}		 
+				// distinguish the characters and arrows
+				if (c == '\033') { // if the first value is esc
+				    term_getchar_nb(); // skip the [
+				    c = term_getchar_nb();
+				    if (c!='A' && c!='B' && c!='C' && c!='D') {
+				    	rs232_putchar(messg_encode(27));
+					}		 
+				}
+				// distinguish the arrows with ESC
+				rs232_putchar(messg_encode(c));
+				
+				if (g_current_state == PANIC_ST){
+					//delay_ms(300);
+					g_current_state = SAFE_ST;
+				}
+				
+				//printf("Message sent!\n");
 			}
-			// distinguish the arrows with ESC
-			rs232_putchar(messg_encode(c));
-			
-			if (g_current_state == PANIC_ST){
-				//delay_ms(300);
-				g_current_state = SAFE_ST;
+			if ((c = rs232_getchar_nb()) != -1)
+				term_putchar(c);
+
+			/*
+			 *	comm: js -> pc
+			 *
+			 */
+			if (read(fd, &js, sizeof(struct js_event)) != sizeof(struct js_event)) {
+				perror("\nmy_js: error reading");
+				exit (1);
 			}
-			
-			//printf("Message sent!\n");
+
+			switch(js.type & ~JS_EVENT_INIT) {
+				case JS_EVENT_BUTTON:
+					button[js.number] = js.value;
+					break;
+				case JS_EVENT_AXIS:
+					axis[js.number] = js.value;
+					break;
+			}
+
+			printf("\r"); // '\r': carriage Return
+
+			//js: 
+			messg_encode_send_js(axes, buttons, axis, button);
+			fflush(stdout);
 		}
-
-		if ((c = rs232_getchar_nb()) != -1)
-			term_putchar(c);
-
 	}
 
 	term_exitio();
 	rs232_close();
 	term_puts("\n<exit>\n");
 
-	return 0;
+	// js: unknown mode
+	printf("my_js: unknown mode: %s\n", argv[1]);
+	return -1;
 }
 
