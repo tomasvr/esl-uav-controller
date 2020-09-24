@@ -40,7 +40,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <inttypes.h>
-
+#include <stdbool.h>
+ 
 /*------------------------------------------------------------
  * console I/O
  *------------------------------------------------------------
@@ -201,58 +202,152 @@ int 	rs232_putchar(int c) 			// change char to uint32_t
 	return result;
 }
 
+// the states that our QR has
+enum STATE {
+		SAFE_ST, 
+		PANIC_ST,
+		MANUAL_ST,
+		CALIBRATION_ST,
+		YAWCONTROL_ST,
+		FULLCONTROL_ST,
+		NO_WHERE
+	};
+
+enum STATE g_current_state = SAFE_ST;
+enum STATE g_dest_state = NO_WHERE;
+bool ESC = false;
+
+uint32_t append_current_mode(uint32_t messg){
+
+	switch(g_current_state){
+		case 0:
+			messg |= 0x00000000;
+			break;
+		case 1:
+			messg |= 0x00000800;
+			break;
+		case 2:
+			messg |= 0x00000100;
+			break;
+		case 3:
+			messg |= 0x00000200;
+			break;
+		case 4:
+			messg |= 0x00000300;
+			break;
+		case 5:
+			messg |= 0x00000400;
+			break;
+	}
+	//printf("TER: The packet to send is: "PRINTF_BINARY_PATTERN_INT32 "\n",PRINTF_BYTE_TO_BINARY_INT32(messg)); // 0000 0000 1000 0000 0001 0010 0101 0101
+	return messg;
+}
+
+
+void mode_sw_action(){
+	if (ESC) {
+		g_current_state = SAFE_ST;
+		return;
+	}
+	if (g_current_state == SAFE_ST){
+		if (g_dest_state == PANIC_ST) {
+			printf("TER: Can not switch to PANIC MODE while in SAFE MODE!\n");
+			return;
+		}
+		g_current_state = g_dest_state;
+		return;
+	} 
+	if (g_current_state == PANIC_ST){
+		if (g_dest_state != SAFE_ST){
+			printf("TER: an not switch to other modes else than SAFE MODE while in PANIC MODE.\n");
+			return;
+		}
+		return;
+	}
+	if (g_current_state != SAFE_ST && g_current_state != PANIC_ST){
+		if (g_dest_state == PANIC_ST || g_dest_state == g_current_state){
+			g_current_state = g_dest_state;
+			return;
+		}else{
+			printf("TER: Can not directly switch to other modes else than PANIC MODE in the current mode.\n");
+			return;
+		}
+	}
+}
 
 uint32_t messg_encode(int c){
 	uint32_t messg;
 	switch(c){
 		
 		case 'a':
-			//messg = 'u'; // keyboard 'a' pressed, drone lift up
-			messg = 0b10111111001101110000000101010101; // test messg to see how many bit we can send
-			printf("The packet to send is: "PRINTF_BINARY_PATTERN_INT32 "\n",PRINTF_BYTE_TO_BINARY_INT32(messg));
+			// keyboard 'a' pressed, drone lift up
+			messg = 0b10111111001101110000000101010101; // keyboard 'a' pressed, drone lift up, this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) messg = append_current_mode(messg); 
 			break;
 
 		case 'z':
-			messg = 'd'; // keyboard 'z' pressed, drone lift down
+			messg = 0b10101110001001100000000101010101; // keyboard 'z' pressed, drone lift down, this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 			break;
 
 		case 'A':
-			messg = 'A'; // keyboard '↑' pressed, drone pitch down
+			messg = 0b10111100001001000000000101010101; // keyboard '↑' pressed, drone pitch down, this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 			break;
 
 		case 'B':
-			messg = 'B'; // keyboard '↓' pressed, drone pitch up
+			messg = 0b10101100001101000000000101010101; // keyboard '↓' pressed, drone pitch up, this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 			break;
 
 		case 'C':
-			messg = 'C'; // keyboard '->' pressed, drone roll down
+			messg = 0b10001111000001100000000101010101; // keyboard '->' pressed, drone roll down, this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 			break;
 
 		case 'D':
-			messg = 'D'; // keyboard '<-' pressed, drone roll up
+			messg = 0b10001110000001110000000101010101; // keyboard '<-' pressed, drone roll up, this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 			break;
 
 		case 'q':
-			messg = 'q'; // keyboard 'q' pressed, drone yaw down(left)
+			messg = 0b10101111001001110000000101010101; // keyboard 'q' pressed, drone yaw down(left), this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 			break;
 		case 'w':
-			messg = 'w'; // keyboard 'w' pressed, drone yaw up(right)
+			messg = 0b10111110001101100000000101010101; // keyboard 'w' pressed, drone yaw up(right), this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 			break;
 
-		case 27:
-			messg = 27;
+		case 27: // keyboard 'ESC' pressed, dorne switches to PANIC_ST
+			messg = 0b00000000000000001111000001010101;
+			messg = append_current_mode(messg); 
+			ESC = true;
+			mode_sw_action();
 			break;
 
-		case 48:
-			messg = 48;
+		case 48: // keyboard '0' pressed, dorne switches to SAFE_ST
+			messg = 0b00000000000000000001000001010101;
+			messg = append_current_mode(messg); 
+			g_dest_state = SAFE_ST;
+			mode_sw_action();
+			g_dest_state = NO_WHERE;
 			break;
 
-		case 49:
-			messg = 49;
+		case 49: // keyboard '1' pressed, dorne switches to PANIC_ST
+			messg = 0b00000000100000000001000001010101;
+			messg = append_current_mode(messg); 
+			g_dest_state = PANIC_ST;
+			mode_sw_action();
+			g_dest_state = NO_WHERE;
 			break;
 
-		case 50:
-			messg = 50;
+		case 50: // keyboard '2' pressed dorne switches to MANUAL_ST
+			messg = 0b00000000000100000001000001010101;
+			messg = append_current_mode(messg); 
+			g_dest_state = MANUAL_ST;
+			mode_sw_action();
+			g_dest_state = NO_WHERE;
 			break;
 
 		default:
@@ -278,7 +373,7 @@ int main(int argc, char **argv)
 	term_initio();
 	rs232_open();
 
-	term_puts("Type ^C to exit\n");
+	term_puts("TER: Type ^C to exit\n");
 	
 	/* discard any incoming text
 	 */
@@ -287,7 +382,7 @@ int main(int argc, char **argv)
 
 	/* send & receive
 	 */
-	for (;;)
+	while(true)
 	{
 		if ((c = term_getchar_nb()) != -1){
 
@@ -295,11 +390,18 @@ int main(int argc, char **argv)
 			if (c == '\033') { // if the first value is esc
 			    term_getchar_nb(); // skip the [
 			    c = term_getchar_nb();
-			    if (c!='A' && c!='B' && c!='C' && c!='D') rs232_putchar(messg_encode(27));
+			    if (c!='A' && c!='B' && c!='C' && c!='D') {
+			    	rs232_putchar(messg_encode(27));
+				}		 
 			}
-
 			// distinguish the arrows with ESC
 			rs232_putchar(messg_encode(c));
+			
+			if (g_current_state == PANIC_ST){
+				//delay_ms(300);
+				g_current_state = SAFE_ST;
+			}
+			
 			//printf("Message sent!\n");
 		}
 

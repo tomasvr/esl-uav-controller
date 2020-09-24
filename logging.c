@@ -15,6 +15,6 @@
  *
  * @return     { description_of_the_return_value }
  */
-bool write_to_log(uint8_t data) {
-	return false;
-};
+// bool write_to_log(uint8_t data) {
+// 	return false;
+// };
