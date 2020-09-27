@@ -243,7 +243,7 @@ uint32_t append_current_mode(uint32_t messg){
 
 	switch(g_current_state){
 		case 0:
-			messg |= 0x00000000;
+			messg |= 0x00000000; // selected bits should be masked to 0 before '|='?
 			break;
 		case 1:
 			messg |= 0x00000800;
@@ -430,13 +430,13 @@ uint32_t messg_encode_send_js(int *axis, int *button){
 			// roll
 			if(axis[i]<-THRESHOLD_READ){
 				// roll counterclockwise
-				messg = 0b10001111000001100000000101010101; // keyboard '->' pressed, drone roll down, this command has a default mode -> MANUAL_ST
+				messg = 0b10001111000001100101001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 				rs232_putchar(messg);
 			}
 			else if(axis[i]>THRESHOLD_READ){
 				// roll clockwise
-				messg = 0b10001110000001110000000101010101; // keyboard '<-' pressed, drone roll up, this command has a default mode -> MANUAL_ST
+				messg = 0b10001110000001110101001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 				rs232_putchar(messg);
 			}
@@ -445,13 +445,13 @@ uint32_t messg_encode_send_js(int *axis, int *button){
 			// pitch
 			if(axis[i]<-THRESHOLD_READ){
 				// pitch up
-				messg = 0b10101100001101000000000101010101; // keyboard '↓' pressed, drone pitch up, this command has a default mode -> MANUAL_ST
+				messg = 0b10101100001101000101001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 				rs232_putchar(messg);
 			}
 			else if(axis[i]>THRESHOLD_READ){
 				// pitch down
-				messg = 0b10111100001001000000000101010101; // keyboard '↑' pressed, drone pitch down, this command has a default mode -> MANUAL_ST
+				messg = 0b10111100001001000101001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 				rs232_putchar(messg);
 			}
@@ -461,13 +461,13 @@ uint32_t messg_encode_send_js(int *axis, int *button){
 			// yaw
 			if(axis[i]<-THRESHOLD_READ){
 				// yaw counterclockwise
-				messg = 0b10101111001001110000000101010101; // keyboard 'q' pressed, drone yaw down(left), this command has a default mode -> MANUAL_ST
+				messg = 0b10101111001001110101001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 				rs232_putchar(messg);
 			}
 			else if(axis[i]>THRESHOLD_READ){
 				// yaw clockwise
-				messg = 0b10111110001101100000000101010101; // keyboard 'w' pressed, drone yaw up(right), this command has a default mode -> MANUAL_ST
+				messg = 0b10111110001101100101001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 				rs232_putchar(messg);
 			}
@@ -477,13 +477,13 @@ uint32_t messg_encode_send_js(int *axis, int *button){
 			// lift
 			if(axis[i]<-THRESHOLD_READ){
 				// lift up
-				messg = 0b10111111001101110000000101010101; // keyboard 'a' pressed, drone lift up, this command has a default mode -> MANUAL_ST
+				messg = 0b10111111001101110101001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg); 
 				rs232_putchar(messg);
 			}
 			else if(axis[i]>THRESHOLD_READ){
 				// lift down
-				messg = 0b10101110001001100000000101010101; // keyboard 'z' pressed, drone lift down, this command has a default mode -> MANUAL_ST
+				messg = 0b10101110001001100101001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 				rs232_putchar(messg);
 			}

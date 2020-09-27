@@ -27,7 +27,7 @@ enum COMM_TYPE {
 		BAT_INFO,
 		SYS_LOG,
 		ESC_COMM,
-		JS_COMM
+		JS_COMM, // '0101'
 		NO_COMM
 	};
 
