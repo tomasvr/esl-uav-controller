@@ -27,6 +27,7 @@ enum COMM_TYPE {
 		BAT_INFO,
 		SYS_LOG,
 		ESC_COMM,
+		JS_COMM
 		NO_COMM
 	};
 
@@ -34,25 +35,33 @@ enum COMM_TYPE {
 enum M0_CRTL{
 		M0_UP,
 		M0_REMAIN,
-		M0_DOWN
+		M0_DOWN,
+		M0_ASCENDING,
+		M0_DESCENDING
 	};
 // the states that motor 1 has
 enum M1_CRTL{		
 		M1_UP,
 		M1_REMAIN,
 		M1_DOWN,
+		M1_ASCENDING,
+		M1_DESCENDING
 	};
 // the states that motor 2 has
 enum M2_CRTL{	
 		M2_UP,
 		M2_REMAIN,
 		M2_DOWN,
+		M2_ASCENDING,
+		M2_DESCENDING
 	};
 // the states that motor 3 has
 enum M3_CRTL{
 		M3_UP,
 		M3_REMAIN,
-		M3_DOWN
+		M3_DOWN,
+		M3_ASCENDING,
+		M3_DESCENDING
 	};
 
 /**

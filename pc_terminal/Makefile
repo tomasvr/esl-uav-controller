@@ -1,7 +1,7 @@
 
 CC=gcc
 CFLAGS = -g -Wall -lm
-EXEC = ./pc-terminal --normal /dev/input/js0
+EXEC = ./pc-terminal 
 
 all:
 	$(CC) $(CFLAGS) pc_terminal.c -o $(EXEC)

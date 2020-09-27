@@ -41,6 +41,8 @@
 /* --- end macros --- */
 //printf("The value received is: "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(c));
 
+#define STEP_SIZE 1
+#define UPPER_LIMIT 330
 
 #include "in4073.h"
 #include <assert.h>
@@ -113,7 +115,7 @@ void messg_decode(uint8_t messg){
 		//assert( == 1 && "QR: No such command found.");
 
 		int result = check_mode_sync(state, g_current_state);
-		assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?????????????????
+		// assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?????????????????
 	}
 
 	/*--------------------------------------------------------------
@@ -166,8 +168,7 @@ void messg_decode(uint8_t messg){
  * process_key -- process command keys
  *------------------------------------------------------------------
  */
-void process_key(uint8_t c)
-{	
+void process_key(uint8_t c){	
 	if (c == 0x55 && FRAG_COUNT == 0 && g_current_state != PANIC_ST) {
 		FRAG_COUNT = 3;
 		return;
@@ -184,12 +185,13 @@ void process_key(uint8_t c)
 void ctrl_action(){
 	switch (g_current_m0_state){			//M0
 		case M0_UP:
-			ae[0] += 10;
+			ae[0] += STEP_SIZE;
+			if (ae[0] > 330) ae[0] = UPPER_LIMIT;
 			break;
 		case M0_REMAIN:
 			break;
 		case M0_DOWN:
-			ae[0] -= 10;
+			ae[0] -= STEP_SIZE;
 			if (ae[0] < 0) ae[0] = 0;
 			break;
 		default:
@@ -197,12 +199,13 @@ void ctrl_action(){
 	}
 	switch (g_current_m1_state){			//M1
 		case M1_UP:
-			ae[1] += 10;
+			ae[1] += STEP_SIZE;
+			if (ae[1] > 330) ae[1] = UPPER_LIMIT;
 			break;
 		case M1_REMAIN:
 			break;
 		case M1_DOWN:
-			ae[1] -= 10;
+			ae[1] -= STEP_SIZE;
 			if (ae[1] < 0) ae[1] = 0;
 			break;
 		default:
@@ -210,12 +213,13 @@ void ctrl_action(){
 	}
 	switch (g_current_m2_state){			//M2
 		case M2_UP:
-			ae[2] += 10;
+			ae[2] += STEP_SIZE;
+			if (ae[2] > 330) ae[2] = UPPER_LIMIT;
 			break;
 		case M2_REMAIN:
 			break;
 		case M2_DOWN:
-			ae[2] -= 10;
+			ae[2] -= STEP_SIZE;
 			if (ae[2] < 0) ae[2] = 0;
 			break;
 		default:
@@ -223,12 +227,13 @@ void ctrl_action(){
 	}
 	switch (g_current_m3_state){			//M3
 		case M3_UP:
-			ae[3] += 10;
+			ae[3] += STEP_SIZE;
+			if (ae[3] > 330) ae[3] = UPPER_LIMIT;
 			break;
 		case M3_REMAIN:
 			break;
 		case M3_DOWN:
-			ae[3] -= 10;
+			ae[3] -= STEP_SIZE;
 			if (ae[3] < 0) ae[3] = 0;
 			break;
 		default:
@@ -242,7 +247,9 @@ void mode_sw_action(){
 			printf("QR: Can not switch to PANIC MODE while in SAFE MODE!\n");
 			return;
 		}
-		g_current_state = g_dest_state;
+		else{ // fix 1 bug?
+			g_current_state = g_dest_state;
+		}
 		return;
 	} 
 	if (g_current_state == PANIC_ST){
