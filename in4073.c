@@ -41,8 +41,6 @@
 /* --- end macros --- */
 //printf("The value received is: "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(c));
 
-#define STEP_SIZE 10
-#define UPPER_LIMIT 1000
 
 #include "in4073.h"
 #include <assert.h>
@@ -50,13 +48,18 @@
 // each packet includes 4 fragments
 int FRAG_COUNT = 0;
 
+// State variables initalization
 STATE_t g_current_state = SAFE_ST;
 STATE_t g_dest_state = NO_WHERE;
+
+// Communication variables initalization
 enum COMM_TYPE g_current_comm_type = NO_COMM;
-enum M0_CRTL g_current_m0_state = M0_REMAIN;
-enum M1_CRTL g_current_m1_state = M1_REMAIN;
-enum M2_CRTL g_current_m2_state = M2_REMAIN;
-enum M3_CRTL g_current_m3_state = M3_REMAIN;
+
+// Motor variables initalization
+MOTOR_CTRL g_current_m0_state = MOTOR_REMAIN;
+MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
+MOTOR_CTRL g_current_m2_state = MOTOR_REMAIN;
+MOTOR_CTRL g_current_m3_state = MOTOR_REMAIN;
 
 int find_motor_state(uint8_t messg){
 	uint8_t m_ctrl_1 = messg & 0xf0; 		
@@ -64,27 +67,27 @@ int find_motor_state(uint8_t messg){
 	int result = 0;
 	// find motor state of motor 0 
 	if (m_ctrl_1>>6 == 0) {				// 0000 -> M0
-		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) g_current_m0_state = M0_UP;
-		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) g_current_m0_state = M0_DOWN;
-		if (((m_ctrl_1 >> 5)&1) == 0) g_current_m0_state = M0_REMAIN;
+		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) g_current_m0_state = MOTOR_UP;
+		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) g_current_m0_state = MOTOR_DOWN;
+		if (((m_ctrl_1 >> 5)&1) == 0) g_current_m0_state = MOTOR_REMAIN;
 		result = 1;
 	}
 	if (m_ctrl_1>>6 == 2) {				// 0010 -> M2
-		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) g_current_m2_state = M2_UP;
-		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) g_current_m2_state = M2_DOWN;
-		if (((m_ctrl_1 >> 5)&1) == 0) g_current_m2_state = M2_REMAIN;
+		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) g_current_m2_state = MOTOR_UP;
+		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) g_current_m2_state = MOTOR_DOWN;
+		if (((m_ctrl_1 >> 5)&1) == 0) g_current_m2_state = MOTOR_REMAIN;
 		result = 1;
 	}
 	if (m_ctrl_2>>2 == 1) {				// 0001 -> M1
-		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) g_current_m1_state = M1_UP;
-		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) g_current_m1_state = M1_DOWN;
-		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m1_state = M1_REMAIN;
+		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) g_current_m1_state = MOTOR_UP;
+		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) g_current_m1_state = MOTOR_DOWN;
+		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m1_state = MOTOR_REMAIN;
 		result = 1;
 	}
 	if (m_ctrl_2>>2 == 3) {				// 0011 -> M3
-		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) g_current_m3_state = M3_UP;
-		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) g_current_m3_state = M3_DOWN;
-		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m3_state = M3_REMAIN;
+		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) g_current_m3_state = MOTOR_UP;
+		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) g_current_m3_state = MOTOR_DOWN;
+		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m3_state = MOTOR_REMAIN;
 		result = 1;
 	} 
 	return result;
@@ -183,80 +186,9 @@ void process_key(uint8_t c){
 	return;
 }
 
-void increase_motor_speed(int16_t *ae, uint8_t motor){
-	ae[motor] += STEP_SIZE;
-	if (ae[motor] > UPPER_LIMIT) ae[motor] = UPPER_LIMIT;
-	return;
-}
-
-void decrease_motor_speed(int16_t *ae, uint8_t motor){
-	ae[motor] -= STEP_SIZE;
-	if (ae[motor] < 0) ae[motor] = 0;
-	return;
-}
-
-void ctrl_action(){
-	switch (g_current_m0_state){			//M0
-		case M0_UP:
-			increase_motor_speed(ae, 0);
-			break;
-		case M0_REMAIN:
-			break;
-		case M0_DOWN:
-			decrease_motor_speed(ae, 0);
-			break;
-		default:
-			break;
-	}
-	switch (g_current_m1_state){			//M1
-		case M1_UP:
-			increase_motor_speed(ae, 1);
-			break;
-		case M1_REMAIN:
-			break;
-		case M1_DOWN:
-			decrease_motor_speed(ae, 1);
-			break;
-		default:
-			break;
-	}
-	switch (g_current_m2_state){			//M2
-		case M2_UP:
-			increase_motor_speed(ae, 2);
-			break;
-		case M2_REMAIN:
-			break;
-		case M2_DOWN:
-			decrease_motor_speed(ae, 2);
-			break;
-		default:
-			break;
-	}
-	switch (g_current_m3_state){			//M3
-		case M3_UP:
-			increase_motor_speed(ae, 3);
-			break;
-		case M3_REMAIN:
-			break;
-		case M3_DOWN:
-			decrease_motor_speed(ae, 3);
-			break;
-		default:
-			break;
-	}
-}
-
-void reset_motor_state(){
-	g_current_m0_state = M0_REMAIN;
-	g_current_m1_state = M1_REMAIN;
-	g_current_m2_state = M2_REMAIN;
-	g_current_m3_state = M3_REMAIN;
-}
-
 void execute (){
 	if (g_current_comm_type == CTRL_COMM){
 		ctrl_action();
-		reset_motor_state();
 		// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
 	}
 
@@ -345,15 +277,15 @@ int main(void)
 		}
 		if (g_current_state == PANIC_ST){
 				printf("QR: Entered PANIC MODE.");
-				int i = 800;
+				int motor_speed = PANIC_MODE_MOTOR_SPEED;
 				while (i) {
-					ae[0] = i;
-					ae[1] = i;
-					ae[2] = i;
-					ae[3] = i;
-					run_filters_and_control();
+					ae[0] = motor_speed;
+					ae[1] = motor_speed;
+					ae[2] = motor_speed;
+					ae[3] = motor_speed;
+					update_motors(); //or run filters_and_control() ?
 					nrf_delay_ms(1000);
-					i = i - 100;
+					motor_speed = motor_speed - 100;
 				}
 			g_current_state = SAFE_ST;
 		}
