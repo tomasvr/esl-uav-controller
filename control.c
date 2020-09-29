@@ -46,8 +46,6 @@ void update_motors(void)
 		motor[3] = ae[3];
 }
 
-
-int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
 void run_filters_and_control()
 {
 	// fancy stuff here
