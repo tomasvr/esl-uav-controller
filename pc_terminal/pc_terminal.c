@@ -49,14 +49,13 @@
 #include <stdbool.h> 
 
 #include "joystick.h"
-#include "../joystick_comm.h"
 #include "../states.h"
 
 #define JS_DEV	"/dev/input/js0"
 #define THRESHOLD_READ 20000
 #define POLL_DELAY 100000 // 1000000us = 1000ms = 1s
 
-//#define ENABLE_JOYSTICK
+#define ENABLE_JOYSTICK
 
 // current axis and button readings
 int	axis[6];
@@ -496,7 +495,7 @@ int main(int argc, char **argv)
 			last_poll_time = current_time;
 		} 
 		if(time2poll){
-			g_dest_state = messg_encode_send_js(axis, button);
+			g_dest_state = messg_encode_send_js(axis, button, g_current_state);
 			// printf("Poll \n");
 			time2poll = false;
 		}

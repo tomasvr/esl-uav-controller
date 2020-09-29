@@ -299,7 +299,7 @@ void execute (){
 		g_current_comm_type = NO_COMM;
 	}
 
-	if (g_current_comm_type == ESC_COMM){
+	if (g_current_comm_type == ESC_COMM){ //todo: shouldn't this be at the start of this function?
 		demo_done = true;
 		g_current_comm_type = NO_COMM;
 	}

@@ -31,6 +31,12 @@
 
 #include <asm/types.h>
 #include <linux/input.h>
+#include <inttypes.h>
+#include <stdbool.h> 
+
+#include "../states.h"
+
+#define THRESHOLD_READ 20000
 
 /*
  * Version
@@ -124,5 +130,7 @@ struct JS_DATA_SAVE_TYPE {
 	struct JS_DATA_TYPE JS_SAVE;
 	struct JS_DATA_TYPE JS_CORR;
 };
+
+uint32_t messg_encode_send_js(int *axis, int *button, STATE_t g_current_state);
 
 #endif /* _LINUX_JOYSTICK_H */

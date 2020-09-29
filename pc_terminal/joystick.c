@@ -4,7 +4,7 @@
 
 */
 
-#include "joystick_comm.h"
+#include "joystick.h"
 
 bool ESC; //todo: delete this
 

@@ -1,3 +1,11 @@
+/*
+
+	states.h - header file for state logic
+
+	all logic regarding state transitions should go in this module
+
+*/
+
 #ifndef STATES_H__
 #define STATES_H__
 
