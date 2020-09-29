@@ -49,9 +49,6 @@
 #include <stdbool.h> 
 
 #include "joystick.h"
-// #include "../in4073.h"
-// #include <in4073/in4073.h>
-// #include "app_timer.h"
 
 #define JS_DEV	"/dev/input/js0"
 #define THRESHOLD_READ 20000
@@ -656,7 +653,6 @@ int main(int argc, char **argv)
 		}
 		
 	}
-
 
 	term_exitio();
 	rs232_close();

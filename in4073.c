@@ -90,38 +90,6 @@ int find_motor_state(uint8_t messg){
 	return result;
 }
 
-int find_motor_state_js(uint8_t messg){
-	uint8_t m_ctrl_1 = messg & 0xf0; 		
-	uint8_t m_ctrl_2 = messg & 0x0f;
-	int result = 0;
-	// find motor state of motor 0 
-	if (m_ctrl_1>>6 == 0) {				// 0000 -> M0
-		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) g_current_m0_state = M0_ASCENDING;
-		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) g_current_m0_state = M0_DESCENDING;
-		if (((m_ctrl_1 >> 5)&1) == 0) g_current_m0_state = M0_REMAIN;
-		result = 1;
-	}
-	if (m_ctrl_1>>6 == 2) {				// 0010 -> M2
-		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) g_current_m2_state = M2_ASCENDING;
-		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) g_current_m2_state = M2_DESCENDING;
-		if (((m_ctrl_1 >> 5)&1) == 0) g_current_m2_state = M2_REMAIN;
-		result = 1;
-	}
-	if (m_ctrl_2>>2 == 1) {				// 0001 -> M1
-		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) g_current_m1_state = M1_ASCENDING;
-		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) g_current_m1_state = M1_DESCENDING;
-		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m1_state = M1_REMAIN;
-		result = 1;
-	}
-	if (m_ctrl_2>>2 == 3) {				// 0011 -> M3
-		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) g_current_m3_state = M3_ASCENDING;
-		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) g_current_m3_state = M3_DESCENDING;
-		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m3_state = M3_REMAIN;
-		result = 1;
-	} 
-	return result;
-}
-
 /*------------------------------------------------------------------
  * messg_decode -- decode messages
  *------------------------------------------------------------------
@@ -175,11 +143,7 @@ void messg_decode(uint8_t messg){
 	 		result = find_motor_state(messg);
 	 		assert(result == 1 && "QR: Fail to find the motor state.");
 	 	}
-	 	if (g_current_comm_type == JS_COMM){
-	 		int result;
-	 		result = find_motor_state_js(messg);
-	 		assert(result == 1 && "QR: Fail to find the motor state.");
-	 	}
+	 	
 	 	/*--------------------------------------------------------------
 		 * if the command is MODE_SW_TYPE, two field in this byte: 
 		 * 		  ----------------------		 ----------------------
@@ -282,48 +246,48 @@ void ctrl_action(){
 	}
 }
 
-void *ctrl_action_js(void *vargp){
-	int *myid = (int *)vargp;
-	while(!demo_done){
-		// M0
-		if(g_current_m0_state != M0_REMAIN){
-			if(g_current_m0_state == M0_ASCENDING){
-				increase_motor_speed(ae, 0);
-			}
-			else if(g_current_m0_state == M0_DESCENDING){
-				decrease_motor_speed(ae, 0);
-			}
-		}
-		// M1
-		if(g_current_m1_state != M1_REMAIN){
-			if(g_current_m1_state == M1_ASCENDING){
-				increase_motor_speed(ae, 1);
-			}
-			else if(g_current_m1_state == M1_DESCENDING){
-				decrease_motor_speed(ae, 1);
-			}
-		}
-		// M2
-		if(g_current_m2_state != M2_REMAIN){
-			if(g_current_m2_state == M2_ASCENDING){
-				increase_motor_speed(ae, 2);
-			}
-			else if(g_current_m2_state == M2_DESCENDING){
-				decrease_motor_speed(ae, 2);
-			}
-		}
-		// M3
-		if(g_current_m3_state != M3_REMAIN){
-			if(g_current_m3_state == M3_ASCENDING){
-				increase_motor_speed(ae, 3);
-			}
-			else if(g_current_m3_state == M3_DESCENDING){
-				decrease_motor_speed(ae, 3);
-			}
-		}
-		nrf_delay_ms(100); // 0.1s delay
-	}
-}
+// void *ctrl_action_js(void *vargp){
+// 	int *myid = (int *)vargp;
+// 	while(!demo_done){
+// 		// M0
+// 		if(g_current_m0_state != M0_REMAIN){
+// 			if(g_current_m0_state == M0_ASCENDING){
+// 				increase_motor_speed(ae, 0);
+// 			}
+// 			else if(g_current_m0_state == M0_DESCENDING){
+// 				decrease_motor_speed(ae, 0);
+// 			}
+// 		}
+// 		// M1
+// 		if(g_current_m1_state != M1_REMAIN){
+// 			if(g_current_m1_state == M1_ASCENDING){
+// 				increase_motor_speed(ae, 1);
+// 			}
+// 			else if(g_current_m1_state == M1_DESCENDING){
+// 				decrease_motor_speed(ae, 1);
+// 			}
+// 		}
+// 		// M2
+// 		if(g_current_m2_state != M2_REMAIN){
+// 			if(g_current_m2_state == M2_ASCENDING){
+// 				increase_motor_speed(ae, 2);
+// 			}
+// 			else if(g_current_m2_state == M2_DESCENDING){
+// 				decrease_motor_speed(ae, 2);
+// 			}
+// 		}
+// 		// M3
+// 		if(g_current_m3_state != M3_REMAIN){
+// 			if(g_current_m3_state == M3_ASCENDING){
+// 				increase_motor_speed(ae, 3);
+// 			}
+// 			else if(g_current_m3_state == M3_DESCENDING){
+// 				decrease_motor_speed(ae, 3);
+// 			}
+// 		}
+// 		nrf_delay_ms(100); // 0.1s delay
+// 	}
+// }
 
 void mode_sw_action(){
 	if (g_current_state == SAFE_ST){
@@ -368,9 +332,9 @@ void execute (){
 		// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
 	}
 
-	if(g_current_comm_type == JS_COMM){
-		// handled by the thread
-	}
+	// if(g_current_comm_type == JS_COMM){
+	// 	// handled by the thread
+	// }
 
 	if (g_current_comm_type == MODE_SW_COMM && g_dest_state != NO_WHERE){
 		mode_sw_action();
@@ -402,10 +366,6 @@ int main(void)
 
 	uint32_t counter = 0;
 	demo_done = false;
-
-	// js: create a thread to manipulating the motor state based on js cmds
-	// pthread_t tid;
-	// pthread_create(&tid, NULL, ctrl_action_js, (void *)&tid); 
 
 	printf("    TIME   | AE0 AE1 AE2 AE3 |   PHI    THETA   PSI |     SP     SQ     SR |  BAT | TEMP | PRESSURE | MODE \n");
 	while (!demo_done)
@@ -443,9 +403,6 @@ int main(void)
 			ae[3] = 0;
 		}
 	}
-
-	// js: join the thread
-	// pthread_join(tid, NULL);	
 
 	printf("\n\t Goodbye \n\n");
 	nrf_delay_ms(100);
