@@ -46,15 +46,21 @@
 #include <string.h>
 #include <time.h>
 #include <assert.h>
+#include <stdbool.h> 
 
 #include "joystick.h"
+// #include "../in4073.h"
+// #include <in4073/in4073.h>
+// #include "app_timer.h"
 
 #define JS_DEV	"/dev/input/js0"
 #define THRESHOLD_READ 20000
+#define POLL_DELAY 100000 // 1000000us = 1000ms = 1s
 
 // current axis and button readings
 int	axis[6];
 int	button[12];
+bool time2poll;
 
 
 #include <stdio.h>
@@ -385,14 +391,14 @@ uint32_t messg_encode(int c){
 
 unsigned int mon_time_ms(void)
 {
-        unsigned int    ms;
-        struct timeval  tv;
-        struct timezone tz;
+    unsigned int    ms;
+    struct timeval  tv;
+    struct timezone tz;
 
-        gettimeofday(&tv, &tz);
-        ms = 1000 * (tv.tv_sec % 65); // 65 sec wrap around
-        ms = ms + tv.tv_usec / 1000;
-        return ms;
+    gettimeofday(&tv, &tz);
+    ms = 1000 * (tv.tv_sec % 65); // 65 sec wrap around
+    ms = ms + tv.tv_usec / 1000;
+    return ms;
 }
 
 void mon_delay_ms(unsigned int ms)
@@ -430,13 +436,13 @@ uint32_t messg_encode_send_js(int *axis, int *button){
 			// roll
 			if(axis[i]<-THRESHOLD_READ){
 				// roll counterclockwise
-				messg = 0b10001111000001100101001001010101;
+				messg = 0b10001111000001100000001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 				rs232_putchar(messg);
 			}
 			else if(axis[i]>THRESHOLD_READ){
 				// roll clockwise
-				messg = 0b10001110000001110101001001010101;
+				messg = 0b10001110000001110000001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 				rs232_putchar(messg);
 			}
@@ -445,13 +451,13 @@ uint32_t messg_encode_send_js(int *axis, int *button){
 			// pitch
 			if(axis[i]<-THRESHOLD_READ){
 				// pitch up
-				messg = 0b10101100001101000101001001010101;
+				messg = 0b10101100001101000000001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 				rs232_putchar(messg);
 			}
 			else if(axis[i]>THRESHOLD_READ){
 				// pitch down
-				messg = 0b10111100001001000101001001010101;
+				messg = 0b10111100001001000000001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 				rs232_putchar(messg);
 			}
@@ -461,13 +467,13 @@ uint32_t messg_encode_send_js(int *axis, int *button){
 			// yaw
 			if(axis[i]<-THRESHOLD_READ){
 				// yaw counterclockwise
-				messg = 0b10101111001001110101001001010101;
+				messg = 0b10101111001001110000001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 				rs232_putchar(messg);
 			}
 			else if(axis[i]>THRESHOLD_READ){
 				// yaw clockwise
-				messg = 0b10111110001101100101001001010101;
+				messg = 0b10111110001101100000001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 				rs232_putchar(messg);
 			}
@@ -477,13 +483,13 @@ uint32_t messg_encode_send_js(int *axis, int *button){
 			// lift
 			if(axis[i]<-THRESHOLD_READ){
 				// lift up
-				messg = 0b10111111001101110101001001010101;
+				messg = 0b10111111001101110000001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg); 
 				rs232_putchar(messg);
 			}
 			else if(axis[i]>THRESHOLD_READ){
 				// lift down
-				messg = 0b10101110001001100101001001010101;
+				messg = 0b10101110001001100000001001010101;
 				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 				rs232_putchar(messg);
 			}
@@ -545,6 +551,12 @@ uint32_t messg_encode_send_js(int *axis, int *button){
 	return 0;
 }
 
+uint32_t GetTimeStamp() {
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    return tv.tv_sec*(uint32_t)1000000+tv.tv_usec;
+}
+
 /*----------------------------------------------------------------
  * main -- execute terminal
  *----------------------------------------------------------------
@@ -571,6 +583,10 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	fcntl(fd, F_SETFL, O_NONBLOCK);// non-blocking mode
+
+	uint32_t last_poll_time = GetTimeStamp();
+	uint32_t current_time;
+	time2poll = true;
 
 	/* send & receive
 	 */
@@ -627,8 +643,17 @@ int main(int argc, char **argv)
 			perror("\njs: error reading (EAGAIN)");
 			exit (1);
 		}
-		// js: encode and send js cmds
-		messg_encode_send_js(axis, button);
+		// js: poll to encode and send js cmds
+		current_time = GetTimeStamp();
+		if((current_time-last_poll_time) >= POLL_DELAY){
+			time2poll = true;
+			last_poll_time = current_time;
+		} 
+		if(time2poll){
+			messg_encode_send_js(axis, button);
+			// printf("Poll \n");
+			time2poll = false;
+		}
 		
 	}
 

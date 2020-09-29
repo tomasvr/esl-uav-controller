@@ -404,8 +404,8 @@ int main(void)
 	demo_done = false;
 
 	// js: create a thread to manipulating the motor state based on js cmds
-	pthread_t tid;
-	pthread_create(&tid, NULL, ctrl_action_js, (void *)&tid); 
+	// pthread_t tid;
+	// pthread_create(&tid, NULL, ctrl_action_js, (void *)&tid); 
 
 	printf("    TIME   | AE0 AE1 AE2 AE3 |   PHI    THETA   PSI |     SP     SQ     SR |  BAT | TEMP | PRESSURE | MODE \n");
 	while (!demo_done)
@@ -445,7 +445,7 @@ int main(void)
 	}
 
 	// js: join the thread
-	pthread_join(tid, NULL);	
+	// pthread_join(tid, NULL);	
 
 	printf("\n\t Goodbye \n\n");
 	nrf_delay_ms(100);
