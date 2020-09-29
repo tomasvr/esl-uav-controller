@@ -16,7 +16,7 @@
 
 #define DEBUG_LED
 
-// turns off all leds except one
+// This funciton is used for debugging
 // gpio_pin_set TURNS OFF led
 // gpio_pin_clear TURNS ON led
 void switch_led(int color) {
@@ -32,6 +32,7 @@ void switch_led(int color) {
 void update_motors(void)
 {					
 	#ifdef DEBUG_LED
+		// The 4 LEDS represent motor speed, blue = max speed, red = minimal speed
 		if (ae[0] < 256) switch_led(RED);
 		else if (ae[0] >= 256 && ae[0] < 512) switch_led(YELLOW);
 		else if (ae[0] >= 512 && ae[0] < 768) switch_led(GREEN);
