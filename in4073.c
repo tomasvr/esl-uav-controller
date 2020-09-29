@@ -289,6 +289,25 @@ void execute (){
 	}
 }
 
+uint8_t calibration_counter = 0;
+int16_t sensor_calib = 0, sensor_sum = 0;
+int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
+int16_t sensor_calibration(int16_t sensor_ori, uint8_t num)//average
+{
+	int16_t sensor_temp = 0;
+	sensor_temp = sensor_ori;
+	sensor_sum += sensor_temp;
+	calibration_counter++;
+	if(calibration_counter == 3){
+		sensor_calib = sensor_sum / num;
+		calibration_counter = 0; sensor_sum = 0;
+		printf("| %6d \n", sensor_calib);
+	}
+	else
+		printf("||\n");
+	return sensor_calib;
+}
+
 /*------------------------------------------------------------------
  * main -- everything you need is here :)
  *------------------------------------------------------------------
@@ -326,6 +345,9 @@ int main(void)
 			printf("%6d %6d %6d | ", sp, sq, sr);
 			printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 			printf("%4d \n", g_current_state);
+
+			sensor_calibration(phi, 3); phi_calib = sensor_calib;
+
 			clear_timer_flag();
 		}
 
