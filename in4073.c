@@ -321,7 +321,7 @@ int main(void)
 	spi_flash_init();
 	ble_init();
 
-	//uint32_t counter = 0;
+	uint32_t counter = 0;
 	demo_done = false;
 
 	printf("    TIME   | AE0 AE1 AE2 AE3 |   PHI    THETA   PSI |     SP     SQ     SR |  BAT | TEMP | PRESSURE | MODE \n");
@@ -331,7 +331,7 @@ int main(void)
 		execute();
 		if (check_timer_flag()) 
 		{
-			//if (counter++%20 == 0) nrf_gpio_pin_toggle(BLUE);
+			if (counter++%20 == 0) nrf_gpio_pin_toggle(BLUE);
 
 			adc_request_sample();
 			read_baro();
