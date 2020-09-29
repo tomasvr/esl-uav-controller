@@ -55,7 +55,7 @@
 #define THRESHOLD_READ 20000
 #define POLL_DELAY 100000 // 1000000us = 1000ms = 1s
 
-#define ENABLE_JOYSTICK
+//#define ENABLE_JOYSTICK
 
 // current axis and button readings
 int	axis[6];
