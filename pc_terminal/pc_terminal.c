@@ -54,6 +54,8 @@
 #define THRESHOLD_READ 20000
 #define POLL_DELAY 100000 // 1000000us = 1000ms = 1s
 
+//#define ENABLE_JOYSTICK
+
 // current axis and button readings
 int	axis[6];
 int	button[12];
@@ -571,6 +573,7 @@ int main(int argc, char **argv)
 	while ((c = rs232_getchar_nb()) != -1)
 		fputc(c,stderr);
 
+#ifdef ENABLE_JOYSTICK
 	// js: initializaiton
 	int 			fd;
 	struct js_event js;
@@ -584,7 +587,7 @@ int main(int argc, char **argv)
 	uint32_t last_poll_time = GetTimeStamp();
 	uint32_t current_time;
 	time2poll = true;
-
+#endif
 	/* send & receive
 	 */
 	while(true){
@@ -621,6 +624,7 @@ int main(int argc, char **argv)
 		 *---------------------------------------------------
 		 */
 		// mon_delay_ms(30);
+#ifdef ENABLE_JOYSTICK		
 		t = mon_time_ms();
 
 		// js: read input values
@@ -651,7 +655,7 @@ int main(int argc, char **argv)
 			// printf("Poll \n");
 			time2poll = false;
 		}
-		
+#endif	
 	}
 
 	term_exitio();
