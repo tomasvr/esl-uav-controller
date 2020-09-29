@@ -131,6 +131,15 @@ struct JS_DATA_SAVE_TYPE {
 	struct JS_DATA_TYPE JS_CORR;
 };
 
-uint32_t messg_encode_send_js(int *axis, int *button, STATE_t g_current_state);
+/**
+ * @brief      Encodes joystick commands to a message
+ *
+ * @param      axis             The state of the axis
+ * @param      button           The state of the button
+ * @param[in]  g_current_state  The current state of the caller
+ *
+ * @return     The new state the TERM should switch to
+ */
+STATE_t messg_encode_send_js(int *axis, int *button, STATE_t g_current_state);
 
 #endif /* _LINUX_JOYSTICK_H */

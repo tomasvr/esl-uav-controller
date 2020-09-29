@@ -134,5 +134,5 @@ STATE_t messg_encode_send_js(int *axis, int *button, STATE_t g_current_state){
 		// 	rs232_putchar(messg);
 		// }
 	}
-	return g_dest_state;
+	return g_dest_state; //todo: what should be returned here?
 }
