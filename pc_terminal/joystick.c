@@ -1,6 +1,6 @@
 /* 
 
-	joystick_comm.c - contains implementation for state logic
+	joystick.c - contains implementation joystick communication
 
 */
 
@@ -8,7 +8,7 @@
 
 bool ESC; //todo: delete this
 
-uint32_t messg_encode_send_js(int *axis, int *button, STATE_t g_current_state){
+STATE_t messg_encode_send_js(int *axis, int *button, STATE_t g_current_state){
 	// variable declaration
 	int i;
 	uint32_t messg;

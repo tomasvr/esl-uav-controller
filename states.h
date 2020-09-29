@@ -10,6 +10,7 @@
 #define STATES_H__
 
 #include <stdbool.h>
+#include <stdio.h>
 
 typedef enum {
 		SAFE_ST, 
