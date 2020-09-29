@@ -55,12 +55,15 @@
 #define THRESHOLD_READ 20000
 #define POLL_DELAY 100000 // 1000000us = 1000ms = 1s
 
-//#define ENABLE_JOYSTICK
+#define ENABLE_JOYSTICK
 
 // current axis and button readings
 int	axis[6];
 int	button[12];
 bool time2poll;
+
+STATE_t g_current_state = SAFE_ST;
+STATE_t g_dest_state = NO_WHERE;
 
 
 #include <stdio.h>
@@ -230,8 +233,8 @@ int 	rs232_putchar(int c) 			// change char to uint32_t
 	return result;
 }
 
-STATE_t g_current_state = SAFE_ST;
-STATE_t g_dest_state = NO_WHERE;
+// STATE_t g_current_state = SAFE_ST;
+// STATE_t g_dest_state = NO_WHERE;
 bool ESC = false;
 
 uint32_t append_current_mode(uint32_t messg){
@@ -399,6 +402,7 @@ int main(int argc, char **argv)
 	rs232_open();
 	term_puts("TER: Type ^C to exit\n");
 
+
 	/* discard any incoming text
 	 */
 	while ((c = rs232_getchar_nb()) != -1)
@@ -484,7 +488,7 @@ int main(int argc, char **argv)
 			last_poll_time = current_time;
 		} 
 		if(time2poll){
-			g_dest_state = messg_encode_send_js(axis, button, g_current_state);
+			messg_encode_send_js(axis, button);
 			// printf("Poll \n");
 			time2poll = false;
 		}

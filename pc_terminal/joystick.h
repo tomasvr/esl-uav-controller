@@ -36,6 +36,8 @@
 
 #include "../states.h"
 
+extern STATE_t g_current_state;
+extern STATE_t g_dest_state;
 #define THRESHOLD_READ 20000
 
 /*
@@ -136,10 +138,8 @@ struct JS_DATA_SAVE_TYPE {
  *
  * @param      axis             The state of the axis
  * @param      button           The state of the button
- * @param[in]  g_current_state  The current state of the caller
  *
- * @return     The new state the TERM should switch to
  */
-STATE_t messg_encode_send_js(int *axis, int *button, STATE_t g_current_state);
+void messg_encode_send_js(int *axis, int *button);
 
 #endif /* _LINUX_JOYSTICK_H */

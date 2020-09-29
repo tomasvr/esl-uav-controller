@@ -8,11 +8,10 @@
 
 bool ESC; //todo: delete this
 
-STATE_t messg_encode_send_js(int *axis, int *button, STATE_t g_current_state){
+void messg_encode_send_js(int *axis, int *button) {
 	// variable declaration
 	int i;
 	uint32_t messg;
-	STATE_t g_dest_state;
 
 	// check js values
 	// printf("Axes: ");
@@ -134,5 +133,4 @@ STATE_t messg_encode_send_js(int *axis, int *button, STATE_t g_current_state){
 		// 	rs232_putchar(messg);
 		// }
 	}
-	return g_dest_state; //todo: what should be returned here?
 }
