@@ -10,14 +10,40 @@
  *------------------------------------------------------------------
  */
 
+#include "nrf_gpio.h"
+#include "in4073.h"
+
+
+#define DEBUG_LED
+
+// This funciton is used for debugging
+// if color == -1, then all leds are turned off
+// gpio_pin_set TURNS OFF led
+// gpio_pin_clear TURNS ON led
+void switch_led(int color) {
+	nrf_gpio_pin_set(GREEN);
+	nrf_gpio_pin_set(RED);
+	nrf_gpio_pin_set(YELLOW);
+	if (color != -1) {
+		nrf_gpio_pin_clear(color);
+	}
+}
+
 #include "in4073.h"
 
 void update_motors(void)
 {					
-	motor[0] = ae[0];
-	motor[1] = ae[1];
-	motor[2] = ae[2];
-	motor[3] = ae[3];
+	#ifdef DEBUG_LED
+		// The 4 LEDS represent motor speed, blue = max speed, red = minimal speed
+		if (ae[0] == 0) switch_led(-1);
+		else if (ae[0] < 350) switch_led(RED);
+		else if (ae[0] >= 350 && ae[0] < 700) switch_led(YELLOW);
+		else switch_led(GREEN);
+	#endif
+		motor[0] = ae[0];
+		motor[1] = ae[1];
+		motor[2] = ae[2];
+		motor[3] = ae[3];
 }
 
 void run_filters_and_control()
