@@ -373,13 +373,18 @@ int main(void)
 			run_filters_and_control();
 		}
 		if (g_current_state == PANIC_ST){
-			printf("QR: Entered PANIC MODE.");
-			nrf_delay_ms(3000);
+				printf("QR: Entered PANIC MODE.");
+				int i = 800;
+				while (i) {
+					ae[0] = i;
+					ae[1] = i;
+					ae[2] = i;
+					ae[3] = i;
+					run_filters_and_control();
+					nrf_delay_ms(1000);
+					i = i - 100;
+				}
 			g_current_state = SAFE_ST;
-			ae[0] = 0;
-			ae[1] = 0;
-			ae[2] = 0;
-			ae[3] = 0;
 		}
 	}
 
