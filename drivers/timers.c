@@ -12,9 +12,28 @@
 
 #include "in4073.h"
 #include "app_timer.h"
+
+#include <stdio.h>
+#include <stdlib.h>
  
 uint32_t global_time;
 bool timer_flag;
+
+void TIMER3_IRQHandler(void)
+{
+	exit(0);
+	if (NRF_TIMER3->EVENTS_COMPARE[3])
+	{
+		NRF_TIMER3->EVENTS_COMPARE[3] = 0;
+
+		NRF_TIMER3->TASKS_CAPTURE[2]=1;
+		if(true)
+		{
+			printf("%s\n", "timer 3 fired!");	
+
+		}
+	}
+}
 
 void TIMER2_IRQHandler(void)
 {
@@ -81,6 +100,15 @@ void timers_init(void)
 	global_time = 0;
 	timer_flag = false;
 
+	NRF_TIMER3->PRESCALER 	= 0x1UL; // 0.125us
+	NRF_TIMER3->INTENSET    = TIMER_INTENSET_COMPARE3_Msk;
+	NRF_TIMER3->CC[0]	= 1000; // motor signal is 125-250us
+	NRF_TIMER3->CC[1]	= 1000; // 
+//	NRF_TIMER1->CC[2]	= 1000; // is used to measure at which part of the motor pulse we are currently at
+	NRF_TIMER3->CC[3]	= 2500; // 2500 * 0.125 = 312.5 us
+	NRF_TIMER3->SHORTS	= TIMER_SHORTS_COMPARE3_CLEAR_Msk;
+	NRF_TIMER3->TASKS_CLEAR = 1;
+
 	NRF_TIMER2->PRESCALER 	= 0x1UL; // 0.125us 
 	NRF_TIMER2->INTENSET    = TIMER_INTENSET_COMPARE3_Msk;
 	NRF_TIMER2->CC[0]	= 1000; // motor signal is 125-250us
@@ -99,9 +127,17 @@ void timers_init(void)
 	NRF_TIMER1->SHORTS	= TIMER_SHORTS_COMPARE3_CLEAR_Msk;
 	NRF_TIMER1->TASKS_CLEAR = 1;
 
+
+
+	NRF_TIMER3->TASKS_START	= 1;
+
 	NRF_TIMER2->TASKS_START	= 1;
 	NRF_TIMER1->TASKS_START	= 1;
 	
+	NVIC_ClearPendingIRQ(TIMER3_IRQn);
+	NVIC_SetPriority(TIMER3_IRQn, 2);
+	NVIC_EnableIRQ(TIMER3_IRQn);
+
 	NVIC_ClearPendingIRQ(TIMER2_IRQn);
 	NVIC_SetPriority(TIMER2_IRQn, 3);
 	NVIC_EnableIRQ(TIMER2_IRQn);

@@ -305,7 +305,7 @@ int main(void)
 	spi_flash_init();
 	ble_init();
 
-	uint32_t counter = 0;
+	//uint32_t counter = 0;
 	demo_done = false;
 
 	printf("    TIME   | AE0 AE1 AE2 AE3 |   PHI    THETA   PSI |     SP     SQ     SR |  BAT | TEMP | PRESSURE | MODE \n");
@@ -315,7 +315,7 @@ int main(void)
 		execute();
 		if (check_timer_flag()) 
 		{
-			if (counter++%20 == 0) nrf_gpio_pin_toggle(BLUE);
+			//if (counter++%20 == 0) nrf_gpio_pin_toggle(BLUE);
 
 			adc_request_sample();
 			read_baro();
@@ -335,13 +335,18 @@ int main(void)
 			run_filters_and_control();
 		}
 		if (g_current_state == PANIC_ST){
-			printf("QR: Entered PANIC MODE.");
-			nrf_delay_ms(3000);
+				printf("QR: Entered PANIC MODE.");
+				int i = 800;
+				while (i) {
+					ae[0] = i;
+					ae[1] = i;
+					ae[2] = i;
+					ae[3] = i;
+					run_filters_and_control();
+					nrf_delay_ms(1000);
+					i = i - 100;
+				}
 			g_current_state = SAFE_ST;
-			ae[0] = 0;
-			ae[1] = 0;
-			ae[2] = 0;
-			ae[3] = 0;
 		}
 	}	
 
