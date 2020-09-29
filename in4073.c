@@ -246,35 +246,6 @@ void ctrl_action(){
 	}
 }
 
-// void mode_sw_action(){
-// 	if (g_current_state == SAFE_ST){
-// 		if (g_dest_state == PANIC_ST) {
-// 			printf("QR: Can not switch to PANIC MODE while in SAFE MODE!\n");
-// 			return;
-// 		}
-// 		else{ // fix 1 bug?
-// 			g_current_state = g_dest_state;
-// 		}
-// 		return;
-// 	} 
-// 	if (g_current_state == PANIC_ST){
-// 		if (g_dest_state != SAFE_ST){
-// 			printf("QR: an not switch to other modes else than SAFE MODE while in PANIC MODE.\n");
-// 			return;
-// 		}
-// 		return;
-// 	}
-// 	if (g_current_state != SAFE_ST && g_current_state != PANIC_ST){
-// 		if (g_dest_state == PANIC_ST || g_dest_state == g_current_state){
-// 			g_current_state = g_dest_state;
-// 			return;
-// 		}else{
-// 			printf("QR: Can not directly switch to other modes else than PANIC MODE in the current mode.\n");
-// 			return;
-// 		}
-// 	}
-// }
-
 void reset_motor_state(){
 	g_current_m0_state = M0_REMAIN;
 	g_current_m1_state = M1_REMAIN;

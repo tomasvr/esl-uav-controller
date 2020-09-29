@@ -230,17 +230,6 @@ int 	rs232_putchar(int c) 			// change char to uint32_t
 	return result;
 }
 
-// the states that our QR has
-// enum STATE {
-// 		SAFE_ST, 
-// 		PANIC_ST,
-// 		MANUAL_ST,
-// 		CALIBRATION_ST,
-// 		YAWCONTROL_ST,
-// 		FULLCONTROL_ST,
-// 		NO_WHERE
-// 	};
-
 STATE_t g_current_state = SAFE_ST;
 STATE_t g_dest_state = NO_WHERE;
 bool ESC = false;
