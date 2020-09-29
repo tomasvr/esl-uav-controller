@@ -40,13 +40,13 @@ enum M0_CRTL{
 enum M1_CRTL{		
 		M1_UP,
 		M1_REMAIN,
-		M1_DOWN,
+		M1_DOWN
 	};
 // the states that motor 2 has
 enum M2_CRTL{	
 		M2_UP,
 		M2_REMAIN,
-		M2_DOWN,
+		M2_DOWN
 	};
 // the states that motor 3 has
 enum M3_CRTL{
