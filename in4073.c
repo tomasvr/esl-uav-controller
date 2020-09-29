@@ -41,6 +41,8 @@
 /* --- end macros --- */
 //printf("The value received is: "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(c));
 
+#define STEP_SIZE 1
+#define UPPER_LIMIT 330
 
 #include "in4073.h"
 #include <assert.h>
@@ -113,7 +115,7 @@ void messg_decode(uint8_t messg){
 		//assert( == 1 && "QR: No such command found.");
 
 		int result = check_mode_sync(state, g_current_state);
-		assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?????????????????
+		// assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?????????????????
 	}
 
 	/*--------------------------------------------------------------
@@ -141,6 +143,7 @@ void messg_decode(uint8_t messg){
 	 		result = find_motor_state(messg);
 	 		assert(result == 1 && "QR: Fail to find the motor state.");
 	 	}
+	 	
 	 	/*--------------------------------------------------------------
 		 * if the command is MODE_SW_TYPE, two field in this byte: 
 		 * 		  ----------------------		 ----------------------
@@ -166,8 +169,7 @@ void messg_decode(uint8_t messg){
  * process_key -- process command keys
  *------------------------------------------------------------------
  */
-void process_key(uint8_t c)
-{	
+void process_key(uint8_t c){	
 	if (c == 0x55 && FRAG_COUNT == 0 && g_current_state != PANIC_ST) {
 		FRAG_COUNT = 3;
 		return;
@@ -181,55 +183,63 @@ void process_key(uint8_t c)
 	return;
 }
 
+void increase_motor_speed(int16_t *ae, uint8_t motor){
+	ae[motor] += STEP_SIZE;
+	if (ae[motor] > UPPER_LIMIT) ae[motor] = UPPER_LIMIT;
+	return;
+}
+
+void decrease_motor_speed(int16_t *ae, uint8_t motor){
+	ae[motor] -= STEP_SIZE;
+	if (ae[motor] < 0) ae[motor] = 0;
+	return;
+}
+
 void ctrl_action(){
 	switch (g_current_m0_state){			//M0
 		case M0_UP:
-			ae[0] += 10;
+			increase_motor_speed(ae, 0);
 			break;
 		case M0_REMAIN:
 			break;
 		case M0_DOWN:
-			ae[0] -= 10;
-			if (ae[0] < 0) ae[0] = 0;
+			decrease_motor_speed(ae, 0);
 			break;
 		default:
 			break;
 	}
 	switch (g_current_m1_state){			//M1
 		case M1_UP:
-			ae[1] += 10;
+			increase_motor_speed(ae, 1);
 			break;
 		case M1_REMAIN:
 			break;
 		case M1_DOWN:
-			ae[1] -= 10;
-			if (ae[1] < 0) ae[1] = 0;
+			decrease_motor_speed(ae, 1);
 			break;
 		default:
 			break;
 	}
 	switch (g_current_m2_state){			//M2
 		case M2_UP:
-			ae[2] += 10;
+			increase_motor_speed(ae, 2);
 			break;
 		case M2_REMAIN:
 			break;
 		case M2_DOWN:
-			ae[2] -= 10;
-			if (ae[2] < 0) ae[2] = 0;
+			decrease_motor_speed(ae, 2);
 			break;
 		default:
 			break;
 	}
 	switch (g_current_m3_state){			//M3
 		case M3_UP:
-			ae[3] += 10;
+			increase_motor_speed(ae, 3);
 			break;
 		case M3_REMAIN:
 			break;
 		case M3_DOWN:
-			ae[3] -= 10;
-			if (ae[3] < 0) ae[3] = 0;
+			decrease_motor_speed(ae, 3);
 			break;
 		default:
 			break;
@@ -242,7 +252,9 @@ void mode_sw_action(){
 			printf("QR: Can not switch to PANIC MODE while in SAFE MODE!\n");
 			return;
 		}
-		g_current_state = g_dest_state;
+		else{ // fix 1 bug?
+			g_current_state = g_dest_state;
+		}
 		return;
 	} 
 	if (g_current_state == PANIC_ST){
@@ -276,6 +288,10 @@ void execute (){
 		reset_motor_state();
 		// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
 	}
+
+	// if(g_current_comm_type == JS_COMM){
+	// 	// handled by the thread
+	// }
 
 	if (g_current_comm_type == MODE_SW_COMM && g_dest_state != NO_WHERE){
 		mode_sw_action();
@@ -348,7 +364,7 @@ int main(void)
 				}
 			g_current_state = SAFE_ST;
 		}
-	}	
+	}
 
 	printf("\n\t Goodbye \n\n");
 	nrf_delay_ms(100);
