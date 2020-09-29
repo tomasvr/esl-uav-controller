@@ -28,6 +28,7 @@
 // custom includes
 #include "logging.h"
 #include "comm.h"
+#include "states.h"
 
 #define RED			22
 #define YELLOW		24

@@ -42,6 +42,8 @@ $(abspath ../components/drivers_nrf/delay/nrf_delay.c) \
 $(abspath ./in4073.c) \
 $(abspath ./control.c) \
 $(abspath ./comm.c) \
+$(abspath ./joystick_comm.c) \
+$(abspath ./states.c) \
 $(abspath ./logging.c) \
 $(abspath ./drivers/gpio.c) \
 $(abspath ./drivers/timers.c) \
