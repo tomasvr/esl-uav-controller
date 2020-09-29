@@ -49,17 +49,21 @@
 #include <stdbool.h> 
 
 #include "joystick.h"
+#include "../states.h"
 
 #define JS_DEV	"/dev/input/js0"
 #define THRESHOLD_READ 20000
 #define POLL_DELAY 100000 // 1000000us = 1000ms = 1s
 
-//#define ENABLE_JOYSTICK
+#define ENABLE_JOYSTICK
 
 // current axis and button readings
 int	axis[6];
 int	button[12];
 bool time2poll;
+
+STATE_t g_current_state = SAFE_ST;
+STATE_t g_dest_state = NO_WHERE;
 
 
 #include <stdio.h>
@@ -229,19 +233,8 @@ int 	rs232_putchar(int c) 			// change char to uint32_t
 	return result;
 }
 
-// the states that our QR has
-enum STATE {
-		SAFE_ST, 
-		PANIC_ST,
-		MANUAL_ST,
-		CALIBRATION_ST,
-		YAWCONTROL_ST,
-		FULLCONTROL_ST,
-		NO_WHERE
-	};
-
-enum STATE g_current_state = SAFE_ST;
-enum STATE g_dest_state = NO_WHERE;
+// STATE_t g_current_state = SAFE_ST;
+// STATE_t g_dest_state = NO_WHERE;
 bool ESC = false;
 
 uint32_t append_current_mode(uint32_t messg){
@@ -270,38 +263,6 @@ uint32_t append_current_mode(uint32_t messg){
 	}
 	//printf("TER: The packet to send is: "PRINTF_BINARY_PATTERN_INT32 "\n",PRINTF_BYTE_TO_BINARY_INT32(messg)); // 0000 0000 1000 0000 0001 0010 0101 0101
 	return messg;
-}
-
-
-void mode_sw_action(){
-	if (ESC) {
-		g_current_state = SAFE_ST;
-		return;
-	}
-	if (g_current_state == SAFE_ST){
-		if (g_dest_state == PANIC_ST) {
-			printf("TER: Can not switch to PANIC MODE while in SAFE MODE!\n");
-			return;
-		}
-		g_current_state = g_dest_state;
-		return;
-	} 
-	if (g_current_state == PANIC_ST){
-		if (g_dest_state != SAFE_ST){
-			printf("TER: an not switch to other modes else than SAFE MODE while in PANIC MODE.\n");
-			return;
-		}
-		return;
-	}
-	if (g_current_state != SAFE_ST && g_current_state != PANIC_ST){
-		if (g_dest_state == PANIC_ST || g_dest_state == g_current_state){
-			g_current_state = g_dest_state;
-			return;
-		}else{
-			printf("TER: Can not directly switch to other modes else than PANIC MODE in the current mode.\n");
-			return;
-		}
-	}
 }
 
 uint32_t messg_encode(int c){
@@ -352,14 +313,14 @@ uint32_t messg_encode(int c){
 			messg = 0b00000000000000001111000001010101;
 			messg = append_current_mode(messg); 
 			ESC = true;
-			mode_sw_action();
+			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
 			break;
 
 		case 48: // keyboard '0' pressed, dorne switches to SAFE_ST
 			messg = 0b00000000000000000001000001010101;
 			messg = append_current_mode(messg); 
 			g_dest_state = SAFE_ST;
-			mode_sw_action();
+			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
 			g_dest_state = NO_WHERE;
 			break;
 
@@ -367,7 +328,7 @@ uint32_t messg_encode(int c){
 			messg = 0b00000000100000000001000001010101;
 			messg = append_current_mode(messg); 
 			g_dest_state = PANIC_ST;
-			mode_sw_action();
+			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
 			g_dest_state = NO_WHERE;
 			break;
 
@@ -375,7 +336,7 @@ uint32_t messg_encode(int c){
 			messg = 0b00000000000100000001000001010101;
 			messg = append_current_mode(messg); 
 			g_dest_state = MANUAL_ST;
-			mode_sw_action();
+			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
 			g_dest_state = NO_WHERE;
 			break;
 
@@ -422,133 +383,6 @@ void mon_delay_ms(unsigned int ms)
  * @return     	0 if no error,
  * 				-1 if there is error
  */
-uint32_t messg_encode_send_js(int *axis, int *button){
-	// variable declaration
-	int i;
-	uint32_t messg;
-
-	// check js values
-	// printf("Axes: ");
-	for (i = 0; i < 6; i++){
-		// printf("%2d:%6d ", i, axis[i]);
-		if(i==0 && axis[i]!=0){
-			// roll
-			if(axis[i]<-THRESHOLD_READ){
-				// roll counterclockwise
-				messg = 0b10001111000001100000001001010101;
-				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
-				rs232_putchar(messg);
-			}
-			else if(axis[i]>THRESHOLD_READ){
-				// roll clockwise
-				messg = 0b10001110000001110000001001010101;
-				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
-				rs232_putchar(messg);
-			}
-		}
-		else if(i==1 && axis[i]!=0){
-			// pitch
-			if(axis[i]<-THRESHOLD_READ){
-				// pitch up
-				messg = 0b10101100001101000000001001010101;
-				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
-				rs232_putchar(messg);
-			}
-			else if(axis[i]>THRESHOLD_READ){
-				// pitch down
-				messg = 0b10111100001001000000001001010101;
-				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
-				rs232_putchar(messg);
-			}
-
-		}
-		else if(i==2 && axis[i]!=0){
-			// yaw
-			if(axis[i]<-THRESHOLD_READ){
-				// yaw counterclockwise
-				messg = 0b10101111001001110000001001010101;
-				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
-				rs232_putchar(messg);
-			}
-			else if(axis[i]>THRESHOLD_READ){
-				// yaw clockwise
-				messg = 0b10111110001101100000001001010101;
-				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
-				rs232_putchar(messg);
-			}
-
-		}
-		else if(i==3 && axis[i]!=0){
-			// lift
-			if(axis[i]<-THRESHOLD_READ){
-				// lift up
-				messg = 0b10111111001101110000001001010101;
-				if (g_current_state != SAFE_ST) messg = append_current_mode(messg); 
-				rs232_putchar(messg);
-			}
-			else if(axis[i]>THRESHOLD_READ){
-				// lift down
-				messg = 0b10101110001001100000001001010101;
-				if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
-				rs232_putchar(messg);
-			}
-
-		}
-		// else if(i==4 && axis[i]!=0){
-		// 	// small button on js (left&right)
-		// }
-		// else if(i==5 && axis[i]!=0){
-		// 	// small button on js (forward&backward)
-		// }
-	}
-
-	// check button values
-	// printf("Buttons: ");
-	for (i = 0; i < 12; i++){
-		// printf("%2d:%s ", i, button[i] ? "on " : "off");
-		if(i==0 && button[i]){// button 1(fire button) pressed
-			messg = 0b00000000000000001111000001010101;
-			messg = append_current_mode(messg); 
-			ESC = true;
-			mode_sw_action();
-			rs232_putchar(messg);
-		}
-		if(i==6 && button[i]){// button 7 pressed, drone switches to SAFE_ST
-			messg = 0b00000000000000000001000001010101;
-			messg = append_current_mode(messg); 
-			g_dest_state = SAFE_ST;
-			mode_sw_action();
-			g_dest_state = NO_WHERE;
-			rs232_putchar(messg);
-		}
-		if(i==7 && button[i]){// keyboard 8 pressed, drone switches to PANIC_ST
-			messg = 0b00000000100000000001000001010101;
-			messg = append_current_mode(messg); 
-			g_dest_state = PANIC_ST;
-			mode_sw_action();
-			g_dest_state = NO_WHERE;
-			rs232_putchar(messg);
-		}
-		if(i==8 && button[i]){// keyboard 9 pressed drone switches to MANUAL_ST
-			messg = 0b00000000000100000001000001010101;
-			messg = append_current_mode(messg); 
-			g_dest_state = MANUAL_ST;
-			mode_sw_action();
-			g_dest_state = NO_WHERE;
-			rs232_putchar(messg);
-		}
-		// if(i==9 && button[9]){// keyboard 10 pressed drone switches to CALIBRATION_ST
-		// 	rs232_putchar(messg);
-		// }
-		// if(i==10 && button[10]){// keyboard 11 pressed drone switches to YAWCONTROL_ST
-		// 	rs232_putchar(messg);
-		// }
-		// if(i==11 && button[11]){// keyboard 12 pressed drone switches to FULLCONTROL_ST
-		// 	rs232_putchar(messg);
-		// }
-	}
-	return 0;
-}
 
 uint32_t GetTimeStamp() {
     struct timeval tv;
@@ -567,6 +401,7 @@ int main(int argc, char **argv)
 	term_initio();
 	rs232_open();
 	term_puts("TER: Type ^C to exit\n");
+
 
 	/* discard any incoming text
 	 */
@@ -610,7 +445,9 @@ int main(int argc, char **argv)
 			rs232_putchar(messg_encode(c));
 			
 			if (g_current_state == PANIC_ST){
-				//delay_ms(300);
+				// c = rs232_getchar(); //delay until character received again
+				// term_putchar(c);
+				// term_puts("Character received from FCB, leaving panic mode on PC-side");
 				g_current_state = SAFE_ST;
 			}
 			
