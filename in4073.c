@@ -278,7 +278,7 @@ int main(void)
 		if (g_current_state == PANIC_ST){
 				printf("QR: Entered PANIC MODE.");
 				int motor_speed = PANIC_MODE_MOTOR_SPEED;
-				while (i) {
+				while (motor_speed > 0) {
 					ae[0] = motor_speed;
 					ae[1] = motor_speed;
 					ae[2] = motor_speed;

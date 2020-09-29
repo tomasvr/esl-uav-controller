@@ -37,6 +37,8 @@
 #define BLUE		30
 #define INT_PIN		5
 
+#define PANIC_MODE_MOTOR_SPEED 400
+
 bool demo_done;
 
 // Control
