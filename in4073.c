@@ -246,49 +246,6 @@ void ctrl_action(){
 	}
 }
 
-// void *ctrl_action_js(void *vargp){
-// 	int *myid = (int *)vargp;
-// 	while(!demo_done){
-// 		// M0
-// 		if(g_current_m0_state != M0_REMAIN){
-// 			if(g_current_m0_state == M0_ASCENDING){
-// 				increase_motor_speed(ae, 0);
-// 			}
-// 			else if(g_current_m0_state == M0_DESCENDING){
-// 				decrease_motor_speed(ae, 0);
-// 			}
-// 		}
-// 		// M1
-// 		if(g_current_m1_state != M1_REMAIN){
-// 			if(g_current_m1_state == M1_ASCENDING){
-// 				increase_motor_speed(ae, 1);
-// 			}
-// 			else if(g_current_m1_state == M1_DESCENDING){
-// 				decrease_motor_speed(ae, 1);
-// 			}
-// 		}
-// 		// M2
-// 		if(g_current_m2_state != M2_REMAIN){
-// 			if(g_current_m2_state == M2_ASCENDING){
-// 				increase_motor_speed(ae, 2);
-// 			}
-// 			else if(g_current_m2_state == M2_DESCENDING){
-// 				decrease_motor_speed(ae, 2);
-// 			}
-// 		}
-// 		// M3
-// 		if(g_current_m3_state != M3_REMAIN){
-// 			if(g_current_m3_state == M3_ASCENDING){
-// 				increase_motor_speed(ae, 3);
-// 			}
-// 			else if(g_current_m3_state == M3_DESCENDING){
-// 				decrease_motor_speed(ae, 3);
-// 			}
-// 		}
-// 		nrf_delay_ms(100); // 0.1s delay
-// 	}
-// }
-
 void mode_sw_action(){
 	if (g_current_state == SAFE_ST){
 		if (g_dest_state == PANIC_ST) {

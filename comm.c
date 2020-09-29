@@ -54,8 +54,6 @@ enum COMM_TYPE find_comm_type (uint8_t comm_type){
 		current_comm_type = CTRL_COMM;	
 	}else if(comm_type == 0x10){		// 0001 -> MODE_SW_COMM
 		current_comm_type = MODE_SW_COMM;
-	}else if(comm_type == 0x20){		// 0010 -> JS_COMM
-		current_comm_type = JS_COMM;
 	}else if(comm_type == 0x80){		// 1000 -> BAT_INFO
 		current_comm_type = BAT_INFO;
 	}else if(comm_type == 0x90){		// 1001 -> SYS_LOG
