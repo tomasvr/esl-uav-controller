@@ -51,31 +51,25 @@ int check_mode_sync (uint8_t state, STATE_t g_current_state){
 }
 
 COMM_TYPE find_comm_type (uint8_t comm_type){
-	COMM_TYPE current_comm_type = NO_COMM;
-	if (comm_type == 0x00) {			// 0000 -> CTRL_COMM
-		current_comm_type = CTRL_COMM;	
-	}else if(comm_type == 0x10){		// 0001 -> MODE_SW_COMM
-		current_comm_type = MODE_SW_COMM;
-	}else if(comm_type == 0x80){		// 1000 -> BAT_INFO
-		current_comm_type = BAT_INFO;
-	}else if (comm_type == 0x90){		// 1001 -> USB_CHECK_COMM
-		current_comm_type = USB_CHECK_COMM;
-	}else if (comm_type == 0xb0){		// 1011 -> SYS_LOG
-		current_comm_type = SYS_LOG;
-	}else if (comm_type == 0xf0){
-		current_comm_type = ESC_COMM;	// 1111 -> ESC
-	}else current_comm_type = NO_COMM;
+	COMM_TYPE current_comm_type;
+	if 		(comm_type == 0x00) current_comm_type = CTRL_COMM;			// 0000 -> CTRL_COMM
+	else if (comm_type == 0x10) current_comm_type = MODE_SW_COMM;		// 0001 -> MODE_SW_COMM
+	else if (comm_type == 0x80) current_comm_type = BAT_INFO;			// 1000 -> BAT_INFO
+	else if (comm_type == 0x90) current_comm_type = USB_CHECK_COMM;		// 1001 -> USB_CHECK_COMM
+	else if (comm_type == 0xb0) current_comm_type = SYS_LOG;			// 1011 -> SYS_LOG
+	else if (comm_type == 0xf0) current_comm_type = ESC_COMM;			// 1111 -> ESC
+	else 						current_comm_type = NO_COMM;
 	return current_comm_type;
 }
 
 STATE_t find_dest_state(uint8_t messg){
 	STATE_t dest_state = NO_WHERE;
-	if (messg == 0x00) dest_state = SAFE_ST;
+	if 		(messg == 0x00) dest_state = SAFE_ST;
 	else if (messg == 0x80) dest_state = PANIC_ST;
 	else if (messg == 0x10) dest_state = MANUAL_ST;
 	else if (messg == 0x20) dest_state = CALIBRATION_ST;
 	else if (messg == 0x30) dest_state = YAWCONTROL_ST;
 	else if (messg == 0x40) dest_state = FULLCONTROL_ST;
-	else dest_state = NO_WHERE;
+	else 					dest_state = NO_WHERE;
 	return dest_state;
 }
