@@ -11,6 +11,10 @@
 #define STEP_SIZE 10
 #define UPPER_LIMIT 1000
 
+#define YAW_P_STEP_SIZE 1
+#define YAW_P_UPPER_LIMIT 50
+#define YAW_P_LOWER_LIMIT 1 
+
 // the states that a motor has
 typedef enum {
 		MOTOR_UP,
@@ -38,7 +42,9 @@ typedef struct {
 	int16_t actual_speed_minus;
 } YAW_CONTROL_T;
 
-void yaw_control_speed_calculate();
-void yaw_control_init();
+void yaw_control_speed_calculate(YAW_CONTROL_T*);
+void yaw_control_init(YAW_CONTROL_T*);
+void increase_p_value(YAW_CONTROL_T*);
+void decrease_p_value(YAW_CONTROL_T*);
 
 #endif // CONTROL_H__

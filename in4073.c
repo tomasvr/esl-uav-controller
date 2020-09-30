@@ -66,6 +66,8 @@ MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m2_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m3_state = MOTOR_REMAIN;
 
+YAW_CONTROL_T yaw_control;
+
 int find_motor_state(uint8_t messg){
 	uint8_t m_ctrl_1 = messg & 0xf0; 		
 	uint8_t m_ctrl_2 = messg & 0x0f;
@@ -226,9 +228,11 @@ void messg_decode(uint8_t messg){
 		printf("  CHANGE_P_COMM message: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
 	 		if (messg == 0x01) {
 	 			printf("P CONTROL UP\n");
+	 			increase_p_value(&yaw_control);
 	 		}
 	 		if (messg == 0x00) {
 		 		printf("P CONTROL DOWN\n");
+		 		decrease_p_value(&yaw_control);
 	 		}
 	 	}
 
@@ -317,9 +321,7 @@ int main(void)
 	demo_done = false;
 	usb_comm_last_received = get_time_us();
 
-
-	YAW_CONTROL_T yaw_control;
-	yaw_control_init(yaw_control);
+	yaw_control_init(&yaw_control);
 
 	printf("    TIME   | AE0 AE1 AE2 AE3 |   PHI    THETA   PSI |     SP     SQ     SR |  BAT | TEMP | PRESSURE | MODE \n");
 	while (!demo_done)
@@ -365,7 +367,7 @@ int main(void)
 			//input: setpoint signal + psi signal
 			//output: motor speed
 			//setpoint = 0, yaw rate = 0
-			yaw_control_speed_calculate(yaw_control);
+			yaw_control_speed_calculate(&yaw_control);
 		}
 
 	}
