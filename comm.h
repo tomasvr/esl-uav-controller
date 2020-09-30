@@ -22,14 +22,15 @@
 // 	};
 
 // the command types during communication
-enum COMM_TYPE {
+typedef enum {
 		CTRL_COMM,
 		MODE_SW_COMM,
 		BAT_INFO,
 		SYS_LOG,
 		ESC_COMM,
+		USB_CHECK_COMM,
 		NO_COMM
-	};
+	} COMM_TYPE;
 
 
 /**
@@ -40,7 +41,7 @@ enum COMM_TYPE {
 // uint32_t append_current_mode(uint32_t messg, enum STATE g_current_state);
 int check_mode_sync (uint8_t state, STATE_t g_current_state);
 
-enum COMM_TYPE find_comm_type (uint8_t comm_type);
+COMM_TYPE find_comm_type (uint8_t comm_type);
 
 STATE_t find_dest_state(uint8_t messg);
 

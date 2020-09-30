@@ -53,7 +53,10 @@
 
 #define JS_DEV	"/dev/input/js0"
 #define THRESHOLD_READ 20000
-#define POLL_DELAY 100000 // 1000000us = 1000ms = 1s
+#define POLL_DELAY 1000000 // 1000000us = 1000ms = 1s
+
+#define USB_SEND_CHECK_INTERVAL 1000000 // Control how often USB check messages are send
+#define USB_CHECK_MESSAGE 0 // Message ID for check USB type message (no need to change)
 
 //#define ENABLE_JOYSTICK
 
@@ -268,7 +271,12 @@ uint32_t append_current_mode(uint32_t messg){
 uint32_t messg_encode(int c){
 	uint32_t messg;
 	switch(c){
-		
+
+		case USB_CHECK_MESSAGE:// USB_COMM_CHECK_MESSAGE //todo: take other number than 99? (i chose it randomly)
+			printf("entered case for usb check message\n");
+			messg = 0b00000000000000001001000001010101; // 000000000-00000000-11110000-01010101 (empty - empty - USB_check_comm - startbit)
+			if (g_current_state != SAFE_ST) messg = append_current_mode(messg); //TODO: WHY NOT APPEND IN SAFE STATE?
+			break;
 		case 'a':
 			// keyboard 'a' pressed, drone lift up
 			messg = 0b10111111001101110000000101010101; // keyboard 'a' pressed, drone lift up, this command has a default mode -> MANUAL_ST
@@ -317,7 +325,7 @@ uint32_t messg_encode(int c){
 			break;
 
 		case 48: // keyboard '0' pressed, dorne switches to SAFE_ST
-			messg = 0b00000000000000000001000001010101;
+			messg = 0b00000000000000000001000001010101; //000000000-00000000-00010000-01010101 (empty - CTRL_COMM - MODE_SW_COMM - startbit)
 			messg = append_current_mode(messg); 
 			g_dest_state = SAFE_ST;
 			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
@@ -333,7 +341,7 @@ uint32_t messg_encode(int c){
 			break;
 
 		case 50: // keyboard '2' pressed dorne switches to MANUAL_ST
-			messg = 0b00000000000100000001000001010101;
+			messg = 0b00000000000100000001000001010101; 
 			messg = append_current_mode(messg); 
 			g_dest_state = MANUAL_ST;
 			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
@@ -387,8 +395,13 @@ void mon_delay_ms(unsigned int ms)
 uint32_t GetTimeStamp() {
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    return tv.tv_sec*(uint32_t)1000000+tv.tv_usec;
+    return tv.tv_sec*(uint32_t)1000000+tv.tv_usec; //todo: check for overflow?
 }
+
+void send_USB_check_message() {
+	rs232_putchar(messg_encode(USB_CHECK_MESSAGE));
+}
+
 
 /*----------------------------------------------------------------
  * main -- execute terminal
@@ -408,6 +421,10 @@ int main(int argc, char **argv)
 	while ((c = rs232_getchar_nb()) != -1)
 		fputc(c,stderr);
 
+
+	uint32_t current_time;
+	uint32_t last_USB_check_time = GetTimeStamp();
+
 #ifdef ENABLE_JOYSTICK
 	// js: initializaiton
 	int 			fd;
@@ -420,9 +437,9 @@ int main(int argc, char **argv)
 	fcntl(fd, F_SETFL, O_NONBLOCK);// non-blocking mode
 
 	uint32_t last_poll_time = GetTimeStamp();
-	uint32_t current_time;
 	time2poll = true;
 #endif
+
 	/* send & receive
 	 */
 	while(true){
@@ -431,6 +448,16 @@ int main(int argc, char **argv)
 		 *			communication: pc -> drone
 		 *---------------------------------------------------
 		 */
+
+		/* Send USB connection message */
+		current_time = GetTimeStamp();
+		if((current_time - last_USB_check_time) >= USB_SEND_CHECK_INTERVAL) {
+			printf("Time to send USB check message\n");
+			send_USB_check_message();
+			last_USB_check_time = current_time;
+		}
+
+
 		if ((c = term_getchar_nb()) != -1){
 
 			// distinguish the characters and arrows
