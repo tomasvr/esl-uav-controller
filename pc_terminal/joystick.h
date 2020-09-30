@@ -31,6 +31,14 @@
 
 #include <asm/types.h>
 #include <linux/input.h>
+#include <inttypes.h>
+#include <stdbool.h> 
+
+#include "../states.h"
+
+extern STATE_t g_current_state;
+extern STATE_t g_dest_state;
+#define THRESHOLD_READ 20000
 
 /*
  * Version
@@ -124,5 +132,14 @@ struct JS_DATA_SAVE_TYPE {
 	struct JS_DATA_TYPE JS_SAVE;
 	struct JS_DATA_TYPE JS_CORR;
 };
+
+/**
+ * @brief      Encodes joystick commands to a message
+ *
+ * @param      axis             The state of the axis
+ * @param      button           The state of the button
+ *
+ */
+void messg_encode_send_js(int *axis, int *button);
 
 #endif /* _LINUX_JOYSTICK_H */

@@ -17,34 +17,33 @@
  */
 
 
-int check_mode_sync (uint8_t state, enum STATE g_current_state){
+int check_mode_sync (uint8_t state, STATE_t g_current_state){
 	int mode_synced = 0; 
 
 	if (state == 0x00){					// 0000 -> SAFE_ST
-		enum STATE tstate = SAFE_ST;
+		STATE_t tstate = SAFE_ST;
 		if (g_current_state == tstate) mode_synced = 1;
 	}
 	if (state == 0x01){					// 0001 -> MANUAL_ST
-		enum STATE tstate = MANUAL_ST;
+		STATE_t tstate = MANUAL_ST;
 		if (g_current_state == tstate) mode_synced = 1;
 	}
 	if (state == 0x02){					// 0010 -> CALIBRATION_ST
-		enum STATE tstate = CALIBRATION_ST;
+		STATE_t tstate = CALIBRATION_ST;
 		if (g_current_state == tstate) mode_synced = 1;
 	}
 	if (state == 0x03){					// 0011 -> YAWCONTROL_ST
-		enum STATE tstate = YAWCONTROL_ST;
+		STATE_t tstate = YAWCONTROL_ST;
 		if (g_current_state == tstate) mode_synced = 1;
 	}
 	if (state == 0x04){					// 0100 -> FULLCONTROL_ST
-		enum STATE tstate = FULLCONTROL_ST;
+		STATE_t tstate = FULLCONTROL_ST;
 		if (g_current_state == tstate) mode_synced = 1;
 	}
 	if (state == 0x08){					// 0000 -> SAFE_ST
-		enum STATE tstate = PANIC_ST;
+		STATE_t tstate = PANIC_ST;
 		if (g_current_state == tstate) mode_synced = 1;
 	}
-	
 	return mode_synced;
 }
 
@@ -64,8 +63,8 @@ enum COMM_TYPE find_comm_type (uint8_t comm_type){
 	return current_comm_type;
 }
 
-enum STATE find_dest_state(uint8_t messg){
-	enum STATE dest_state = NO_WHERE;
+STATE_t find_dest_state(uint8_t messg){
+	STATE_t dest_state = NO_WHERE;
 	if (messg == 0x00) dest_state = SAFE_ST;
 	else if (messg == 0x80) dest_state = PANIC_ST;
 	else if (messg == 0x10) dest_state = MANUAL_ST;
