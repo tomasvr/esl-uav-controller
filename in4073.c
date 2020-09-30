@@ -284,20 +284,23 @@ void execute (){
 uint8_t calibration_counter = 0;
 int16_t sensor_calib = 0, sensor_sum = 0;
 int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
+int16_t calib_return;
+
 int16_t sensor_calibration(int16_t sensor_ori, uint8_t num)//average
 {
 	int16_t sensor_temp = 0;
 	sensor_temp = sensor_ori;
 	sensor_sum += sensor_temp;
 	calibration_counter++;
-	if(calibration_counter == 3){
+	if(calibration_counter == num){
 		sensor_calib = sensor_sum / num;
-		calibration_counter = 0; sensor_sum = 0;
-		printf("| %6d \n", sensor_calib);
+		sensor_sum = 0;
+		calibration_counter = 0;
+		printf("| Calib done: %6d \n", sensor_calib);
+		return sensor_calib;
 	}
-	// else
-	// 	printf("||\n");
-	return sensor_calib;
+	// not calibrated yet
+	return -1;
 }
 
 
@@ -349,7 +352,7 @@ int main(void)
 			printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 			printf("%4d \n", g_current_state);
 
-			sensor_calibration(psi, 3); psi_calib = sensor_calib;
+			
 
 			clear_timer_flag();
 		}
@@ -361,6 +364,14 @@ int main(void)
 		}
 		if (g_current_state == PANIC_ST){
 			enter_panic_mode(false); //enter panic mode for any reason other than cable
+		}
+		if (g_current_state == CALIBRATION_ST) {
+			calib_return = sensor_calibration(psi, 10); 
+			if (calib_return != -1) {
+				psi_calib = sensor_calib;
+				printf("\n PSI CALIB DONE, PSI_CALIB: %6d\n", psi_calib);	
+				g_current_state = SAFE_ST;
+			}
 		}
 		if (g_current_state == YAWCONTROL_ST){
 			printf("QR: Entered YAW CONTROL MODE.");

@@ -356,6 +356,20 @@ uint32_t messg_encode(int c){
 			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
 			g_dest_state = NO_WHERE;
 			break;
+		case 51: // keyboard '3' switches drone to calibration mode
+			messg = 0b00000000001000000001000001010101; 
+			messg = append_current_mode(messg); 
+			g_dest_state = CALIBRATION_ST;
+			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
+			g_dest_state = NO_WHERE;
+			break;
+		case 52: // keyboard '4' switches drone to yaw control mode
+			messg = 0b00000000001100000001000001010101; 
+			messg = append_current_mode(messg); 
+			g_dest_state = YAWCONTROL_ST;
+			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
+			g_dest_state = NO_WHERE;
+			break;
 
 		default:
 			messg = -1;
