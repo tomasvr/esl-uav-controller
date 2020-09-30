@@ -24,8 +24,9 @@ STATE_t mode_sw_action(char caller[], STATE_t g_current_state, STATE_t g_dest_st
 			g_current_state = g_dest_state;
 		}
 	}
-	else if (g_current_state != SAFE_ST && g_current_state != PANIC_ST){
-		if (g_dest_state == PANIC_ST || g_dest_state == g_current_state){
+
+	else if (g_current_state != SAFE_ST && g_current_state != PANIC_ST){ //TODO fix this logic
+		if (g_dest_state == PANIC_ST || g_dest_state == g_current_state || g_dest_state == CALIBRATION_ST || g_dest_state == YAWCONTROL_ST){
 			g_current_state = g_dest_state;
 		} else {
 			printf("%s: Can not directly switch to other modes else than PANIC MODE in the current mode.\n", caller);

@@ -66,6 +66,8 @@ MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m2_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m3_state = MOTOR_REMAIN;
 
+YAW_CONTROL_T yaw_control;
+
 int find_motor_state(uint8_t messg){
 	uint8_t m_ctrl_1 = messg & 0xf0; 		
 	uint8_t m_ctrl_2 = messg & 0x0f;
@@ -170,7 +172,7 @@ void messg_decode(uint8_t messg){
 	 	}
 
 		int result = check_mode_sync(state, g_current_state);
-		printf("check_mode_sync result: %d\n", result);
+		//printf("check_mode_sync result: %d\n", result);
 		//assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?????????????????
 	}
 
@@ -222,8 +224,20 @@ void messg_decode(uint8_t messg){
 	 		//do nothing
 	 	}
 
+	 	else if (g_current_comm_type == CHANGE_P_COMM && FRAG_COUNT == 2) {
+		printf("  CHANGE_P_COMM message: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
+	 		if (messg == 0x01) {
+	 			printf("P CONTROL UP\n");
+	 			increase_p_value(&yaw_control);
+	 		}
+	 		if (messg == 0x00) {
+		 		printf("P CONTROL DOWN\n");
+		 		decrease_p_value(&yaw_control);
+	 		}
+	 	}
+
 	 	else {
-	      	printf("UNKNOWN COMM TYPE RECEIVED AT FCB SIDE \n");
+	      	printf("UNKNOWN COMM TYPE OR TRASHED MESSG RECEIVED AT FCB SIDE \n");
 	 	}
 	}
 }
@@ -270,21 +284,27 @@ void execute (){
 uint8_t calibration_counter = 0;
 int16_t sensor_calib = 0, sensor_sum = 0;
 int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
+int16_t calib_return;
+bool calibration_done = false;
+
 int16_t sensor_calibration(int16_t sensor_ori, uint8_t num)//average
 {
 	int16_t sensor_temp = 0;
 	sensor_temp = sensor_ori;
 	sensor_sum += sensor_temp;
 	calibration_counter++;
-	if(calibration_counter == 3){
+	if(calibration_counter == num){
 		sensor_calib = sensor_sum / num;
-		calibration_counter = 0; sensor_sum = 0;
-		printf("| %6d \n", sensor_calib);
+		sensor_sum = 0;
+		calibration_counter = 0;
+		calibration_done = true;
+		printf("| Calib done: %6d \n", sensor_calib);
+		return sensor_calib;
 	}
-	else
-		printf("||\n");
-	return sensor_calib;
+	// not calibrated yet
+	return -1;
 }
+
 
 /*------------------------------------------------------------------
  * main -- everything you need is here :)
@@ -306,6 +326,8 @@ int main(void)
 	demo_done = false;
 	usb_comm_last_received = get_time_us();
 
+	yaw_control_init(&yaw_control);
+
 	printf("    TIME   | AE0 AE1 AE2 AE3 |   PHI    THETA   PSI |     SP     SQ     SR |  BAT | TEMP | PRESSURE | MODE \n");
 	while (!demo_done)
 	{
@@ -316,12 +338,12 @@ int main(void)
 		execute();
 
 		// check if USB connection is still alive by checking last time received
-		if (counter++%100 == 0) check_USB_connection_alive(); // use counter so this doesn't happen too often
+		if (counter % 100 == 0) check_USB_connection_alive(); // use counter so this doesn't happen too often
 
 		if (check_timer_flag()) 
 		{
-			if (counter++%20 == 0) nrf_gpio_pin_toggle(BLUE);
-
+			if (counter % 20 == 0) nrf_gpio_pin_toggle(BLUE);
+ 
 			adc_request_sample();
 			read_baro();
 
@@ -332,7 +354,7 @@ int main(void)
 			printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 			printf("%4d \n", g_current_state);
 
-			sensor_calibration(phi, 3); phi_calib = sensor_calib;
+			
 
 			clear_timer_flag();
 		}
@@ -345,6 +367,29 @@ int main(void)
 		if (g_current_state == PANIC_ST){
 			enter_panic_mode(false); //enter panic mode for any reason other than cable
 		}
+		if (g_current_state == CALIBRATION_ST) {
+			calib_return = sensor_calibration(psi, 10); 
+			if (calib_return != -1) {
+				psi_calib = sensor_calib;
+				printf("\n PSI CALIB DONE, PSI_CALIB: %6d\n", psi_calib);	
+				g_current_state = SAFE_ST;
+			}
+		}
+		if (g_current_state == YAWCONTROL_ST){
+			if (counter % 200 == 0) {
+				if (calibration_done) {
+					//input: setpoint signal + psi signal
+					//output: motor speed
+					//setpoint = 0, yaw rate = 0
+					yaw_control_speed_calculate(&yaw_control, psi);
+				} else {
+					printf("\n DO CALIBRATION BEFORE YAW CONTROL MODE! \n");
+				}
+			}
+
+		
+		}
+		counter++;
 	}
 
 	printf("\n\t Goodbye \n\n");

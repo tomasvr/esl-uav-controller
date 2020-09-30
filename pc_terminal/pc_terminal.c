@@ -316,6 +316,15 @@ uint32_t messg_encode(int c){
 			messg = 0b10111110001101100000000101010101; // keyboard 'w' pressed, drone yaw up(right), this command has a default mode -> MANUAL_ST
 			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 			break;
+		case 'u':
+			messg = 0b00000000000000010111000001010101; // keyboard 'u' pressed, increase P yaw control
+			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+			break;
+		case 'j':
+			messg = 0b00000000000000000111000001010101; // keyboard 'j' pressed, decrease P yaw control
+			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+			break;
+
 
 		case 27: // keyboard 'ESC' pressed, drone switches to PANIC_ST
 			messg = 0b00000000000000001111000001010101;
@@ -344,6 +353,20 @@ uint32_t messg_encode(int c){
 			messg = 0b00000000000100000001000001010101; 
 			messg = append_current_mode(messg); 
 			g_dest_state = MANUAL_ST;
+			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
+			g_dest_state = NO_WHERE;
+			break;
+		case 51: // keyboard '3' switches drone to calibration mode
+			messg = 0b00000000001000000001000001010101; 
+			messg = append_current_mode(messg); 
+			g_dest_state = CALIBRATION_ST;
+			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
+			g_dest_state = NO_WHERE;
+			break;
+		case 52: // keyboard '4' switches drone to yaw control mode
+			messg = 0b00000000001100000001000001010101; 
+			messg = append_current_mode(messg); 
+			g_dest_state = YAWCONTROL_ST;
 			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
 			g_dest_state = NO_WHERE;
 			break;
