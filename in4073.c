@@ -45,6 +45,11 @@
 #include "in4073.h"
 #include <assert.h>
 
+#define USB_COMM_INTERVAL_THRESHOLD 2000000 // in us (1000000 = 1 second)    
+
+uint32_t usb_comm_last_received;
+uint32_t current_time;
+
 // each packet includes 4 fragments
 int FRAG_COUNT = 0;
 
@@ -53,7 +58,7 @@ STATE_t g_current_state = SAFE_ST;
 STATE_t g_dest_state = NO_WHERE;
 
 // Communication variables initalization
-enum COMM_TYPE g_current_comm_type = NO_COMM;
+COMM_TYPE g_current_comm_type = NO_COMM;
 
 // Motor variables initalization
 MOTOR_CTRL g_current_m0_state = MOTOR_REMAIN;
@@ -93,6 +98,34 @@ int find_motor_state(uint8_t messg){
 	return result;
 }
 
+void enter_panic_mode(){
+	printf("QR: Entered PANIC MODE.");
+	int motor_speed = PANIC_MODE_MOTOR_SPEED;
+	while (motor_speed >= 0) {
+		ae[0] = motor_speed;
+		ae[1] = motor_speed;
+		ae[2] = motor_speed;
+		ae[3] = motor_speed;
+		update_motors(); //or run filters_and_control() ?
+		nrf_delay_ms(1000);
+		motor_speed = motor_speed - 100;
+	}
+	g_current_state = SAFE_ST;
+}
+
+void USB_comm_update_received() {
+	printf("USB comm check has been received!\n");
+	current_time = get_time_us();
+	usb_comm_last_received = current_time;
+}
+
+void check_USB_connection_alive() {
+	current_time = get_time_us();
+	if (current_time - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: WHAT HAPPENS ON OVERFLOW!
+		enter_panic_mode();
+	}
+}
+
 /*------------------------------------------------------------------
  * messg_decode -- decode messages
  *------------------------------------------------------------------
@@ -110,15 +143,24 @@ void messg_decode(uint8_t messg){
 	 * last 4 bits 	-> mode/state { SAFE_ST , PANIC_ST , MANUAL_ST , CALIBRATION_ST , YAWCONTROL_ST , FULLCONTROL_ST }
 	 *--------------------------------------------------------------
 	 */
+	
+	//printf("  messg: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
 	if (FRAG_COUNT == 3){
-		uint8_t comm_type = messg & 0xf0;
-		uint8_t state = messg & 0x0f;
+		uint8_t comm_type = messg & 0xf0; //take left most 4 bits from current byte
+		uint8_t state = messg & 0x0f;     //take right most 4 bits from current byte
+
+		//printf("  comm_type: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(comm_type));
 
 		g_current_comm_type = find_comm_type(comm_type);
 		//assert( == 1 && "QR: No such command found.");
 
+	 	if (g_current_comm_type == USB_CHECK_COMM) {
+	 		USB_comm_update_received();
+	 	}
+
 		int result = check_mode_sync(state, g_current_state);
-		// assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?????????????????
+		printf("check_mode_sync result: %d\n", result);
+		//assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?????????????????
 	}
 
 	/*--------------------------------------------------------------
@@ -160,10 +202,18 @@ void messg_decode(uint8_t messg){
 		 * last 4 bits 	-> default 0
 		 *--------------------------------------------------------------
 		 */
-	 	if (g_current_comm_type == MODE_SW_COMM && FRAG_COUNT == 2){
+	 	else if (g_current_comm_type == MODE_SW_COMM && FRAG_COUNT == 2){
 	 		g_dest_state = find_dest_state(messg);
 	 	}
 
+	 	/* USB_comm_check message, so we don't care about the contents of frag 2 and 1 */
+	 	else if (g_current_comm_type == USB_CHECK_COMM) {
+	 		//do nothing
+	 	}
+
+	 	else {
+	      	printf("UNKNOWN COMM TYPE RECEIVED AT FCB SIDE \n");
+	 	}
 	}
 }
 
@@ -243,6 +293,7 @@ int main(void)
 
 	uint32_t counter = 0;
 	demo_done = false;
+	usb_comm_last_received = get_time_us();
 
 	printf("    TIME   | AE0 AE1 AE2 AE3 |   PHI    THETA   PSI |     SP     SQ     SR |  BAT | TEMP | PRESSURE | MODE \n");
 	while (!demo_done)
@@ -252,6 +303,9 @@ int main(void)
 			process_key( dequeue(&rx_queue) );
 		}
 		execute();
+
+		// check if USB connection is still alive by checking last time received
+		if (counter++%100 == 0) check_USB_connection_alive(); // use counter so this doesn't happen too often
 
 		if (check_timer_flag()) 
 		{
@@ -278,18 +332,7 @@ int main(void)
 			run_filters_and_control();
 		}
 		if (g_current_state == PANIC_ST){
-				printf("QR: Entered PANIC MODE.");
-				int motor_speed = PANIC_MODE_MOTOR_SPEED;
-				while (motor_speed >= 0) {
-					ae[0] = motor_speed;
-					ae[1] = motor_speed;
-					ae[2] = motor_speed;
-					ae[3] = motor_speed;
-					update_motors(); //or run filters_and_control() ?
-					nrf_delay_ms(1000);
-					motor_speed = motor_speed - 100;
-				}
-			g_current_state = SAFE_ST;
+			enter_panic_mode();
 		}
 	}
 
