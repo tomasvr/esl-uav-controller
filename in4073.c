@@ -343,7 +343,7 @@ int main(void)
 			run_filters_and_control();
 		}
 		if (g_current_state == PANIC_ST){
-			enter_panic_mode(false); //enter panic mode for any reason other than cable detach
+			enter_panic_mode(false); //enter panic mode for any reason other than cable
 		}
 	}
 

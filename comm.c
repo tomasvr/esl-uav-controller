@@ -21,31 +21,17 @@ int check_mode_sync (uint8_t state, STATE_t g_current_state){
 	int mode_synced = 1; 
 	STATE_t tstate;
 
-	printf(" state: %d\n", state);
-	printf(" g_current_state: %d\n", g_current_state);
+	//printf(" state: %d\n", state);
+	//printf(" g_current_state: %d\n", g_current_state);
 
-	switch(state) {
-		case 0x00: 
-			tstate = SAFE_ST; 			// 0000 -> SAFE_ST
-			break;
-		case 0x01: 
-			tstate = MANUAL_ST; 		// 0001 -> MANUAL_ST
-			break;
-		case 0x02: 
-			tstate = CALIBRATION_ST; 	// 0010 -> CALIBRATION_ST
-			break;
-		case 0x03: 
-			tstate = YAWCONTROL_ST;		// 0011 -> YAWCONTROL_ST
-			break;
-		case 0x04: 
-			tstate = FULLCONTROL_ST;	// 0100 -> FULLCONTROL_ST
-			break;
-		case 0x08: 
-			tstate = PANIC_ST;          // 0000 -> SAFE_ST
-			break;
-		default:
-			perror("UNKNOWN STATE IN check_mode_sync");
-		}
+	if (state == 0x00) tstate = SAFE_ST;				// 0000 -> SAFE_ST
+	else if (state == 0x01) tstate = MANUAL_ST;			// 0001 -> MANUAL_ST
+	else if (state == 0x02) tstate = CALIBRATION_ST;	// 0010 -> CALIBRATION_ST	
+	else if (state == 0x03) tstate = YAWCONTROL_ST;		// 0011 -> YAWCONTROL_ST	
+	else if (state == 0x04) tstate = FULLCONTROL_ST;	// 0100 -> FULLCONTROL_ST
+	else if (state == 0x08) tstate = PANIC_ST;			// 1000 -> PANIC_ST
+	else perror("UNKNOWN STATE IN check_mode_sync");	// STATE UNKNOWN
+
 	if (g_current_state == tstate) mode_synced = 0;
 	return mode_synced;
 }
