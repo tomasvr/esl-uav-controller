@@ -97,17 +97,18 @@ void ctrl_action(){
 
 void update_motors(void)
 {					
-	#ifdef DEBUG_LED
-		// The 4 LEDS represent motor speed, blue = max speed, red = minimal speed
-		if (ae[0] == 0) switch_led(-1);
-		else if (ae[0] < 350) switch_led(RED);
-		else if (ae[0] >= 350 && ae[0] < 700) switch_led(YELLOW);
-		else switch_led(GREEN);
-	#endif
+	// if (g_current_state != SAFE_ST, PANIC_ST) //TODO
 		motor[0] = ae[0];
 		motor[1] = ae[1];
 		motor[2] = ae[2];
 		motor[3] = ae[3];
+#ifdef DEBUG_LED
+		// The 4 LEDS represent motor speed, blue = max speed, red = minimal speed
+		if (motor[0] == 0) switch_led(-1);
+		else if (motor[0] < 350) switch_led(RED);
+		else if (motor[0] >= 350 && motor[0] < 700) switch_led(YELLOW);
+		else switch_led(GREEN);
+#endif
 }
 
 void run_filters_and_control()

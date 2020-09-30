@@ -141,7 +141,7 @@ void messg_decode(uint8_t messg){
 		 *--------------------------------------------------------------
 		 */
 		 		
-	 	if (g_current_comm_type == CTRL_COMM){
+	 	if (g_current_comm_type == CTRL_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
 	 		int result;
 	 		result = find_motor_state(messg);
 	 		assert(result == 1 && "QR: Fail to find the motor state.");
@@ -165,7 +165,6 @@ void messg_decode(uint8_t messg){
 	 	}
 
 	}
-	return;
 }
 
 /*------------------------------------------------------------------
@@ -177,16 +176,18 @@ void process_key(uint8_t c){
 		FRAG_COUNT = 3;
 		return;
 	}
-	while (FRAG_COUNT > 0){
+	while (FRAG_COUNT > 0){ //TODO: why is there a return statement in this while loop?
 		messg_decode(c);
 		FRAG_COUNT--;
 		return;
 	}
-	nrf_gpio_pin_toggle(RED);
-	return;
 }
 
 void execute (){
+	if (g_current_comm_type == ESC_COMM){ // terminate program
+		demo_done = true;
+		g_current_comm_type = NO_COMM;
+	}
 	if (g_current_comm_type == CTRL_COMM){
 		ctrl_action();
 		// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
@@ -202,10 +203,7 @@ void execute (){
 		g_current_comm_type = NO_COMM;
 	}
 
-	if (g_current_comm_type == ESC_COMM){ //todo: shouldn't this be at the start of this function?
-		demo_done = true;
-		g_current_comm_type = NO_COMM;
-	}
+
 }
 
 uint8_t calibration_counter = 0;
@@ -249,8 +247,12 @@ int main(void)
 	printf("    TIME   | AE0 AE1 AE2 AE3 |   PHI    THETA   PSI |     SP     SQ     SR |  BAT | TEMP | PRESSURE | MODE \n");
 	while (!demo_done)
 	{
-		if (rx_queue.count) process_key( dequeue(&rx_queue) );
+		if (rx_queue.count) 
+		{
+			process_key( dequeue(&rx_queue) );
+		}
 		execute();
+
 		if (check_timer_flag()) 
 		{
 			if (counter++%20 == 0) nrf_gpio_pin_toggle(BLUE);
