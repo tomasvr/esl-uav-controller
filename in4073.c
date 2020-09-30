@@ -172,7 +172,7 @@ void messg_decode(uint8_t messg){
 	 	}
 
 		int result = check_mode_sync(state, g_current_state);
-		printf("check_mode_sync result: %d\n", result);
+		//printf("check_mode_sync result: %d\n", result);
 		//assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?????????????????
 	}
 
@@ -285,6 +285,7 @@ uint8_t calibration_counter = 0;
 int16_t sensor_calib = 0, sensor_sum = 0;
 int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
 int16_t calib_return;
+bool calibration_done = false;
 
 int16_t sensor_calibration(int16_t sensor_ori, uint8_t num)//average
 {
@@ -296,6 +297,7 @@ int16_t sensor_calibration(int16_t sensor_ori, uint8_t num)//average
 		sensor_calib = sensor_sum / num;
 		sensor_sum = 0;
 		calibration_counter = 0;
+		calibration_done = true;
 		printf("| Calib done: %6d \n", sensor_calib);
 		return sensor_calib;
 	}
@@ -336,12 +338,12 @@ int main(void)
 		execute();
 
 		// check if USB connection is still alive by checking last time received
-		if (counter++%100 == 0) check_USB_connection_alive(); // use counter so this doesn't happen too often
+		if (counter % 100 == 0) check_USB_connection_alive(); // use counter so this doesn't happen too often
 
 		if (check_timer_flag()) 
 		{
-			if (counter++%20 == 0) nrf_gpio_pin_toggle(BLUE);
-
+			if (counter % 20 == 0) nrf_gpio_pin_toggle(BLUE);
+ 
 			adc_request_sample();
 			read_baro();
 
@@ -374,13 +376,20 @@ int main(void)
 			}
 		}
 		if (g_current_state == YAWCONTROL_ST){
-			printf("QR: Entered YAW CONTROL MODE.");
-			//input: setpoint signal + psi signal
-			//output: motor speed
-			//setpoint = 0, yaw rate = 0
-			yaw_control_speed_calculate(&yaw_control);
-		}
+			if (counter % 200 == 0) {
+				if (calibration_done) {
+					//input: setpoint signal + psi signal
+					//output: motor speed
+					//setpoint = 0, yaw rate = 0
+					yaw_control_speed_calculate(&yaw_control, psi);
+				} else {
+					printf("\n DO CALIBRATION BEFORE YAW CONTROL MODE! \n");
+				}
+			}
 
+		
+		}
+		counter++;
 	}
 
 	printf("\n\t Goodbye \n\n");

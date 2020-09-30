@@ -42,7 +42,7 @@ typedef struct {
 	int16_t actual_speed_minus;
 } YAW_CONTROL_T;
 
-void yaw_control_speed_calculate(YAW_CONTROL_T*);
+void yaw_control_speed_calculate(YAW_CONTROL_T*, int16_t);
 void yaw_control_init(YAW_CONTROL_T*);
 void increase_p_value(YAW_CONTROL_T*);
 void decrease_p_value(YAW_CONTROL_T*);

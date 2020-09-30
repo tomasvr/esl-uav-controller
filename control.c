@@ -114,9 +114,11 @@ void yaw_control_init(YAW_CONTROL_T *yaw_control)
 	printf("yaw_control struct initalized");
 }
 
-void yaw_control_speed_calculate(YAW_CONTROL_T *yaw_control)//input js value here as set value;
+void yaw_control_speed_calculate(YAW_CONTROL_T *yaw_control, int16_t psi)//input js value here as set value;
 {
-	yaw_control->set_yaw_rate = 1; //interpret js value here
+	yaw_control->actual_yaw_rate = psi; //todo fix this (ugly hack)
+
+	yaw_control->set_yaw_rate = 0; //interpret js value here
 	yaw_control->err = yaw_control->set_yaw_rate - yaw_control->actual_yaw_rate;
 	yaw_control->integral += yaw_control->err;
 	yaw_control->speed_comm = yaw_speed_init;
