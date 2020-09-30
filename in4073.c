@@ -98,7 +98,10 @@ int find_motor_state(uint8_t messg){
 	return result;
 }
 
-void enter_panic_mode(){
+void enter_panic_mode(bool cable_detached){
+	if (g_current_state == SAFE_ST) {
+		return; // if in safe mode then you do not need to go to panic mode
+	}
 	printf("QR: Entered PANIC MODE.");
 	int motor_speed = PANIC_MODE_MOTOR_SPEED;
 	while (motor_speed >= 0) {
@@ -111,6 +114,14 @@ void enter_panic_mode(){
 		motor_speed = motor_speed - 100;
 	}
 	g_current_state = SAFE_ST;
+	if (cable_detached) { //wait for reboot
+		while(1) {
+			motor[0] = 0;
+			motor[1] = 0;
+			motor[2] = 0;
+			motor[3] = 0;
+		}
+	}
 }
 
 void USB_comm_update_received() {
@@ -122,7 +133,7 @@ void USB_comm_update_received() {
 void check_USB_connection_alive() {
 	current_time = get_time_us();
 	if (current_time - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: WHAT HAPPENS ON OVERFLOW!
-		enter_panic_mode();
+		enter_panic_mode(true);
 	}
 }
 
@@ -332,7 +343,7 @@ int main(void)
 			run_filters_and_control();
 		}
 		if (g_current_state == PANIC_ST){
-			enter_panic_mode();
+			enter_panic_mode(false); //enter panic mode for any reason other than cable detach
 		}
 	}
 
