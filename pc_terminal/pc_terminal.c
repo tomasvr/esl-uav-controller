@@ -316,6 +316,15 @@ uint32_t messg_encode(int c){
 			messg = 0b10111110001101100000000101010101; // keyboard 'w' pressed, drone yaw up(right), this command has a default mode -> MANUAL_ST
 			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
 			break;
+		case 'u':
+			messg = 0b00000000000000010111000001010101; // keyboard 'u' pressed, increase P yaw control
+			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+			break;
+		case 'j':
+			messg = 0b00000000000000000111000001010101; // keyboard 'j' pressed, decrease P yaw control
+			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+			break;
+
 
 		case 27: // keyboard 'ESC' pressed, drone switches to PANIC_ST
 			messg = 0b00000000000000001111000001010101;

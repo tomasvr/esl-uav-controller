@@ -25,6 +25,7 @@
 typedef enum {
 		CTRL_COMM,
 		MODE_SW_COMM,
+		CHANGE_P_COMM,
 		BAT_INFO,
 		SYS_LOG,
 		ESC_COMM,

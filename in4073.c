@@ -222,8 +222,18 @@ void messg_decode(uint8_t messg){
 	 		//do nothing
 	 	}
 
+	 	else if (g_current_comm_type == CHANGE_P_COMM && FRAG_COUNT == 2) {
+		printf("  CHANGE_P_COMM message: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
+	 		if (messg == 0x01) {
+	 			printf("P CONTROL UP\n");
+	 		}
+	 		if (messg == 0x00) {
+		 		printf("P CONTROL DOWN\n");
+	 		}
+	 	}
+
 	 	else {
-	      	printf("UNKNOWN COMM TYPE RECEIVED AT FCB SIDE \n");
+	      	printf("UNKNOWN COMM TYPE OR TRASHED MESSG RECEIVED AT FCB SIDE \n");
 	 	}
 	}
 }
@@ -286,49 +296,7 @@ int16_t sensor_calibration(int16_t sensor_ori, uint8_t num)//average
 	return sensor_calib;
 }
 
-#define yaw_speed_init 170
-struct yaw_control
-{
-	int16_t err;
-	uint8_t kp;
-	uint8_t ki;
-	uint16_t integral;
-	int16_t speed_comm;
-	int16_t speed_diff;
-	int16_t set_yaw_rate;
-	int16_t actual_yaw_rate;
-	int16_t actual_speed_plus;
-	int16_t actual_speed_minus;
-}yaw_control;
 
-void yaw_control_init()
-{
-	yaw_control.kp = 1; //from keyboard
-	yaw_control.ki = 0;
-	yaw_control.err = 0;
-	yaw_control.integral = 0;
-	yaw_control.speed_comm = 0;
-	yaw_control.speed_diff = 0;
-	yaw_control.set_yaw_rate = 0; //from js
-	yaw_control.actual_yaw_rate = 0; //from sensor
-	yaw_control.actual_speed_plus = 0; 
-	yaw_control.actual_speed_minus = 0; 
-	printf("enter control loop!");
-}
-
-void yaw_control_speed_calculate()//input js value here as set value;
-{
-	yaw_control.set_yaw_rate = 1; //interpret js value here
-	yaw_control.err = yaw_control.set_yaw_rate - yaw_control.actual_yaw_rate;
-	yaw_control.integral += yaw_control.err;
-	yaw_control.speed_comm = yaw_speed_init;
-	yaw_control.speed_diff = yaw_control.kp * yaw_control.err;
-	//yaw_speed_diff = yaw_control.kp * yaw_control.err + yaw_control.ki * yaw_control.integral;
-	yaw_control.actual_speed_plus = yaw_control.speed_comm + yaw_control.speed_diff;
-	yaw_control.actual_speed_minus = yaw_control.speed_comm - yaw_control.speed_diff;
-	//turn right M1 M3 + M2 M4 -
-	//turn left M1 M3 - M2 M4 +
-}
 /*------------------------------------------------------------------
  * main -- everything you need is here :)
  *------------------------------------------------------------------
@@ -348,6 +316,10 @@ int main(void)
 	uint32_t counter = 0;
 	demo_done = false;
 	usb_comm_last_received = get_time_us();
+
+
+	YAW_CONTROL_T yaw_control;
+	yaw_control_init(yaw_control);
 
 	printf("    TIME   | AE0 AE1 AE2 AE3 |   PHI    THETA   PSI |     SP     SQ     SR |  BAT | TEMP | PRESSURE | MODE \n");
 	while (!demo_done)
@@ -389,12 +361,11 @@ int main(void)
 			enter_panic_mode(false); //enter panic mode for any reason other than cable
 		}
 		if (g_current_state == YAWCONTROL_ST){
-		printf("QR: Entered YAW CONTROL MODE.");
+			printf("QR: Entered YAW CONTROL MODE.");
 			//input: setpoint signal + psi signal
 			//output: motor speed
 			//setpoint = 0, yaw rate = 0
-			yaw_control_init();
-			yaw_control_speed_calculate();
+			yaw_control_speed_calculate(yaw_control);
 		}
 
 	}
