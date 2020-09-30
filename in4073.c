@@ -319,11 +319,54 @@ int16_t sensor_calibration(int16_t sensor_ori, uint8_t num)//average
 		calibration_counter = 0; sensor_sum = 0;
 		printf("| %6d \n", sensor_calib);
 	}
-	else
-		printf("||\n");
+	// else
+	// 	printf("||\n");
 	return sensor_calib;
 }
 
+#define yaw_speed_init 170
+struct yaw_control
+{
+	int16_t err;
+	uint8_t kp;
+	uint8_t ki;
+	uint16_t integral;
+	int16_t speed_comm;
+	int16_t speed_diff;
+	int16_t set_yaw_rate;
+	int16_t actual_yaw_rate;
+	int16_t actual_speed_plus;
+	int16_t actual_speed_minus;
+}yaw_control;
+
+void yaw_control_init()
+{
+	yaw_control.kp = 1; //from keyboard
+	yaw_control.ki = 0;
+	yaw_control.err = 0;
+	yaw_control.integral = 0;
+	yaw_control.speed_comm = 0;
+	yaw_control.speed_diff = 0;
+	yaw_control.set_yaw_rate = 0; //from js
+	yaw_control.actual_yaw_rate = 0; //from sensor
+	yaw_control.actual_speed_plus = 0; 
+	yaw_control.actual_speed_minus = 0; 
+	printf("enter control loop!");
+}
+
+void yaw_control_speed_calculate()//input js value here as set value;
+{
+	yaw_control.set_yaw_rate = 1; //interpret js value here
+	yaw_control.err = yaw_control.set_yaw_rate - yaw_control.actual_yaw_rate;
+	yaw_control.integral += yaw_control.err;
+	yaw_control.speed_comm = yaw_speed_init;
+	yaw_control.speed_diff = yaw_control.kp * yaw_control.err;
+	//yaw_speed_diff = yaw_control.kp * yaw_control.err + yaw_control.ki * yaw_control.integral;
+	yaw_control.actual_speed_plus = yaw_control.speed_comm + yaw_control.speed_diff;
+	yaw_control.actual_speed_minus = yaw_control.speed_comm - yaw_control.speed_diff;
+	//turn right M1 M3 + M2 M4 -
+	//turn left M1 M3 - M2 M4 +
+}
 /*------------------------------------------------------------------
  * main -- everything you need is here :)
  *------------------------------------------------------------------
@@ -362,7 +405,7 @@ int main(void)
 			printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 			printf("%4d \n", g_current_state);
 
-			sensor_calibration(phi, 3); phi_calib = sensor_calib;
+			sensor_calibration(psi, 3); psi_calib = sensor_calib;
 
 			clear_timer_flag();
 		}
@@ -386,6 +429,15 @@ int main(void)
 				}
 			g_current_state = SAFE_ST;
 		}
+		if (g_current_state == YAWCONTROL_ST){
+		printf("QR: Entered YAW CONTROL MODE.");
+			//input: setpoint signal + psi signal
+			//output: motor speed
+			//setpoint = 0, yaw rate = 0
+			yaw_control_init();
+			yaw_control_speed_calculate();
+		}
+
 	}
 
 	printf("\n\t Goodbye \n\n");
