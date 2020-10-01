@@ -176,6 +176,8 @@ void check_USB_connection_alive() {
 
 void process_js_command(js_total_value, joystick_type) {
 	return;
+
+	// example js_total_value = 32776
 }
 
 

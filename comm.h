@@ -42,7 +42,6 @@ typedef enum {
 } JOYSTICK_TYPE_t;
 
 
-
 /**
  * @brief      Send packet from PC to FCB.
  */

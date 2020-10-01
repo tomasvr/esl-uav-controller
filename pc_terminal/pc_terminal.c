@@ -384,14 +384,30 @@ void send_USB_check_message() {
 void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	uint32_t messg;
 	if (js_type == 1) { //buttons
-
+		switch(js_number) {
+			case 1:
+				break;
+			case 2:
+				break;		
+			case 3:
+				break;	
+			case 4:
+				break;	
+			case 5:
+				break;	
+		}
 	}
 	else if (js_type == 2) { //axis
+		messg = 0b00000000000000000010000001010101; //base for js messg
 		switch(js_number) {
 			case 2:                  //0000010001001010101 //base for js messg
-				messg = 0b00000000000000000010001001010101; // 000000000-00000000-11110000-01010101 (empty - empty - USB_check_comm - startbit)
-				messg |= (js_value << 16);
-			break;
+				printf("messg before modification: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
+				messg |= (0x02 << 8); //configure yaw mode
+				printf("messg after yaw config: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
+				messg |= (js_value << 16); //configure value
+				printf("messg after value config: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
+
+				break;
 		}
 	} else {
 		printf("send js error\n");

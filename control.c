@@ -13,7 +13,6 @@
 #include "nrf_gpio.h"
 #include "in4073.h"
 #include "control.h"
-#include <assert.h>
 
 // This funciton is used for debugging
 // if color == -1, then all leds are turned off
@@ -40,14 +39,6 @@ void decrease_motor_speed(int16_t *ae, uint8_t motor){
 	return;
 }
 
-void set_motor_speed(int16_t *ae, uint8_t motor, uint8_t level){
-	assert(motor >= 0 && 'Invaid motor number \n');
-	assert(motor <= 3 && 'Invaid motor number \n');
-	assert(level >= 0 && 'Invaid ae level \n');
-	assert(level <= 10 && 'Invaid ae level \n');
-	ae[motor] = (int16_t) (level/10)*UPPER_LIMIT;
-}
-
 void ctrl_action(){
 	switch (g_current_m0_state){			//M0
 		case MOTOR_UP:
@@ -57,39 +48,6 @@ void ctrl_action(){
 			break;
 		case MOTOR_DOWN:
 			decrease_motor_speed(ae, 0);
-			break;
-		case MOTOR_LEVEL_0:
-			set_motor_speed(ae, 0, 0);
-			break;
-		case MOTOR_LEVEL_1:
-			set_motor_speed(ae, 0, 1);
-			break;
-		case MOTOR_LEVEL_2:
-			set_motor_speed(ae, 0, 2);
-			break;
-		case MOTOR_LEVEL_3:
-			set_motor_speed(ae, 0, 3);
-			break;
-		case MOTOR_LEVEL_4:
-			set_motor_speed(ae, 0, 4);
-			break;
-		case MOTOR_LEVEL_5:
-			set_motor_speed(ae, 0, 5);
-			break;
-		case MOTOR_LEVEL_6:
-			set_motor_speed(ae, 0, 6);
-			break;
-		case MOTOR_LEVEL_7:
-			set_motor_speed(ae, 0, 7);
-			break;
-		case MOTOR_LEVEL_8:
-			set_motor_speed(ae, 0, 8);
-			break;
-		case MOTOR_LEVEL_9:
-			set_motor_speed(ae, 0, 9);
-			break;
-		case MOTOR_LEVEL_10:
-			set_motor_speed(ae, 0, 10);
 			break;
 		default:
 			break;
@@ -103,39 +61,6 @@ void ctrl_action(){
 		case MOTOR_DOWN:
 			decrease_motor_speed(ae, 1);
 			break;
-		case MOTOR_LEVEL_0:
-			set_motor_speed(ae, 1, 0);
-			break;
-		case MOTOR_LEVEL_1:
-			set_motor_speed(ae, 1, 1);
-			break;
-		case MOTOR_LEVEL_2:
-			set_motor_speed(ae, 1, 2);
-			break;
-		case MOTOR_LEVEL_3:
-			set_motor_speed(ae, 1, 3);
-			break;
-		case MOTOR_LEVEL_4:
-			set_motor_speed(ae, 1, 4);
-			break;
-		case MOTOR_LEVEL_5:
-			set_motor_speed(ae, 1, 5);
-			break;
-		case MOTOR_LEVEL_6:
-			set_motor_speed(ae, 1, 6);
-			break;
-		case MOTOR_LEVEL_7:
-			set_motor_speed(ae, 1, 7);
-			break;
-		case MOTOR_LEVEL_8:
-			set_motor_speed(ae, 1, 8);
-			break;
-		case MOTOR_LEVEL_9:
-			set_motor_speed(ae, 1, 9);
-			break;
-		case MOTOR_LEVEL_10:
-			set_motor_speed(ae, 1, 10);
-			break;
 		default:
 			break;
 	}
@@ -147,39 +72,6 @@ void ctrl_action(){
 			break;
 		case MOTOR_DOWN:
 			decrease_motor_speed(ae, 2);
-			break;
-		case MOTOR_LEVEL_0:
-			set_motor_speed(ae, 2, 0);
-			break;
-		case MOTOR_LEVEL_1:
-			set_motor_speed(ae, 2, 1);
-			break;
-		case MOTOR_LEVEL_2:
-			set_motor_speed(ae, 2, 2);
-			break;
-		case MOTOR_LEVEL_3:
-			set_motor_speed(ae, 2, 3);
-			break;
-		case MOTOR_LEVEL_4:
-			set_motor_speed(ae, 2, 4);
-			break;
-		case MOTOR_LEVEL_5:
-			set_motor_speed(ae, 2, 5);
-			break;
-		case MOTOR_LEVEL_6:
-			set_motor_speed(ae, 2, 6);
-			break;
-		case MOTOR_LEVEL_7:
-			set_motor_speed(ae, 2, 7);
-			break;
-		case MOTOR_LEVEL_8:
-			set_motor_speed(ae, 2, 8);
-			break;
-		case MOTOR_LEVEL_9:
-			set_motor_speed(ae, 2, 9);
-			break;
-		case MOTOR_LEVEL_10:
-			set_motor_speed(ae, 2, 10);
 			break;
 		default:
 			break;
@@ -193,39 +85,6 @@ void ctrl_action(){
 		case MOTOR_DOWN:
 			decrease_motor_speed(ae, 3);
 			break;
-		case MOTOR_LEVEL_0:
-			set_motor_speed(ae, 3, 0);
-			break;
-		case MOTOR_LEVEL_1:
-			set_motor_speed(ae, 3, 1);
-			break;
-		case MOTOR_LEVEL_2:
-			set_motor_speed(ae, 3, 2);
-			break;
-		case MOTOR_LEVEL_3:
-			set_motor_speed(ae, 3, 3);
-			break;
-		case MOTOR_LEVEL_4:
-			set_motor_speed(ae, 3, 4);
-			break;
-		case MOTOR_LEVEL_5:
-			set_motor_speed(ae, 3, 5);
-			break;
-		case MOTOR_LEVEL_6:
-			set_motor_speed(ae, 3, 6);
-			break;
-		case MOTOR_LEVEL_7:
-			set_motor_speed(ae, 3, 7);
-			break;
-		case MOTOR_LEVEL_8:
-			set_motor_speed(ae, 3, 8);
-			break;
-		case MOTOR_LEVEL_9:
-			set_motor_speed(ae, 3, 9);
-			break;
-		case MOTOR_LEVEL_10:
-			set_motor_speed(ae, 3, 10);
-			break;
 		default:
 			break;
 	}
@@ -236,19 +95,68 @@ void ctrl_action(){
 	g_current_m3_state = MOTOR_REMAIN;
 }
 
-void update_motors(void){					
+#define yaw_speed_init 170
+
+
+
+void yaw_control_init(YAW_CONTROL_T *yaw_control)
+{
+	yaw_control->kp = 1; //from keyboard
+	yaw_control->ki = 0;
+	yaw_control->err = 0;
+	yaw_control->integral = 0;
+	yaw_control->speed_comm = 0;
+	yaw_control->speed_diff = 0;
+	yaw_control->set_yaw_rate = 0; //from js
+	yaw_control->actual_yaw_rate = 0; //from sensor
+	yaw_control->actual_speed_plus = 0; 
+	yaw_control->actual_speed_minus = 0; 
+	printf("yaw_control struct initalized");
+}
+
+void yaw_control_speed_calculate(YAW_CONTROL_T *yaw_control, int16_t psi)//input js value here as set value;
+{
+	yaw_control->actual_yaw_rate = psi; //todo fix this (ugly hack)
+
+	yaw_control->set_yaw_rate = 0; //interpret js value here
+	yaw_control->err = yaw_control->set_yaw_rate - yaw_control->actual_yaw_rate;
+	yaw_control->integral += yaw_control->err;
+	yaw_control->speed_comm = yaw_speed_init;
+	yaw_control->speed_diff = yaw_control->kp * yaw_control->err;
+	//yaw_speed_diff = yaw_control.kp * yaw_control.err + yaw_control.ki * yaw_control.integral;
+	yaw_control->actual_speed_plus = yaw_control->speed_comm + yaw_control->speed_diff;
+	yaw_control->actual_speed_minus = yaw_control->speed_comm - yaw_control->speed_diff;
+	//turn right M1 M3 + M2 M4 -
+	//turn left M1 M3 - M2 M4 +
+}
+
+void increase_p_value(YAW_CONTROL_T *yaw_control) {
+	if (yaw_control->kp < YAW_P_UPPER_LIMIT) {
+		yaw_control->kp += YAW_P_STEP_SIZE;
+	}
+}
+
+void decrease_p_value(YAW_CONTROL_T *yaw_control) {
+	if (yaw_control->kp > YAW_P_LOWER_LIMIT) {
+		yaw_control->kp -= YAW_P_STEP_SIZE;
+	}
+}
+
+
+void update_motors(void)
+{					
 	// if (g_current_state != SAFE_ST, PANIC_ST) //TODO
 		motor[0] = ae[0];
 		motor[1] = ae[1];
 		motor[2] = ae[2];
 		motor[3] = ae[3];
-	#ifdef DEBUG_LED
+#ifdef DEBUG_LED
 		// The 4 LEDS represent motor speed, blue = max speed, red = minimal speed
 		if (motor[0] == 0) switch_led(-1);
 		else if (motor[0] < 350) switch_led(RED);
 		else if (motor[0] >= 350 && motor[0] < 700) switch_led(YELLOW);
 		else switch_led(GREEN);
-	#endif
+#endif
 }
 
 void run_filters_and_control()
