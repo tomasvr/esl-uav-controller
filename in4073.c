@@ -174,6 +174,11 @@ void check_USB_connection_alive() {
 	}
 }
 
+void process_js_command(js_total_value, joystick_type) {
+	return;
+}
+
+
 /*------------------------------------------------------------------
  * messg_decode -- decode messages
  *------------------------------------------------------------------
@@ -191,12 +196,17 @@ void messg_decode(uint8_t messg){
 	 * last 4 bits 	-> mode/state { SAFE_ST , PANIC_ST , MANUAL_ST , CALIBRATION_ST , YAWCONTROL_ST , FULLCONTROL_ST }
 	 *--------------------------------------------------------------
 	 */
+
+	uint8_t jsvalue_left;
+	uint8_t jsvalue_right;
+	JOYSTICK_TYPE_t joystick_type;
 	
 	printf("FRAG_COUNT: %d \n", FRAG_COUNT);
 	printf("messg: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
 	if (FRAG_COUNT == 3){
+
 		uint8_t comm_type = messg & 0xf0; //take left most 4 bits from current byte
-		uint8_t state = messg & 0x0f;     //take right most 4 bits from current byte
+		uint8_t state = messg & 0x0f;     //take right most 4 bits from current byte // CAN ALSO BE NUMBER FOR JOYSTICK TYPE!
 
 		//printf("  comm_type: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(comm_type));
 
@@ -207,9 +217,15 @@ void messg_decode(uint8_t messg){
 	 		USB_comm_update_received();
 	 	}
 
+	 	if (g_current_comm_type == JS_COMM) {
+	 		joystick_type = find_joystick_message_type(state);
+	 	}
+
 		int result = check_mode_sync(state, g_current_state);
 		// printf("check_mode_sync result: %d\n", result);
 		//assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?????????????????
+
+		
 	}
 
 	/*--------------------------------------------------------------
@@ -242,6 +258,18 @@ void messg_decode(uint8_t messg){
 		 	result = find_motor_state_js(messg, FRAG_COUNT);
 	 		assert(result == 1 && "QR: Fail to find the motor state.");
 	 	}
+
+	 	if (g_current_comm_type == JS_COMM) {
+	 		if (FRAG_COUNT == 2) {
+	 			jsvalue_right = messg;	
+	 		}
+	 		if (FRAG_COUNT == 1) {
+	 			jsvalue_left = messg;	
+	 			uint16_t js_total_value = (jsvalue_left << 8) | jsvalue_right;
+	 			process_js_command(js_total_value, joystick_type);
+	 		}
+	 	}
+
 	 	
 	 	/*--------------------------------------------------------------
 		 * if the command is MODE_SW_TYPE, two field in this byte: 
@@ -359,7 +387,7 @@ int main(void)
 		execute();
 
 		// check if USB connection is still alive by checking last time received
-		if (counter++%100 == 0) check_USB_connection_alive(); // use counter so this doesn't happen too often
+		//if (counter++%100 == 0) check_USB_connection_alive(); // use counter so this doesn't happen too often
 
 		if (check_timer_flag()) 
 		{
@@ -368,12 +396,12 @@ int main(void)
 			adc_request_sample();
 			read_baro();
 
-			printf("%10ld | ", get_time_us());
-			printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
-			printf("%6d %6d %6d | ", phi, theta, psi);
-			printf("%6d %6d %6d | ", sp, sq, sr);
-			printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
-			printf("%4d \n", g_current_state);
+			// printf("%10ld | ", get_time_us());
+			// printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
+			// printf("%6d %6d %6d | ", phi, theta, psi);
+			// printf("%6d %6d %6d | ", sp, sq, sr);
+			// printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
+			// printf("%4d \n", g_current_state);
 
 			sensor_calibration(phi, 3); phi_calib = sensor_calib;
 

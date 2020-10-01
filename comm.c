@@ -60,3 +60,13 @@ STATE_t find_dest_state(uint8_t messg){
 	else 					dest_state = NO_WHERE;
 	return dest_state;
 }
+
+JOYSTICK_TYPE_t find_joystick_message_type(uint8_t messg){
+	JOYSTICK_TYPE_t joystick_type;
+	if 		(messg == 0x00) joystick_type = ROLL_AXIS; //0000
+	else if (messg == 0x01) joystick_type = PITCH_AXIS; //0001
+	else if (messg == 0x02) joystick_type = YAW_AXIS;   //0010
+	else if (messg == 0x03) joystick_type = LIFT_THROTTLE; // 0011
+	else printf("error, joystick_type not found\n");
+	return joystick_type;
+}

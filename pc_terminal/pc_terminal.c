@@ -381,6 +381,27 @@ void send_USB_check_message() {
 	rs232_putchar(messg_encode(USB_CHECK_MESSAGE));
 }
 
+void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
+	uint32_t messg;
+	if (js_type == 1) { //buttons
+
+	}
+	else if (js_type == 2) { //axis
+		switch(js_number) {
+			case 2:                  //0000010001001010101 //base for js messg
+				messg = 0b00000000000000000010001001010101; // 000000000-00000000-11110000-01010101 (empty - empty - USB_check_comm - startbit)
+				messg |= (js_value << 16);
+			break;
+		}
+	} else {
+		printf("send js error\n");
+		return;
+	}
+
+	//if (g_current_state != SAFE_ST) messg = append_current_mode(messg); //TODO: WHY NOT APPEND IN SAFE STATE?
+	rs232_putchar(messg);
+}
+
 
 /*----------------------------------------------------------------
  * main -- execute terminal
@@ -414,7 +435,6 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	fcntl(fd, F_SETFL, O_NONBLOCK);// non-blocking mode
-
 	uint32_t last_poll_time = GetTimeStamp();
 	time2poll = true;
 #endif
@@ -470,36 +490,37 @@ int main(int argc, char **argv)
 
 #ifdef ENABLE_JOYSTICK
 
-		t = mon_time_ms();
+		// //t = mon_time_ms();
+		// if (read(fd, &js, sizeof(struct js_event)) != sizeof(struct js_event)) {
+		// 	perror("\njstest: error reading");
+		// 	exit (1);
+		// } else {
+		// 	printf("Event: type %d, time %d, number %d, value %d\n",
+		// 	js.type, js.time, js.number, js.value);
+		// }
 
-		// js: read input values
-		while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)){
-			// register data
-			// fprintf(stderr,".");
-			switch(js.type & ~JS_EVENT_INIT) {
-				case JS_EVENT_BUTTON:
-					button[js.number] = js.value;
-					break;
-				case JS_EVENT_AXIS:
-					axis[js.number] = js.value;
-					break;
-			}
+		while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event))  {
+			printf("Event: type %d, time %d, number %d, value %d\n",
+				js.type, js.time, js.number, js.value);
+				send_js_message(js.type, js.number, js.value);
 		}
+
 		if (errno != EAGAIN) {
-			perror("\njs: error reading (EAGAIN)");
+			perror("\njstest: error reading");
 			exit (1);
 		}
-		// js: poll to encode and send js cmds
-		current_time = GetTimeStamp();
-		if((current_time-last_poll_time) >= POLL_DELAY){
-			time2poll = true;
-			last_poll_time = current_time;
-		} 
-		if(time2poll){
-			messg_encode_send_js(axis, button);
-			// printf("Poll \n");
-			time2poll = false;
-		}
+
+		// // js: poll to encode and send js cmds
+		// current_time = GetTimeStamp();
+		// if((current_time-last_poll_time) >= POLL_DELAY){
+		// 	time2poll = true;
+		// 	last_poll_time = current_time;
+		// } 
+		// if(time2poll){
+		// 	messg_encode_send_js(axis, button);
+		// 	// printf("Poll \n");
+		// 	time2poll = false;
+		// }
 #endif
 		
 	}

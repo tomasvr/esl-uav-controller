@@ -33,6 +33,15 @@ typedef enum {
 		NO_COMM
 	} COMM_TYPE;
 
+typedef enum {
+		ROLL_AXIS,
+		PITCH_AXIS,
+		YAW_AXIS,
+		LIFT_THROTTLE,	
+		//todo: buttons
+} JOYSTICK_TYPE_t;
+
+
 
 /**
  * @brief      Send packet from PC to FCB.
