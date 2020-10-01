@@ -52,13 +52,13 @@
 #include "../states.h"
 
 #define JS_DEV	"/dev/input/js0"
-#define THRESHOLD_READ 20000
-#define POLL_DELAY 1000000 // 1000000us = 1000ms = 1s
+// #define THRESHOLD_READ 2767
+#define POLL_DELAY 100000 // 1000000us = 1000ms = 1s
 
 #define USB_SEND_CHECK_INTERVAL 1000000 // Control how often USB check messages are send
 #define USB_CHECK_MESSAGE 0 // Message ID for check USB type message (no need to change)
 
-//#define ENABLE_JOYSTICK
+#define ENABLE_JOYSTICK
 
 // current axis and button readings
 int	axis[6];
@@ -147,8 +147,7 @@ int	term_getchar()
 int serial_device = 0;
 int fd_RS232;
 
-void rs232_open(void)
-{
+void rs232_open(void){
   	char 		*name;
   	int 		result;
   	struct termios	tty;
@@ -187,8 +186,7 @@ void rs232_open(void)
 }
 
 
-void 	rs232_close(void)
-{
+void 	rs232_close(void){
   	int 	result;
 
   	result = close(fd_RS232);
@@ -196,8 +194,7 @@ void 	rs232_close(void)
 }
 
 
-int	rs232_getchar_nb()
-{
+int	rs232_getchar_nb(){
 	int 		result;
 	unsigned char 	c;
 
@@ -214,8 +211,7 @@ int	rs232_getchar_nb()
 }
 
 
-int 	rs232_getchar()
-{
+int rs232_getchar(){
 	int 	c;
 
 	while ((c = rs232_getchar_nb()) == -1)
@@ -224,8 +220,7 @@ int 	rs232_getchar()
 }
 
 
-int 	rs232_putchar(int c) 			// change char to uint32_t
-{
+int rs232_putchar(int c){ // change char to uint32_t
 	int result;
 
 	do {
@@ -273,7 +268,7 @@ uint32_t messg_encode(int c){
 	switch(c){
 
 		case USB_CHECK_MESSAGE:// USB_COMM_CHECK_MESSAGE //todo: take other number than 99? (i chose it randomly)
-			printf("entered case for usb check message\n");
+			// printf("entered case for usb check message\n");
 			messg = 0b00000000000000001001000001010101; // 000000000-00000000-11110000-01010101 (empty - empty - USB_check_comm - startbit)
 			if (g_current_state != SAFE_ST) messg = append_current_mode(messg); //TODO: WHY NOT APPEND IN SAFE STATE?
 			break;
@@ -357,8 +352,7 @@ uint32_t messg_encode(int c){
 
 }
 
-unsigned int mon_time_ms(void)
-{
+unsigned int mon_time_ms(void){
     unsigned int    ms;
     struct timeval  tv;
     struct timezone tz;
@@ -369,28 +363,13 @@ unsigned int mon_time_ms(void)
     return ms;
 }
 
-void mon_delay_ms(unsigned int ms)
-{
+void mon_delay_ms(unsigned int ms){
         struct timespec req, rem;
 
         req.tv_sec = ms / 1000;
         req.tv_nsec = 1000000 * (ms % 1000);
         assert(nanosleep(&req,&rem) == 0);
 }
-
-/**
- * @brief		encode js cmds & send to drone
- *
- * @author     	Zehang Wu
- *
- * @param      	axes:
- *				buttons:
- *				axis: reading values of js
- *				button: reading values of js buttons
- *
- * @return     	0 if no error,
- * 				-1 if there is error
- */
 
 uint32_t GetTimeStamp() {
     struct timeval tv;
@@ -452,7 +431,7 @@ int main(int argc, char **argv)
 		/* Send USB connection message */
 		current_time = GetTimeStamp();
 		if((current_time - last_USB_check_time) >= USB_SEND_CHECK_INTERVAL) {
-			printf("Time to send USB check message\n");
+			// printf("Time to send USB check message\n");
 			send_USB_check_message();
 			last_USB_check_time = current_time;
 		}
@@ -488,7 +467,9 @@ int main(int argc, char **argv)
 		 *---------------------------------------------------
 		 */
 		// mon_delay_ms(30);
-#ifdef ENABLE_JOYSTICK		
+
+#ifdef ENABLE_JOYSTICK
+
 		t = mon_time_ms();
 
 		// js: read input values
@@ -519,7 +500,8 @@ int main(int argc, char **argv)
 			// printf("Poll \n");
 			time2poll = false;
 		}
-#endif	
+#endif
+		
 	}
 
 	term_exitio();

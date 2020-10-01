@@ -38,7 +38,7 @@
 
 extern STATE_t g_current_state;
 extern STATE_t g_dest_state;
-#define THRESHOLD_READ 20000
+#define THRESHOLD_READ 2767
 
 /*
  * Version
@@ -133,6 +133,9 @@ struct JS_DATA_SAVE_TYPE {
 	struct JS_DATA_TYPE JS_CORR;
 };
 
+void increase_level(int16_t level, uint8_t amount);
+void decrease_level(int16_t level, uint8_t amount);
+uint32_t generate_messg_js(int16_t level_0, int16_t level_1, int16_t level_2, int16_t level_3);
 /**
  * @brief      Encodes joystick commands to a message
  *

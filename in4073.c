@@ -51,7 +51,7 @@ uint32_t usb_comm_last_received;
 uint32_t current_time;
 
 // each packet includes 4 fragments
-int FRAG_COUNT = 0;
+uint8_t FRAG_COUNT = 0;
 
 // State variables initalization
 STATE_t g_current_state = SAFE_ST;
@@ -66,7 +66,7 @@ MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m2_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m3_state = MOTOR_REMAIN;
 
-int find_motor_state(uint8_t messg){
+uint8_t find_motor_state(uint8_t messg){
 	uint8_t m_ctrl_1 = messg & 0xf0; 		
 	uint8_t m_ctrl_2 = messg & 0x0f;
 	int result = 0;
@@ -98,6 +98,43 @@ int find_motor_state(uint8_t messg){
 	return result;
 }
 
+MOTOR_CTRL find_motor_level(uint8_t value){
+	MOTOR_CTRL result = MOTOR_REMAIN;
+	if(value == 0) result = MOTOR_LEVEL_0;
+	else if(value == 0) result = MOTOR_LEVEL_0;
+	else if(value == 1) result = MOTOR_LEVEL_1;
+	else if(value == 2) result = MOTOR_LEVEL_2;
+	else if(value == 3) result = MOTOR_LEVEL_3;
+	else if(value == 4) result = MOTOR_LEVEL_4;
+	else if(value == 5) result = MOTOR_LEVEL_5;
+	else if(value == 6) result = MOTOR_LEVEL_6;
+	else if(value == 7) result = MOTOR_LEVEL_7;
+	else if(value == 8) result = MOTOR_LEVEL_8;
+	else if(value == 9) result = MOTOR_LEVEL_9;
+	else if(value == 10) result = MOTOR_LEVEL_10;
+	return result;
+}
+
+uint8_t find_motor_state_js(uint8_t messg, uint8_t FRAG_COUNT){
+	int result = 0;
+	uint8_t m_ctrl_1 = messg & 0xf0; 		
+	uint8_t m_ctrl_2 = messg & 0x0f;
+	MOTOR_CTRL state_1 = find_motor_level(m_ctrl_1>>4);
+	MOTOR_CTRL state_2 = find_motor_level(m_ctrl_2);
+	if(FRAG_COUNT == 2){ // MO & M1
+		g_current_m0_state = state_1;
+		g_current_m1_state = state_2;
+		result = 1;
+	}
+	else if(FRAG_COUNT == 1){ // M2 & M3
+		g_current_m2_state = state_1;
+		g_current_m3_state = state_2;
+		result = 1;
+	} 
+	return result;
+}
+
+
 void enter_panic_mode(bool cable_detached){
 	if (g_current_state == SAFE_ST) {
 		return; // if in safe mode then you do not need to go to panic mode
@@ -125,7 +162,7 @@ void enter_panic_mode(bool cable_detached){
 }
 
 void USB_comm_update_received() {
-	printf("USB comm check has been received!\n");
+	// printf("USB comm check has been received!\n");
 	current_time = get_time_us();
 	usb_comm_last_received = current_time;
 }
@@ -155,7 +192,8 @@ void messg_decode(uint8_t messg){
 	 *--------------------------------------------------------------
 	 */
 	
-	//printf("  messg: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
+	printf("FRAG_COUNT: %d \n", FRAG_COUNT);
+	printf("messg: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
 	if (FRAG_COUNT == 3){
 		uint8_t comm_type = messg & 0xf0; //take left most 4 bits from current byte
 		uint8_t state = messg & 0x0f;     //take right most 4 bits from current byte
@@ -170,7 +208,7 @@ void messg_decode(uint8_t messg){
 	 	}
 
 		int result = check_mode_sync(state, g_current_state);
-		printf("check_mode_sync result: %d\n", result);
+		// printf("check_mode_sync result: %d\n", result);
 		//assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?????????????????
 	}
 
@@ -197,6 +235,11 @@ void messg_decode(uint8_t messg){
 	 	if (g_current_comm_type == CTRL_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
 	 		int result;
 	 		result = find_motor_state(messg);
+	 		assert(result == 1 && "QR: Fail to find the motor state.");
+	 	}
+	 	if (g_current_comm_type == JS_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
+	 		int result;
+		 	result = find_motor_state_js(messg, FRAG_COUNT);
 	 		assert(result == 1 && "QR: Fail to find the motor state.");
 	 	}
 	 	
@@ -233,7 +276,7 @@ void messg_decode(uint8_t messg){
  *------------------------------------------------------------------
  */
 void process_key(uint8_t c){	
-	if (c == 0x55 && FRAG_COUNT == 0 && g_current_state != PANIC_ST) {
+	if (c == 0x55 && FRAG_COUNT == 0 && g_current_state != PANIC_ST) { // '0x55': 0b01010101(start byte)
 		FRAG_COUNT = 3;
 		return;
 	}
@@ -244,7 +287,7 @@ void process_key(uint8_t c){
 	}
 }
 
-void execute (){
+void execute(){
 	if (g_current_comm_type == ESC_COMM){ // terminate program
 		demo_done = true;
 		g_current_comm_type = NO_COMM;
@@ -279,10 +322,10 @@ int16_t sensor_calibration(int16_t sensor_ori, uint8_t num)//average
 	if(calibration_counter == 3){
 		sensor_calib = sensor_sum / num;
 		calibration_counter = 0; sensor_sum = 0;
-		printf("| %6d \n", sensor_calib);
+		// printf("| %6d \n", sensor_calib);
 	}
 	else
-		printf("||\n");
+		// printf("||\n");
 	return sensor_calib;
 }
 

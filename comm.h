@@ -25,6 +25,7 @@
 typedef enum {
 		CTRL_COMM,
 		MODE_SW_COMM,
+		JS_COMM, // '0010'
 		BAT_INFO,
 		SYS_LOG,
 		ESC_COMM,
