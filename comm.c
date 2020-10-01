@@ -41,11 +41,15 @@ COMM_TYPE find_comm_type (uint8_t comm_type){
 	if 		(comm_type == 0x00) current_comm_type = CTRL_COMM;			// 0000 -> CTRL_COMM
 	else if (comm_type == 0x10) current_comm_type = MODE_SW_COMM;		// 0001 -> MODE_SW_COMM
 	else if (comm_type == 0x20) current_comm_type = JS_COMM;			// 0010 -> JS_COMM
+	else if (comm_type == 0x70) current_comm_type = CHANGE_P_COMM;		// 0111 -> CHANGE_P_COMM
 	else if (comm_type == 0x80) current_comm_type = BAT_INFO;			// 1000 -> BAT_INFO
 	else if (comm_type == 0x90) current_comm_type = USB_CHECK_COMM;		// 1001 -> USB_CHECK_COMM
 	else if (comm_type == 0xb0) current_comm_type = SYS_LOG;			// 1011 -> SYS_LOG
 	else if (comm_type == 0xf0) current_comm_type = ESC_COMM;			// 1111 -> ESC
-	else 						current_comm_type = NO_COMM;
+	else {
+		current_comm_type = NO_COMM;
+		printf("COMM TYPE WAS NOT RECOGNISED\n");
+	}
 	return current_comm_type;
 }
 
