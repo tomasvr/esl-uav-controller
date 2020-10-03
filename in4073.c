@@ -141,7 +141,7 @@ void enter_panic_mode(bool cable_detached){
 	if (g_current_state == SAFE_ST) {
 		return; // if in safe mode then you do not need to go to panic mode
 	}
-	printf("QR: Entered PANIC MODE.");
+	printf("FCB: QR: Entered PANIC MODE.");
 	int motor_speed = PANIC_MODE_MOTOR_SPEED;
 	while (motor_speed >= 0) {
 		ae[0] = motor_speed;
@@ -167,6 +167,7 @@ void USB_comm_update_received() {
 	// printf("USB comm check has been received!\n");
 	current_time = get_time_us();
 	usb_comm_last_received = current_time;
+	//printf("FCB: USB_check received!\n");
 }
 
 void check_USB_connection_alive() {
@@ -177,18 +178,22 @@ void check_USB_connection_alive() {
 }
 
 void process_JS_AXIS_COMMand(js_total_value, joystick_axis) {
+	printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
 	return;
-
 	// example js_total_value = 32776
 }
 
+
+uint8_t jsvalue_left; //todo: fix this placement
+uint8_t jsvalue_right;
+JOYSTICK_AXIS_t joystick_axis;
 
 /*------------------------------------------------------------------
  * messg_decode -- decode messages
  *------------------------------------------------------------------
  */
 void messg_decode(uint8_t messg){
-	printf("START messg_decode, g_current_comm_type: %d \n", g_current_comm_type);
+	//printf("START messg_decode, g_current_comm_type: %d \n", g_current_comm_type);
 	
 	// printf("The %d byte is: \n", 4-FRAG_COUNT);			// print out each fragment QR receives
 	// printf("   		 "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
@@ -202,12 +207,12 @@ void messg_decode(uint8_t messg){
 	 *--------------------------------------------------------------
 	 */
 
-	uint8_t jsvalue_left;
-	uint8_t jsvalue_right;
-	JOYSTICK_AXIS_t joystick_axis;
+	// uint8_t jsvalue_left;
+	// uint8_t jsvalue_right;
+	// JOYSTICK_AXIS_t joystick_axis;
 	
-	printf("FRAG_COUNT: %d \n", FRAG_COUNT);
-	printf("messg: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
+	//printf("FCB: FRAG_COUNT: %d \n", FRAG_COUNT);
+	//printf("FCB: message byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
 	if (FRAG_COUNT == 3){
 
 		uint8_t comm_type_bits = messg & 0xf0; //take left most 4 bits from current byte
@@ -215,7 +220,7 @@ void messg_decode(uint8_t messg){
 
 		//printf("  comm_type: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(comm_type));
 
-		g_current_comm_type = retrieve_comm_type(comm_type_bits);
+		g_current_comm_type = retrieve_comm_type( (comm_type_bits >> 4) ); //shift right to get bits at beginning of byte
 		//assert( == 1 && "QR: No such command found.");
 
 	 	if (g_current_comm_type == USB_CHECK_COMM) { // update usb_check received and check state sync
@@ -227,6 +232,14 @@ void messg_decode(uint8_t messg){
 	 	else if (g_current_comm_type == JS_AXIS_COMM) {
 	 		joystick_axis = retrieve_js_axis(state_or_jsaxis_bits);
 	 	}		
+
+	 	else if (g_current_comm_type == MODE_SW_COMM){
+	 		g_dest_state = retrieve_mode(state_or_jsaxis_bits);
+	 		printf("Comm type: %d, State: %d \n", g_current_comm_type, g_dest_state);
+			g_current_state = mode_sw_action("FCB", g_current_state, g_dest_state, false);
+			printf("current_state: %d \n", g_current_state);
+			g_dest_state = NO_WHERE;
+	 	}
 	}
 
 	/*--------------------------------------------------------------
@@ -283,28 +296,31 @@ void messg_decode(uint8_t messg){
 		 * last 4 bits 	-> default 0
 		 *--------------------------------------------------------------
 		 */
-	 	else if (g_current_comm_type == MODE_SW_COMM && FRAG_COUNT == 2){
-	 		g_dest_state = retrieve_mode(messg);
-	 	}
-	 	/* USB_comm_check message, so we don't care about the contents of frag 2 and 1 */
-	 	else if (g_current_comm_type == USB_CHECK_COMM) {
+	 	// else if (g_current_comm_type == MODE_SW_COMM && FRAG_COUNT == 2){ // this now happens in FRAG 3
+	 	// 	g_dest_state = retrieve_mode(messg);
+	 	// }
+	 	// 
+	 
+
+	 	/* USB_comm_check message or mode SW message, so we don't care about the contents of frag 2 and 1 */
+	 	else if (g_current_comm_type == USB_CHECK_COMM || g_current_comm_type == MODE_SW_COMM) {
 	 		//do nothing
- 			printf("USB_CHECK do nothing \n");
+ 			//printf("FCB: USB_CHECK do nothing \n");
 
 	 	}
 	 	else if (g_current_comm_type == CHANGE_P_COMM && FRAG_COUNT == 2) {
 		printf("  CHANGE_P_COMM message: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
 	 		if (messg == 0x01) {
-	 			printf("P CONTROL UP\n");
+	 			printf("FCB: P CONTROL UP\n");
 	 			increase_p_value(&yaw_control);
 	 		}
 	 		if (messg == 0x00) {
-		 		printf("P CONTROL DOWN\n");
+		 		printf("FCB: P CONTROL DOWN\n");
 		 		decrease_p_value(&yaw_control);
 	 		}
 	 	}
 	 	else {
-	      	printf("UNKNOWN COMM TYPE OR TRASHED MESSG RECEIVED AT FCB SIDE \n");
+	      	printf("FCB: ERROR - UNKNOWN COMM TYPE \n");
 	 	}
 	}
 	else {
@@ -321,14 +337,41 @@ void process_key(uint8_t c){
 		FRAG_COUNT = 3;
 		return;
 	}
-	while (FRAG_COUNT > 0){ //TODO: why is there a return statement in this while loop?
+	while (FRAG_COUNT > 0){
 		messg_decode(c);
 		FRAG_COUNT--;
 		return;
 	}
 }
 
-void execute(){
+// void process_message() {
+// 	uint8_t c = dequeue(&rx_queue);
+// 	if (c == 0x55 && FRAG_COUNT == 0 && g_current_state != PANIC_ST) { // '0x55': 0b01010101(start byte)
+// 			FRAG_COUNT = 3;
+// 			uint32_t message = c; //append startbit
+// 			nrf_delay_ms(200);
+// 			while (FRAG_COUNT >  0 && rx_queue.count) {
+// 				nrf_delay_ms(200);
+// 				uint8_t byte = dequeue(&rx_queue);
+// 				message = (message << 8) | byte;
+// 				FRAG_COUNT--;
+// 			} 
+// 			if (FRAG_COUNT > 0) {
+// 				printf("ERROR: DEQUEUE WHILE-LOOP WAS EXITED BUT FRAG_COUNT WAS NOT ZERO - process_message\n");
+// 			} else {
+// 				//messg_decode(message);
+// 				print_packet(message, "RECEIVED MESSAGE AT FCB WAS: ");
+// 				FRAG_COUNT = 0;	
+// 			}
+// 		}
+// 	else {
+// 		printf("ERROR: FIRST BIT RECEIVED WAS NOT A START-BIT - process_message(), FRAG_COUNT: %d, c: %c\n", FRAG_COUNT, c);
+// 	}
+// }
+
+
+
+void execute(){ //TODO: remove this function
 	if (g_current_comm_type == ESC_COMM){ // terminate program
 		demo_done = true;
 		g_current_comm_type = NO_COMM;
@@ -342,11 +385,11 @@ void execute(){
 	// 	// handled by the thread
 	// }
 
-	if (g_current_comm_type == MODE_SW_COMM && g_dest_state != NO_WHERE){
-		g_current_state = mode_sw_action("FCB", g_current_state, g_dest_state, false);
-		g_dest_state = NO_WHERE;
-		g_current_comm_type = NO_COMM;
-	}
+	// if (g_current_comm_type == MODE_SW_COMM && g_dest_state != NO_WHERE){
+	// 	g_current_state = mode_sw_action("FCB", g_current_state, g_dest_state, false);
+	// 	g_dest_state = NO_WHERE;
+	// 	g_current_comm_type = NO_COMM;
+	// }
 
 
 }
@@ -412,8 +455,10 @@ int main(void)
 
 		if (check_timer_flag()) 
 		{
-			if (counter % 20 == 0) nrf_gpio_pin_toggle(BLUE);
- 
+			if (counter % 20 == 0) {
+				nrf_gpio_pin_toggle(BLUE);
+				printf("FCB: current state: %4d \n", g_current_state);
+ 			}
 			adc_request_sample();
 			read_baro();
 

@@ -48,6 +48,7 @@
 #include <assert.h>
 #include <stdbool.h> 
 
+
 #include "joystick.h"
 #include "../states.h"
 #include "../comm.h"
@@ -360,10 +361,10 @@ uint32_t message_encode(int c){
 		// KEYBOARD 2 (MANUAL_ST)
 		case 50: // keyboard '2' pressed dorne switches to MANUAL_ST
 			//message = 0b00000000000100000001000001010101; 
-			print_packet(message, "before append");
+			print_packet(message, "PC: before append");
 			message = append_comm_type(message, MODE_SW_COMM);
 			message = append_mode(message, MANUAL_ST); 
-			print_packet(message, "after append");
+			print_packet(message, "PC: after append");
 			g_current_state = mode_sw_action("TERM", g_current_state, MANUAL_ST, ESC);
 			g_dest_state = NO_WHERE;
 			break;
@@ -386,8 +387,8 @@ uint32_t message_encode(int c){
 			g_dest_state = NO_WHERE;
 			break;
 		default:
-			message = -1;
-			perror("ERROR: KEYBOARD PRESS NOT RECOGNISED (message_encode)");
+			printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
+			exit(-1);
 	}
 	return message;
 }
@@ -403,10 +404,14 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 		message = append_comm_type(message, JS_AXIS_COMM);
 		JOYSTICK_AXIS_t axis_number_from_js = js_number;
 		message = append_js_axis(message, axis_number_from_js);
+		// Add Joystick axis value to message
+		message |= (js_value << 16);
 	} else {
 		printf("ERROR in send_js_message: UKNOWN IF BUTTON OR AXIS (js_type)\n");
 		return;
 	}
+	printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value);
+	print_packet(message, "JS packet:");
 	rs232_putchar(message);
 }
 
@@ -438,8 +443,6 @@ uint32_t GetTimeStamp() {
     gettimeofday(&tv,NULL);
     return tv.tv_sec*(uint32_t)1000000+tv.tv_usec; //todo: check for overflow?
 }
-
-
 
 
 /*----------------------------------------------------------------
@@ -490,7 +493,7 @@ int main(int argc, char **argv)
 		/* Send USB connection message */
 		current_time = GetTimeStamp();
 		if((current_time - last_USB_check_time) >= USB_SEND_CHECK_INTERVAL) {
-			// printf("Time to send USB check message\n");
+			printf("PC: Time to send USB check message\n");
 			send_USB_check_message();
 			last_USB_check_time = current_time;
 		}
@@ -539,13 +542,12 @@ int main(int argc, char **argv)
 		// }
 
 		while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event))  {
-			printf("Event: type %d, time %d, number %d, value %d\n",
-				js.type, js.time, js.number, js.value);
+			//printf("PC: JS event: type %d, time %d, number %d, value %d\n", js.type, js.time, js.number, js.value);
 				send_js_message(js.type, js.number, js.value);
 		}
 
 		if (errno != EAGAIN) {
-			perror("\njstest: error reading");
+			perror("\nPC: jstest: error reading\n");
 			exit (1);
 		}
 
