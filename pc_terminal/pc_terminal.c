@@ -361,10 +361,9 @@ uint32_t message_encode(int c){
 		// KEYBOARD 2 (MANUAL_ST)
 		case 50: // keyboard '2' pressed dorne switches to MANUAL_ST
 			//message = 0b00000000000100000001000001010101; 
-			print_packet(message, "PC: before append");
 			message = append_comm_type(message, MODE_SW_COMM);
 			message = append_mode(message, MANUAL_ST); 
-			print_packet(message, "PC: after append");
+			print_packet(message, "PC: Example change to manual mode: ");
 			g_current_state = mode_sw_action("TERM", g_current_state, MANUAL_ST, ESC);
 			g_dest_state = NO_WHERE;
 			break;
@@ -410,8 +409,8 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 		printf("ERROR in send_js_message: UKNOWN IF BUTTON OR AXIS (js_type)\n");
 		return;
 	}
-	printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value);
-	print_packet(message, "JS packet:");
+	//printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value);
+	//print_packet(message, "JS packet:");
 	rs232_putchar(message);
 }
 
