@@ -66,7 +66,6 @@ MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m2_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m3_state = MOTOR_REMAIN;
 
-uint8_t find_motor_state(uint8_t messg){
 YAW_CONTROL_T yaw_control;
 
 uint8_t find_motor_state(uint8_t messg){
@@ -177,7 +176,7 @@ void check_USB_connection_alive() {
 	}
 }
 
-void process_js_command(js_total_value, joystick_type) {
+void process_JS_AXIS_COMMand(js_total_value, joystick_axis) {
 	return;
 
 	// example js_total_value = 32776
@@ -189,6 +188,7 @@ void process_js_command(js_total_value, joystick_type) {
  *------------------------------------------------------------------
  */
 void messg_decode(uint8_t messg){
+	printf("START messg_decode, g_current_comm_type: %d \n", g_current_comm_type);
 	
 	// printf("The %d byte is: \n", 4-FRAG_COUNT);			// print out each fragment QR receives
 	// printf("   		 "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
@@ -204,33 +204,29 @@ void messg_decode(uint8_t messg){
 
 	uint8_t jsvalue_left;
 	uint8_t jsvalue_right;
-	JOYSTICK_TYPE_t joystick_type;
+	JOYSTICK_AXIS_t joystick_axis;
 	
 	printf("FRAG_COUNT: %d \n", FRAG_COUNT);
 	printf("messg: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
 	if (FRAG_COUNT == 3){
 
-		uint8_t comm_type = messg & 0xf0; //take left most 4 bits from current byte
-		uint8_t state = messg & 0x0f;     //take right most 4 bits from current byte // CAN ALSO BE NUMBER FOR JOYSTICK TYPE!
+		uint8_t comm_type_bits = messg & 0xf0; //take left most 4 bits from current byte
+		uint8_t state_or_jsaxis_bits = messg & 0x0f;     //take right most 4 bits from current byte // CAN ALSO BE NUMBER FOR JOYSTICK TYPE!
 
 		//printf("  comm_type: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(comm_type));
 
-		g_current_comm_type = find_comm_type(comm_type);
+		g_current_comm_type = retrieve_comm_type(comm_type_bits);
 		//assert( == 1 && "QR: No such command found.");
 
-	 	if (g_current_comm_type == USB_CHECK_COMM) {
+	 	if (g_current_comm_type == USB_CHECK_COMM) { // update usb_check received and check state sync
 	 		USB_comm_update_received();
+	 		int result = check_mode_sync(state_or_jsaxis_bits, g_current_state);
+			//printf("check_mode_sync result: %d\n", result);
+			//assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?????????????????
 	 	}
-
-	 	if (g_current_comm_type == JS_COMM) {
-	 		joystick_type = find_joystick_message_type(state);
-	 	}
-
-		int result = check_mode_sync(state, g_current_state);
-		//printf("check_mode_sync result: %d\n", result);
-		//assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?????????????????
-
-		
+	 	else if (g_current_comm_type == JS_AXIS_COMM) {
+	 		joystick_axis = retrieve_js_axis(state_or_jsaxis_bits);
+	 	}		
 	}
 
 	/*--------------------------------------------------------------
@@ -238,7 +234,7 @@ void messg_decode(uint8_t messg){
 	 * command type received in the previous byte.
 	 *--------------------------------------------------------------
 	 */
-	if (FRAG_COUNT == 2 || FRAG_COUNT == 1){
+	else if (FRAG_COUNT == 2 || FRAG_COUNT == 1){
 		/*--------------------------------------------------------------
 		 * if the command is CTRL_TYPE, two field in this byte: 
 		 * 		  ----------------------		 ----------------------
@@ -258,24 +254,22 @@ void messg_decode(uint8_t messg){
 	 		result = find_motor_state(messg);
 	 		assert(result == 1 && "QR: Fail to find the motor state.");
 	 	}
-	 	if (g_current_comm_type == JS_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
-	 		int result;
-		 	result = find_motor_state_js(messg, FRAG_COUNT);
-	 		assert(result == 1 && "QR: Fail to find the motor state.");
-	 	}
-
-	 	if (g_current_comm_type == JS_COMM) {
+	 	// else if (g_current_comm_type == JS_AXIS_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
+	 	// 	int result;
+		 // 	result = find_motor_state_js(messg, FRAG_COUNT);
+	 	// 	assert(result == 1 && "QR: Fail to find the motor state.");
+	 	// }
+	 	else if (g_current_comm_type == JS_AXIS_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
 	 		if (FRAG_COUNT == 2) {
 	 			jsvalue_right = messg;	
 	 		}
-	 		if (FRAG_COUNT == 1) {
+	 		else if (FRAG_COUNT == 1) {
 	 			jsvalue_left = messg;	
 	 			uint16_t js_total_value = (jsvalue_left << 8) | jsvalue_right;
-	 			process_js_command(js_total_value, joystick_type);
+	 			process_JS_AXIS_COMMand(js_total_value, joystick_axis);
 	 		}
 	 	}
 
-	 	
 	 	/*--------------------------------------------------------------
 		 * if the command is MODE_SW_TYPE, two field in this byte: 
 		 * 		  ----------------------		 ----------------------
@@ -290,14 +284,14 @@ void messg_decode(uint8_t messg){
 		 *--------------------------------------------------------------
 		 */
 	 	else if (g_current_comm_type == MODE_SW_COMM && FRAG_COUNT == 2){
-	 		g_dest_state = find_dest_state(messg);
+	 		g_dest_state = retrieve_mode(messg);
 	 	}
-
 	 	/* USB_comm_check message, so we don't care about the contents of frag 2 and 1 */
 	 	else if (g_current_comm_type == USB_CHECK_COMM) {
 	 		//do nothing
-	 	}
+ 			printf("USB_CHECK do nothing \n");
 
+	 	}
 	 	else if (g_current_comm_type == CHANGE_P_COMM && FRAG_COUNT == 2) {
 		printf("  CHANGE_P_COMM message: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
 	 		if (messg == 0x01) {
@@ -309,10 +303,12 @@ void messg_decode(uint8_t messg){
 		 		decrease_p_value(&yaw_control);
 	 		}
 	 	}
-
 	 	else {
 	      	printf("UNKNOWN COMM TYPE OR TRASHED MESSG RECEIVED AT FCB SIDE \n");
 	 	}
+	}
+	else {
+      	printf("ERROR (messg_decode): UNKNOWN FRAG COUNT \n");
 	}
 }
 
@@ -342,7 +338,7 @@ void execute(){
 		// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
 	}
 
-	// if(g_current_comm_type == JS_COMM){
+	// if(g_current_comm_type == JS_AXIS_COMM){
 	// 	// handled by the thread
 	// }
 
@@ -438,18 +434,22 @@ int main(void)
 			get_dmp_data();
 			run_filters_and_control();
 		}
-		if (g_current_state == PANIC_ST){
+		if (g_current_state == PANIC_ST)
+		{
 			enter_panic_mode(false); //enter panic mode for any reason other than cable
 		}
-		if (g_current_state == CALIBRATION_ST) {
+		if (g_current_state == CALIBRATION_ST) 
+		{
 			calib_return = sensor_calibration(psi, 10); 
-			if (calib_return != -1) {
+			if (calib_return != -1) 
+			{
 				psi_calib = sensor_calib;
 				printf("\n PSI CALIB DONE, PSI_CALIB: %6d\n", psi_calib);	
 				g_current_state = SAFE_ST;
 			}
 		}
-		if (g_current_state == YAWCONTROL_ST){
+		if (g_current_state == YAWCONTROL_ST)
+		{
 			if (counter % 200 == 0) {
 				if (calibration_done) {
 					//input: setpoint signal + psi signal

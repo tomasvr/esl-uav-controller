@@ -50,6 +50,7 @@
 
 #include "joystick.h"
 #include "../states.h"
+#include "../comm.h"
 
 #define JS_DEV	"/dev/input/js0"
 // #define THRESHOLD_READ 2767
@@ -185,8 +186,15 @@ void rs232_open(void){
 	tcflush(fd_RS232, TCIOFLUSH); /* flush I/O buffer */
 }
 
+void print_packet(uint32_t message, char *info) { 
+	printf("%s\n", info);
+	printf("message: "PRINTF_BINARY_PATTERN_INT8"-",PRINTF_BYTE_TO_BINARY_INT8(message >> 24));
+	printf(PRINTF_BINARY_PATTERN_INT8"-",PRINTF_BYTE_TO_BINARY_INT8(message >> 16));
+	printf(PRINTF_BINARY_PATTERN_INT8"-",PRINTF_BYTE_TO_BINARY_INT8(message >> 8));
+	printf(PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(message));
+}
 
-void 	rs232_close(void){
+void rs232_close(void){
   	int 	result;
 
   	result = close(fd_RS232);
@@ -235,151 +243,183 @@ int rs232_putchar(int c){ // change char to uint32_t
 // STATE_t g_dest_state = NO_WHERE;
 bool ESC = false;
 
-uint32_t append_current_mode(uint32_t messg){
+// uint32_t append_mode(uint32_t message){
 
-	switch(g_current_state){
-		case 0:
-			messg |= 0x00000000; // selected bits should be masked to 0 before '|='?
-			break;
-		case 1:
-			messg |= 0x00000800;
-			break;
-		case 2:
-			messg |= 0x00000100;
-			break;
-		case 3:
-			messg |= 0x00000200;
-			break;
-		case 4:
-			messg |= 0x00000300;
-			break;
-		case 5:
-			messg |= 0x00000400;
-			break;
-		default:
-			break;
-	}
-	//printf("TER: The packet to send is: "PRINTF_BINARY_PATTERN_INT32 "\n",PRINTF_BYTE_TO_BINARY_INT32(messg)); // 0000 0000 1000 0000 0001 0010 0101 0101
-	return messg;
-}
+// 	switch(g_current_state){
+// 		case 0:
+// 			message |= 0x00000000; // selected bits should be masked to 0 before '|='?
+// 			break;
+// 		case 1:
+// 			message |= 0x00000800;
+// 			break;
+// 		case 2:
+// 			message |= 0x00000100;
+// 			break;
+// 		case 3:
+// 			message |= 0x00000200;
+// 			break;
+// 		case 4:
+// 			message |= 0x00000300;
+// 			break;
+// 		case 5:
+// 			message |= 0x00000400;
+// 			break;
+// 		default:
+// 			break;
+// 	}
+// 	//printf("TER: The packet to send is: "PRINTF_BINARY_PATTERN_INT32 "\n",PRINTF_BYTE_TO_BINARY_INT32(message)); // 0000 0000 1000 0000 0001 0010 0101 0101
+// 	return message;
+// }
 
-uint32_t messg_encode(int c){
-	uint32_t messg;
+uint32_t message_encode(int c){
+	uint32_t message = BASE_MESSAGE_PACKET_BITS; // 0b00000000000000000000000001010101
 	switch(c){
 
 		case USB_CHECK_MESSAGE:// USB_COMM_CHECK_MESSAGE //todo: take other number than 99? (i chose it randomly)
 			// printf("entered case for usb check message\n");
-			messg = 0b00000000000000001001000001010101; // 000000000-00000000-11110000-01010101 (empty - empty - USB_check_comm - startbit)
-			if (g_current_state != SAFE_ST) messg = append_current_mode(messg); //TODO: WHY NOT APPEND IN SAFE STATE?
+			//message = 0b00000000000000001001000001010101; // 000000000-00000000-11110000-01010101 (empty - empty - USB_check_comm - startbit)
+			message = append_comm_type(message, USB_CHECK_COMM);
+			message = append_mode(message, g_current_state); // append current state to check at FCB side
 			break;
 		case 'a':
 			// keyboard 'a' pressed, drone lift up
-			messg = 0b10111111001101110000000101010101; // keyboard 'a' pressed, drone lift up, this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) messg = append_current_mode(messg); 
+			message = 0b10111111001101110000000101010101; // keyboard 'a' pressed, drone lift up, this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state); 
 			break;
 
 		case 'z':
-			messg = 0b10101110001001100000000101010101; // keyboard 'z' pressed, drone lift down, this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+			message = 0b10101110001001100000000101010101; // keyboard 'z' pressed, drone lift down, this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
 			break;
 
 		case 'A':
-			messg = 0b10111100001001000000000101010101; // keyboard '↑' pressed, drone pitch down, this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+			message = 0b10111100001001000000000101010101; // keyboard '↑' pressed, drone pitch down, this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
 			break;
 
 		case 'B':
-			messg = 0b10101100001101000000000101010101; // keyboard '↓' pressed, drone pitch up, this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+			message = 0b10101100001101000000000101010101; // keyboard '↓' pressed, drone pitch up, this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
 			break;
 
 		case 'C':
-			messg = 0b10001111000001100000000101010101; // keyboard '->' pressed, drone roll down, this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+			message = 0b10001111000001100000000101010101; // keyboard '->' pressed, drone roll down, this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
 			break;
 
 		case 'D':
-			messg = 0b10001110000001110000000101010101; // keyboard '<-' pressed, drone roll up, this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+			message = 0b10001110000001110000000101010101; // keyboard '<-' pressed, drone roll up, this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
 			break;
 
 		case 'q':
-			messg = 0b10101111001001110000000101010101; // keyboard 'q' pressed, drone yaw down(left), this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+			message = 0b10101111001001110000000101010101; // keyboard 'q' pressed, drone yaw down(left), this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
 			break;
 		case 'w':
-			messg = 0b10111110001101100000000101010101; // keyboard 'w' pressed, drone yaw up(right), this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+			message = 0b10111110001101100000000101010101; // keyboard 'w' pressed, drone yaw up(right), this command has a default mode -> MANUAL_ST
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
 			break;
 		case 'u':
-			messg = 0b00000000000000010111000001010101; // keyboard 'u' pressed, increase P yaw control
-			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+			message = 0b00000000000000010111000001010101; // keyboard 'u' pressed, increase P yaw control
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
 			break;
 		case 'j':
-			messg = 0b00000000000000000111000001010101; // keyboard 'j' pressed, decrease P yaw control
-			if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+			message = 0b00000000000000000111000001010101; // keyboard 'j' pressed, decrease P yaw control
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
 			break;
 
 
+		// ESC
 		case 27: // keyboard 'ESC' pressed, drone switches to PANIC_ST
-			messg = 0b00000000000000001111000001010101;
-			messg = append_current_mode(messg); 
+			//message = 0b00000000000000001111000001010101;
+			message = append_comm_type(message, MODE_SW_COMM);
+			message = append_mode(message, g_current_state); 
 			ESC = true;
 			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
 			break;
 
+		// KEYBOARD 0 (SAFE_ST)
 		case 48: // keyboard '0' pressed, dorne switches to SAFE_ST
-			messg = 0b00000000000000000001000001010101; //000000000-00000000-00010000-01010101 (empty - CTRL_COMM - MODE_SW_COMM - startbit)
-			messg = append_current_mode(messg); 
-			g_dest_state = SAFE_ST;
-			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
+			//message = 0b00000000000000000001000001010101; //000000000-00000000-00010000-01010101 (empty - CTRL_COMM - MODE_SW_COMM - startbit)
+			message = append_comm_type(message, MODE_SW_COMM);
+			message = append_mode(message, SAFE_ST); 
+			g_current_state = mode_sw_action("TERM", g_current_state, SAFE_ST, ESC);
 			g_dest_state = NO_WHERE;
 			break;
 
+		// KEYBOARD 1 (PANIC_ST)
 		case 49: // keyboard '1' pressed, dorne switches to PANIC_ST
-			messg = 0b00000000100000000001000001010101;
-			messg = append_current_mode(messg); 
-			g_dest_state = PANIC_ST;
-			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
+			//message = 0b00000000100000000001000001010101;
+			message = append_comm_type(message, MODE_SW_COMM);
+			message = append_mode(message, PANIC_ST); 
+			g_current_state = mode_sw_action("TERM", g_current_state, PANIC_ST, ESC);
 			g_dest_state = NO_WHERE;
 			break;
 
+		// KEYBOARD 2 (MANUAL_ST)
 		case 50: // keyboard '2' pressed dorne switches to MANUAL_ST
-			messg = 0b00000000000100000001000001010101; 
-			messg = append_current_mode(messg); 
-			g_dest_state = MANUAL_ST;
-			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
+			//message = 0b00000000000100000001000001010101; 
+			print_packet(message, "before append");
+			message = append_comm_type(message, MODE_SW_COMM);
+			message = append_mode(message, MANUAL_ST); 
+			print_packet(message, "after append");
+			g_current_state = mode_sw_action("TERM", g_current_state, MANUAL_ST, ESC);
 			g_dest_state = NO_WHERE;
 			break;
-		case 51: // keyboard '3' switches drone to calibration mode
-			messg = 0b00000000001000000001000001010101; 
-			messg = append_current_mode(messg); 
-			g_dest_state = CALIBRATION_ST;
-			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
+
+		// KEYBOARD 3 (CALIBRATION_ST)
+		case 51:
+			//message = 0b00000000001000000001000001010101; 
+			message = append_comm_type(message, MODE_SW_COMM);
+			message = append_mode(message, CALIBRATION_ST); 
+			g_current_state = mode_sw_action("TERM", g_current_state, CALIBRATION_ST, ESC);
 			g_dest_state = NO_WHERE;
 			break;
+
+		// KEYBOARD 4 (YAWCONTROL_ST)
 		case 52: // keyboard '4' switches drone to yaw control mode
-			messg = 0b00000000001100000001000001010101; 
-			messg = append_current_mode(messg); 
-			g_dest_state = YAWCONTROL_ST;
-			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
+			//message = 0b00000000001100000001000001010101;
+			message = append_comm_type(message, MODE_SW_COMM);
+			message = append_mode(message, YAWCONTROL_ST); 
+			g_current_state = mode_sw_action("TERM", g_current_state, YAWCONTROL_ST, ESC);
 			g_dest_state = NO_WHERE;
 			break;
-
 		default:
-			messg = -1;
-
+			message = -1;
+			perror("ERROR: KEYBOARD PRESS NOT RECOGNISED (message_encode)");
 	}
-
-	return messg;
-
+	return message;
 }
+
+void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
+	uint32_t message = 0b00000000000000000000000001010101; // base message
+	if (js_type == 1) { //buttons
+		message = append_comm_type(message, MODE_SW_COMM);
+		STATE_t state_from_js_button = js_number; // The button number indicates which state (see states.h)
+		message = append_mode(message, state_from_js_button);
+	}
+	else if (js_type == 2) { //axis
+		message = append_comm_type(message, JS_AXIS_COMM);
+		JOYSTICK_AXIS_t axis_number_from_js = js_number;
+		message = append_js_axis(message, axis_number_from_js);
+	} else {
+		printf("ERROR in send_js_message: UKNOWN IF BUTTON OR AXIS (js_type)\n");
+		return;
+	}
+	rs232_putchar(message);
+}
+
+
+void send_USB_check_message() {
+	rs232_putchar(message_encode(USB_CHECK_MESSAGE));
+}
+
 
 unsigned int mon_time_ms(void){
     unsigned int    ms;
     struct timeval  tv;
     struct timezone tz;
-
     gettimeofday(&tv, &tz);
     ms = 1000 * (tv.tv_sec % 65); // 65 sec wrap around
     ms = ms + tv.tv_usec / 1000;
@@ -388,7 +428,6 @@ unsigned int mon_time_ms(void){
 
 void mon_delay_ms(unsigned int ms){
         struct timespec req, rem;
-
         req.tv_sec = ms / 1000;
         req.tv_nsec = 1000000 * (ms % 1000);
         assert(nanosleep(&req,&rem) == 0);
@@ -400,46 +439,7 @@ uint32_t GetTimeStamp() {
     return tv.tv_sec*(uint32_t)1000000+tv.tv_usec; //todo: check for overflow?
 }
 
-void send_USB_check_message() {
-	rs232_putchar(messg_encode(USB_CHECK_MESSAGE));
-}
 
-void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
-	uint32_t messg;
-	if (js_type == 1) { //buttons
-		switch(js_number) {
-			case 1:
-				break;
-			case 2:
-				break;		
-			case 3:
-				break;	
-			case 4:
-				break;	
-			case 5:
-				break;	
-		}
-	}
-	else if (js_type == 2) { //axis
-		messg = 0b00000000000000000010000001010101; //base for js messg
-		switch(js_number) {
-			case 2:                  //0000010001001010101 //base for js messg
-				printf("messg before modification: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
-				messg |= (0x02 << 8); //configure yaw mode
-				printf("messg after yaw config: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
-				messg |= (js_value << 16); //configure value
-				printf("messg after value config: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
-
-				break;
-		}
-	} else {
-		printf("send js error\n");
-		return;
-	}
-
-	//if (g_current_state != SAFE_ST) messg = append_current_mode(messg); //TODO: WHY NOT APPEND IN SAFE STATE?
-	rs232_putchar(messg);
-}
 
 
 /*----------------------------------------------------------------
@@ -468,13 +468,13 @@ int main(int argc, char **argv)
 	// js: initializaiton
 	int 			fd;
 	struct js_event js;
-	unsigned int	t, i;
+	//unsigned int	t, i;
 	if ((fd = open(JS_DEV, O_RDONLY)) < 0) {
 		perror("jstest");
 		exit(1);
 	}
 	fcntl(fd, F_SETFL, O_NONBLOCK);// non-blocking mode
-	uint32_t last_poll_time = GetTimeStamp();
+	//uint32_t last_poll_time = GetTimeStamp();
 	time2poll = true;
 #endif
 
@@ -503,11 +503,11 @@ int main(int argc, char **argv)
 			    term_getchar_nb(); // skip the [
 			    c = term_getchar_nb();
 			    if (c!='A' && c!='B' && c!='C' && c!='D') {
-			    	rs232_putchar(messg_encode(27));
+			    	rs232_putchar(message_encode(27));
 				}		 
 			}
 			// distinguish the arrows with ESC
-			rs232_putchar(messg_encode(c));
+			rs232_putchar(message_encode(c));
 			
 			if (g_current_state == PANIC_ST){
 				// c = rs232_getchar(); //delay until character received again
@@ -556,7 +556,7 @@ int main(int argc, char **argv)
 		// 	last_poll_time = current_time;
 		// } 
 		// if(time2poll){
-		// 	messg_encode_send_js(axis, button);
+		// 	message_encode_send_js(axis, button);
 		// 	// printf("Poll \n");
 		// 	time2poll = false;
 		// }

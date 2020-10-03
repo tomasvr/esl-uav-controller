@@ -293,7 +293,7 @@ void messg_encode_send_js(int *axis, int *button) {
 	printf("level_2: %d, ", level_2);
 	printf("level_3: %d, \n", level_3);
 	messg = generate_messg_js(level_0, level_1, level_2, level_3);
-	if (g_current_state != SAFE_ST) messg = append_current_mode(messg);
+	if (g_current_state != SAFE_ST) messg = append_mode(messg);
 	rs232_putchar(messg);
 
 	// check button values
@@ -302,14 +302,14 @@ void messg_encode_send_js(int *axis, int *button) {
 		// printf("%2d:%s ", i, button[i] ? "on " : "off");
 		if(i==0 && button[i]){// button 1(fire button) pressed
 			messg = 0b00000000000000001111000001010101;
-			messg = append_current_mode(messg); 
+			messg = append_mode(messg); 
 			ESC = true;
 			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
 			rs232_putchar(messg);
 		}
 		if(i==6 && button[i]){// button 7 pressed, drone switches to SAFE_ST
 			messg = 0b00000000000000000001000001010101;
-			messg = append_current_mode(messg); 
+			messg = append_mode(messg); 
 			g_dest_state = SAFE_ST;
 			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
 			g_dest_state = NO_WHERE;
@@ -317,7 +317,7 @@ void messg_encode_send_js(int *axis, int *button) {
 		}
 		if(i==7 && button[i]){// button 8 pressed, drone switches to PANIC_ST
 			messg = 0b00000000100000000001000001010101;
-			messg = append_current_mode(messg); 
+			messg = append_mode(messg); 
 			g_dest_state = PANIC_ST;
 			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
 			g_dest_state = NO_WHERE;
@@ -325,7 +325,7 @@ void messg_encode_send_js(int *axis, int *button) {
 		}
 		if(i==8 && button[i]){// button 9 pressed drone switches to MANUAL_ST
 			messg = 0b00000000000100000001000001010101;
-			messg = append_current_mode(messg); 
+			messg = append_mode(messg); 
 			g_dest_state = MANUAL_ST;
 			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
 			g_dest_state = NO_WHERE;
