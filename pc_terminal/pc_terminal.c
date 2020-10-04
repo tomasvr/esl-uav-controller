@@ -393,6 +393,7 @@ uint32_t message_encode(int c){
 }
 
 void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
+
 	uint32_t message = 0b00000000000000000000000001010101; // base message
 	if (js_type == 1) { //buttons
 		message = append_comm_type(message, MODE_SW_COMM);
@@ -440,7 +441,7 @@ void mon_delay_ms(unsigned int ms){
 uint32_t GetTimeStamp() {
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    return tv.tv_sec*(uint32_t)1000000+tv.tv_usec; //todo: check for overflow?
+    return tv.tv_sec*(uint32_t)1000000+tv.tv_usec; //todo: check for overflow? <-- (32 bit allows for about 70 minutes before overflow, fix this later?)
 }
 
 
@@ -496,8 +497,6 @@ int main(int argc, char **argv)
 			send_USB_check_message();
 			last_USB_check_time = current_time;
 		}
-
-
 		if ((c = term_getchar_nb()) != -1){
 
 			// distinguish the characters and arrows
@@ -520,8 +519,7 @@ int main(int argc, char **argv)
 			
 			//printf("Message sent!\n");
 		}
-		if ((c = rs232_getchar_nb()) != -1)
-			term_putchar(c);
+		if ((c = rs232_getchar_nb()) != -1) term_putchar(c);
 
 		/*---------------------------------------------------
 		 *			communication: js -> pc
