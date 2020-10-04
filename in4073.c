@@ -117,10 +117,10 @@ MOTOR_CTRL find_motor_level(uint8_t value){
 	return result;
 }
 
-uint8_t find_motor_state_js(uint8_t messg, uint8_t FRAG_COUNT){
+uint8_t find_motor_state_js(uint8_t fragment, uint8_t FRAG_COUNT){
 	int result = 0;
-	uint8_t m_ctrl_1 = messg & 0xf0; 		
-	uint8_t m_ctrl_2 = messg & 0x0f;
+	uint8_t m_ctrl_1 = fragment & 0xf0; 		
+	uint8_t m_ctrl_2 = fragment & 0x0f;
 	MOTOR_CTRL state_1 = find_motor_level(m_ctrl_1>>4);
 	MOTOR_CTRL state_2 = find_motor_level(m_ctrl_2);
 	if(FRAG_COUNT == 2){ // MO & M1
@@ -133,7 +133,7 @@ uint8_t find_motor_state_js(uint8_t messg, uint8_t FRAG_COUNT){
 		g_current_m3_state = state_2;
 		result = 1;
 	} 
-	return result;
+	return result; // return 1 if no errors and 0 otherwise
 }
 
 
@@ -148,7 +148,7 @@ void enter_panic_mode(bool cable_detached){
 		ae[1] = motor_speed;
 		ae[2] = motor_speed;
 		ae[3] = motor_speed;
-		update_motors(); //or run filters_and_control() ?
+		update_motors(); //or run filters_and_control() ? <--('filters_and_control()' when in a control loop)
 		nrf_delay_ms(1000);
 		motor_speed = motor_speed - 100;
 	}
@@ -172,15 +172,87 @@ void USB_comm_update_received() {
 
 void check_USB_connection_alive() {
 	current_time = get_time_us();
-	if (current_time - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: WHAT HAPPENS ON OVERFLOW!
+	if (current_time - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: WHAT HAPPENS ON OVERFLOW! <--(Need fix when operation time > 70 mins)
 		enter_panic_mode(true);
 	}
 }
 
-void process_JS_AXIS_COMMand(js_total_value, joystick_axis) {
+void process_js_axis_cmd(joystick_axis, uint16_t js_total_value) {
+
 	printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
-	return;
 	// example js_total_value = 32776
+	// TODO: implementation of js cmds handling 
+	uint8_t percentage = 0; // (percent%)
+	switch(joystick_axis){
+
+		case ROLL_AXIS:
+			if(js_total_value <= 32767){ // roll counterclockwise
+				percentage = (uint8_t) (100.f * js_total_value / 32767);
+				ae[0] = (int16_t) UPPER_LIMIT * 50 / 100;
+				ae[1] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
+				ae[2] = (int16_t) UPPER_LIMIT * 50 / 100;
+				ae[3] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
+			}
+			else{ // roll clockwise
+				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+				ae[0] = (int16_t) UPPER_LIMIT * 50 / 100;
+				ae[1] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
+				ae[2] = (int16_t) UPPER_LIMIT * 50 / 100;
+				ae[3] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
+			}
+			break;
+
+		case PITCH_AXIS:
+			if(js_total_value <= 32767){ // pitch down
+				percentage = (uint8_t) (100.f * js_total_value / 32767);
+				ae[0] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
+				ae[1] = (int16_t) UPPER_LIMIT * 50 / 100;
+				ae[2] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
+				ae[3] = (int16_t) UPPER_LIMIT * 50 / 100;
+			}
+			else{ // pitch up
+				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+				ae[0] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
+				ae[1] = (int16_t) UPPER_LIMIT * 50 / 100;
+				ae[2] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
+				ae[3] = (int16_t) UPPER_LIMIT * 50 / 100;
+			}
+			break;
+
+		case YAW_AXIS:
+			if(js_total_value <= 32767){ // yaw counterclockwise
+				percentage = (uint8_t) (100.f * js_total_value / 32767);
+				ae[0] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
+				ae[1] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
+				ae[2] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
+				ae[3] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
+			}
+			else{ // yaw clockwise
+				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+				ae[0] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
+				ae[1] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
+				ae[2] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
+				ae[3] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
+			}
+			break;
+
+		case LIFT_THROTTLE:
+			if(js_total_value <= 32767){
+				percentage = (uint8_t) (100.f * (32767-js_total_value) / 65535);
+			}
+			else{
+				percentage = (uint8_t) (100.f * (65536-js_total_value+32767) / 65535);
+			}
+			ae[0] = (int16_t) UPPER_LIMIT * percentage / 100;
+			ae[1] = (int16_t) UPPER_LIMIT * percentage / 100;
+			ae[2] = (int16_t) UPPER_LIMIT * percentage / 100;
+			ae[3] = (int16_t) UPPER_LIMIT * percentage / 100;
+			break;
+
+		default:
+			break;
+	}
+	return;
 }
 
 
@@ -227,7 +299,7 @@ void messg_decode(uint8_t messg){
 	 		USB_comm_update_received();
 	 		int result = check_mode_sync(state_or_jsaxis_bits, g_current_state);
 			//printf("check_mode_sync result: %d\n", result);
-			//assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?????????????????
+			//assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?
 	 	}
 	 	else if (g_current_comm_type == JS_AXIS_COMM) {
 	 		joystick_axis = retrieve_js_axis(state_or_jsaxis_bits);
@@ -279,7 +351,7 @@ void messg_decode(uint8_t messg){
 	 		else if (FRAG_COUNT == 1) {
 	 			jsvalue_left = messg;	
 	 			uint16_t js_total_value = (jsvalue_left << 8) | jsvalue_right;
-	 			process_JS_AXIS_COMMand(js_total_value, joystick_axis);
+	 			process_js_axis_cmd(joystick_axis, js_total_value);
 	 		}
 	 	}
 
@@ -309,7 +381,7 @@ void messg_decode(uint8_t messg){
 
 	 	}
 	 	else if (g_current_comm_type == CHANGE_P_COMM && FRAG_COUNT == 2) {
-		printf("  CHANGE_P_COMM message: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
+			printf("  CHANGE_P_COMM message: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
 	 		if (messg == 0x01) {
 	 			printf("FCB: P CONTROL UP\n");
 	 			increase_p_value(&yaw_control);
@@ -390,8 +462,6 @@ void execute(){ //TODO: remove this function
 	// 	g_dest_state = NO_WHERE;
 	// 	g_current_comm_type = NO_COMM;
 	// }
-
-
 }
 
 uint8_t calibration_counter = 0;
