@@ -101,7 +101,7 @@ void ctrl_action(){
 
 void yaw_control_init(YAW_CONTROL_T *yaw_control)
 {
-	yaw_control->kp = 1; //from keyboard
+	yaw_control->kp = 10; //from keyboard
 	yaw_control->ki = 0;
 	yaw_control->err = 0;
 	yaw_control->integral = 0;
@@ -114,21 +114,29 @@ void yaw_control_init(YAW_CONTROL_T *yaw_control)
 	printf("yaw_control struct initalized");
 }
 
-void yaw_control_speed_calculate(YAW_CONTROL_T *yaw_control, int16_t psi)//input js value here as set value;
+void yaw_control_speed_calculate(YAW_CONTROL_T *yaw_control, int16_t sr, int setpoint)//input js value here as set value; int setpoint
 {
-	yaw_control->actual_yaw_rate = psi; //todo fix this (ugly hack)
-
-	yaw_control->set_yaw_rate = 0; //interpret js value here
+	sr = sr / 10;
+	setpoint = setpoint / 32768 * 10000;
+	printf(" setpoint %2d", setpoint);
+	yaw_control->actual_yaw_rate = sr; //todo fix this (ugly hack)
+	yaw_control->set_yaw_rate = setpoint; //interpret js value here
 	yaw_control->err = yaw_control->set_yaw_rate - yaw_control->actual_yaw_rate;
 	yaw_control->integral += yaw_control->err;
+	printf(" err %2d", yaw_control->err);
 	yaw_control->speed_comm = yaw_speed_init;
 	yaw_control->speed_diff = yaw_control->kp * yaw_control->err;
 	//yaw_speed_diff = yaw_control.kp * yaw_control.err + yaw_control.ki * yaw_control.integral;
 	yaw_control->actual_speed_plus = yaw_control->speed_comm + yaw_control->speed_diff;
 	yaw_control->actual_speed_minus = yaw_control->speed_comm - yaw_control->speed_diff;
-	//turn right M1 M3 + M2 M4 -
-	//turn left M1 M3 - M2 M4 +
+	ae[0] = yaw_control->actual_speed_plus; //turn right M1 M3 + M2 M4 -  turn left M1 M3 - M2 M4 +
+	ae[1] = yaw_control->actual_speed_minus;
+	ae[2] = yaw_control->actual_speed_plus;
+	ae[3] = yaw_control->actual_speed_minus;
+	printf(" %6d | %6d ", yaw_control->actual_speed_plus, yaw_control->actual_speed_minus);
+	printf(" %2d | %2d | %2d | %2d\n ", ae[0], ae[1], ae[2], ae[3]);
 }
+
 
 void increase_p_value(YAW_CONTROL_T *yaw_control) {
 	if (yaw_control->kp < YAW_P_UPPER_LIMIT) {

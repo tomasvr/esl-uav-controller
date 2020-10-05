@@ -381,7 +381,8 @@ int main(void)
 					//input: setpoint signal + psi signal
 					//output: motor speed
 					//setpoint = 0, yaw rate = 0
-					yaw_control_speed_calculate(&yaw_control, psi);
+					yaw_control_init(&yaw_control);
+					yaw_control_speed_calculate(&yaw_control, sr, 0);
 				} else {
 					printf("\n DO CALIBRATION BEFORE YAW CONTROL MODE! \n");
 				}
