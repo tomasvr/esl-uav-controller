@@ -49,17 +49,25 @@ typedef struct {
 	int16_t Integral;
 	int16_t Deriv;
 	int16_t Output;
-	// int16_t speed_comm;
-	// int16_t speed_diff;
-	// int16_t set_yaw_rate;
-	// int16_t actual_yaw_rate;
-	// int16_t actual_speed_plus;
-	// int16_t actual_speed_minus;
 } CONTROL_T;
 
+#define SPEED_REF 170
+//test points before js
+#define TARGET_X 0
+#define TARGET_Y 0
+#define TARGET_Z 0
+
+#define PITCH_THRE 1500
+#define ROLL_THRE 1500
+
 void control_init(CONTROL_T*);
-void yaw_control(CONTROL_T*, int16_t, int);
-void control();
+void yaw_control_err_cal(CONTROL_T*, int16_t, int);
+void control_err_cal(CONTROL_T*, int16_t, int);
+void yaw_control(void);
+void control(void);
+void yaw_control_motor_output(void);
+void control_motor_output(void);
+void speed_limit(void);
 
 void increase_p_value(CONTROL_T*);
 void decrease_p_value(CONTROL_T*);
