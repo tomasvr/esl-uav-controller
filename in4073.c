@@ -66,7 +66,7 @@ MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m2_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m3_state = MOTOR_REMAIN;
 
-YAW_CONTROL_T yaw_control;
+CONTROL_T Control;
 
 uint8_t find_motor_state(uint8_t messg){
 	uint8_t m_ctrl_1 = messg & 0xf0; 		
@@ -570,8 +570,8 @@ int main(void)
 					//input: setpoint signal + psi signal
 					//output: motor speed
 					//setpoint = 0, yaw rate = 0
-					yaw_control_init(&yaw_control);
-					yaw_control_speed_calculate(&yaw_control, sr, 0);
+					control_init(&Control);
+					yaw_control(&yaw_control, sr, 0);
 				} else {
 					printf("\n DO CALIBRATION BEFORE YAW CONTROL MODE! \n");
 				}

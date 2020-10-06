@@ -97,24 +97,53 @@ void ctrl_action(){
 
 #define yaw_speed_init 170
 
+int16_t Integral_max; //maximum bound
 
+int16_t Pitch_Output;
+int16_t Roll_output;
+int16_t Yaw_Output;
 
-void yaw_control_init(YAW_CONTROL_T *yaw_control)
+CONTROL_T Pitch_angle_control;
+CONTROL_T Pitch_rate_control;
+
+CONTROL_T Roll_angle_control;
+CONTROL_T Roll_rate_control;
+
+CONTROL_T Yaw_angle_control;
+CONTROL_T Yaw_rate_control;
+
+void control_init(CONTROL_T *Control)
 {
-	yaw_control->kp = 10; //from keyboard
-	yaw_control->ki = 0;
-	yaw_control->err = 0;
-	yaw_control->integral = 0;
-	yaw_control->speed_comm = 0;
-	yaw_control->speed_diff = 0;
-	yaw_control->set_yaw_rate = 0; //from js
-	yaw_control->actual_yaw_rate = 0; //from sensor
-	yaw_control->actual_speed_plus = 0; 
-	yaw_control->actual_speed_minus = 0; 
-	printf("yaw_control struct initalized");
+	Pitch_angle_control->P = 0;
+	Pitch_angle_control->I = 0;
+	Pitch_angle_control->D = 0;
+
+	Pitch_rate_control->P = 0;
+	Pitch_rate_control->I = 0;
+	Pitch_rate_control->D = 0;
+
+	Roll_angle_control->P = 0;
+	Roll_angle_control->I = 0;
+	Roll_angle_control->D = 0;
+
+	Roll_rate_control->P = 0; 
+	Roll_rate_control->I = 0;
+	Roll_rate_control->D = 0;
+
+	Yaw_angle_control->P = 10; //from keyboard
+	Yaw_rate_control->P = 0; 
+
+	printf("Control struct initalized");
 }
 
-void yaw_control_speed_calculate(YAW_CONTROL_T *yaw_control, int16_t sr, int setpoint)//input js value here as set value; int setpoint
+void yaw_control(CONTROL_T *Control, int16_t sr, int setpoint);//measure target
+{
+	CONTROL_T->Err = setpoint - sr; //target - measure
+	CONTROL_T->Output = CONTROL_T->Err * Yaw_angle_control->P;
+}
+
+/*
+void yaw_control_speed_calculate(CONTROL_T *yaw_control, int16_t sr, int setpoint)//input js value here as set value; int setpoint
 {
 	sr = sr / 10;
 	setpoint = setpoint / 32768 * 10000;
@@ -136,15 +165,15 @@ void yaw_control_speed_calculate(YAW_CONTROL_T *yaw_control, int16_t sr, int set
 	printf(" %6d | %6d ", yaw_control->actual_speed_plus, yaw_control->actual_speed_minus);
 	printf(" %2d | %2d | %2d | %2d\n ", ae[0], ae[1], ae[2], ae[3]);
 }
+*/
 
-
-void increase_p_value(YAW_CONTROL_T *yaw_control) {
+void increase_p_value(CONTROL_T *Control) {
 	if (yaw_control->kp < YAW_P_UPPER_LIMIT) {
 		yaw_control->kp += YAW_P_STEP_SIZE;
 	}
 }
 
-void decrease_p_value(YAW_CONTROL_T *yaw_control) {
+void decrease_p_value(CONTROL_T *Control) {
 	if (yaw_control->kp > YAW_P_LOWER_LIMIT) {
 		yaw_control->kp -= YAW_P_STEP_SIZE;
 	}
