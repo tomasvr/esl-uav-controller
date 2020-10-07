@@ -141,7 +141,7 @@ void control_init(CONTROL_T *Control)
 	Yaw_angle_control.P = 10; //from keyboard
 	Yaw_angle_control.I = 0;
 
-	Yaw_rate_control.P = 0; 
+	Yaw_rate_control.P = 3; 
 	Yaw_rate_control.I = 0; 
 
 	printf("Control struct initalized");
@@ -151,6 +151,10 @@ void yaw_control_err_cal(CONTROL_T *Control, int16_t target, int measure)//setpo
 {
 	Control->Err = target - measure; //target - measure
 	Control->Output = Control->Err * Control->P;
+	Yaw_Target = target;
+	Yaw_Measure = measure;
+	Yaw_Err = Yaw_rate_control.Err/10;
+	Yaw_Output = Yaw_rate_control.Output;
 }
 
 void control_err_cal(CONTROL_T *Control, int16_t target, int measure)
@@ -167,20 +171,20 @@ void control_err_cal(CONTROL_T *Control, int16_t target, int measure)
 void yaw_control()
 {
 	//control_err_cal(&Yaw_angle_control, TARGET_Z, psi);
-	yaw_control_err_cal(&Yaw_rate_control, Yaw_rate_control.Output, sr);
-	if(Yaw_Output > 1000) Yaw_Output = 1000;
-	if(Yaw_Output < 1000) Yaw_Output = -1000;
+	yaw_control_err_cal(&Yaw_rate_control, 0, sr_calib);
+	// if(Yaw_Output > 1000) Yaw_Output = 1000;
+
 }
 
 void control()
 {
 	control_err_cal(&Roll_angle_control, TARGET_X, phi);
 	control_err_cal(&Pitch_angle_control, TARGET_Y, theta);	
-	control_err_cal(&Yaw_angle_control, TARGET_Z, psi);
+	// control_err_cal(&Yaw_angle_control, TARGET_Z, psi);
 
 	control_err_cal(&Roll_rate_control, Roll_angle_control.Output, sp);
 	control_err_cal(&Pitch_rate_control, Pitch_angle_control.Output, sq);
-
+	// yaw_control_err_cal(&Yaw_rate_control, Yaw_rate_control.Output, sr);
 	Roll_Output = Roll_rate_control.Output;
 	Pitch_Output = Pitch_rate_control.Output;
 

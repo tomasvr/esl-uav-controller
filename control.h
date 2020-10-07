@@ -60,6 +60,12 @@ typedef struct {
 #define PITCH_THRE 1500
 #define ROLL_THRE 1500
 
+int16_t Pitch_Output;
+int16_t Roll_Output;
+int16_t Yaw_Target, Yaw_Measure;
+int16_t Yaw_Err;
+int16_t Yaw_Output;
+
 void control_init(CONTROL_T*);
 void yaw_control_err_cal(CONTROL_T*, int16_t, int);
 void control_err_cal(CONTROL_T*, int16_t, int);

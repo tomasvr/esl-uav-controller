@@ -467,6 +467,7 @@ void execute(){ //TODO: remove this function
 uint8_t calibration_counter = 0;
 int16_t sensor_calib = 0, sensor_sum = 0;
 int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
+int16_t sr_calib = 0;
 int16_t calib_return;
 bool calibration_done = false;
 
@@ -481,9 +482,10 @@ int16_t sensor_calibration(int16_t sensor_ori, uint8_t num)//average
 		sensor_sum = 0;
 		calibration_counter = 0;
 		calibration_done = true;
-		printf("| Calib done: %6d \n", sensor_calib);
+		// printf("| Calib done: %6d \n", sensor_calib);
 		return sensor_calib;
 	}
+	else calibration_done = false;
 	// not calibrated yet
 	return -1;
 }
@@ -530,12 +532,12 @@ int main(void)
 			adc_request_sample();
 			read_baro();
 
-			// printf("%10ld | ", get_time_us());
-			// printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
-			// printf("%6d %6d %6d | ", phi, theta, psi);
-			// printf("%6d %6d %6d | ", sp, sq, sr);
-			// printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
-			// printf("%4d \n", g_current_state);
+			printf("%10ld | ", get_time_us());
+			printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
+			printf("%6d %6d %6d | ", phi, theta, psi);
+			printf("%6d %6d %6d | ", sp, sq, sr);
+			printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
+			printf("%4d \n", g_current_state);
 
 			
 
@@ -553,32 +555,28 @@ int main(void)
 		}
 		if (g_current_state == CALIBRATION_ST) 
 		{
-			calib_return = sensor_calibration(psi, 10); 
+			calib_return = sensor_calibration(sr, 10); 
+			calibration_done = true;
 			if (calib_return != -1) 
 			{
-				psi_calib = sensor_calib;
-				printf("\n PSI CALIB DONE, PSI_CALIB: %6d\n", psi_calib);	
+				sr_calib = sensor_calib;
+				printf("\n PSI CALIB DONE, PSI_CALIB: %6d\n", sr_calib);	
 				g_current_state = SAFE_ST;
 			}
 		}
 		if (g_current_state == YAWCONTROL_ST)
 		{
-			if (counter % 200 == 0) {
-				if (calibration_done) {
-					//input: setpoint signal + psi signal
-					//output: motor speed
-					//setpoint = 0, yaw rate = 0
+			sensor_calibration(sr, 10); sr_calib = sensor_calib;
+			if (counter % 200 == 0) {	
+			// if (calibration_done) {
 					control_init(&Control);
-					yaw_control_err_cal(&Control, 0, sr);
 					yaw_control();
 					yaw_control_motor_output();
 					speed_limit();
+					printf("%4d | %4d | %4d | %4d | %4d | %2d | %2d | %2d | %2d\n ", Yaw_Target, Yaw_Measure, sr_calib, Yaw_Err, Yaw_Output, ae[0], ae[1], ae[2], ae[3]);
 				} else {
-					printf("\n DO CALIBRATION BEFORE YAW CONTROL MODE! \n");
+					//printf("\n DO CALIBRATION BEFORE YAW CONTROL MODE! \n");
 				}
-			}
-
-		
 		}
 		counter++;
 	}
