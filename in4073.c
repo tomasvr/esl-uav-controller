@@ -177,8 +177,12 @@ void check_USB_connection_alive() {
 	}
 }
 
-void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
 
+void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
+		joystick_axis_stored_values[joystick_axis] = js_total_value;
+}
+
+void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
 	// printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
 	// example js_total_value = 32776
 	// TODO: implementation of js cmds handling 
@@ -251,6 +255,7 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
 			break;
 
 		default:
+			enter_panic_mode(false);
 			break;
 	}
 	//printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);		
@@ -346,15 +351,23 @@ void messg_decode(uint8_t messg){
 		 // 	result = find_motor_state_js(messg, FRAG_COUNT);
 	 	// 	assert(result == 1 && "QR: Fail to find the motor state.");
 	 	// }
-	 	else if (g_current_comm_type == JS_AXIS_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
+	 	else if (g_current_comm_type == JS_AXIS_COMM) {
 	 		if (FRAG_COUNT == 2) {
-	 			jsvalue_right = messg;	
-	 		}
+ 				jsvalue_right = messg;	
+ 			}
 	 		else if (FRAG_COUNT == 1) {
 	 			jsvalue_left = messg;	
 	 			uint16_t js_total_value = (jsvalue_left << 8) | jsvalue_right;
-	 			process_js_axis_cmd(joystick_axis, js_total_value);
-	 		}
+
+		 		if (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST) { // if in control mode, control drone
+		 			process_js_axis_cmd(joystick_axis, js_total_value);
+		 		}
+		 		else if (g_current_state != PANIC_ST) { // in any other state store values
+		 			store_js_axis_commands(joystick_axis, js_total_value);
+		 		}		
+ 			}	
+
+
 	 	}
 
 	 	/*--------------------------------------------------------------
@@ -445,16 +458,17 @@ void process_key(uint8_t c){
 
 
 
-void execute(){ //TODO: remove this function
-	if (g_current_comm_type == ESC_COMM){ // terminate program
-		enter_panic_mode(false);
-		demo_done = true;
-		g_current_comm_type = NO_COMM;
-	}
-	// if (g_current_comm_type == CTRL_COMM){
-	// 	ctrl_action();
-	// 	// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
-	// }
+
+// void execute(){ //TODO: remove this function
+// 	if (g_current_comm_type == ESC_COMM){ // terminate program
+// 		demo_done = true;
+// 		g_current_comm_type = NO_COMM;
+// 		enter_panic_mode(false);
+// 	}
+// 	if (g_current_comm_type == CTRL_COMM){
+// 		ctrl_action();
+// 		// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
+// 	}
 
 	// if(g_current_comm_type == JS_AXIS_COMM){
 	// 	// handled by the thread
@@ -465,7 +479,7 @@ void execute(){ //TODO: remove this function
 	// 	g_dest_state = NO_WHERE;
 	// 	g_current_comm_type = NO_COMM;
 	// }
-}
+// }
 
 uint8_t calibration_counter = 0;
 int16_t sensor_calib = 0, sensor_sum = 0;
@@ -523,7 +537,7 @@ int main(void)
 		{
 			process_key( dequeue(&rx_queue) );
 		}
-		execute();
+		//execute();
 
 		// check if USB connection is still alive by checking last time received
 		if (counter % 100 == 0) check_USB_connection_alive(); // use counter so this doesn't happen too often
@@ -558,6 +572,15 @@ int main(void)
 		{
 			enter_panic_mode(false); //enter panic mode for any reason other than cable
 		}
+		if (g_current_comm_type == ESC_COMM){ // terminate program
+			demo_done = true;
+			g_current_comm_type = NO_COMM;
+			enter_panic_mode(false);
+		}
+		// if (g_current_comm_type == CTRL_COMM){
+		// 	ctrl_action();
+		// 	// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
+		// }
 		if (g_current_state == CALIBRATION_ST) 
 		{
 			calib_return = sensor_calibration(psi, 10); 
@@ -575,7 +598,7 @@ int main(void)
 					//input: setpoint signal + psi signal
 					//output: motor speed
 					//setpoint = 0, yaw rate = 0
-					yaw_control_speed_calculate(&yaw_control, psi);
+					yaw_control_speed_calculate(&yaw_control, psi, 0);
 				} else {
 					printf("\n DO CALIBRATION BEFORE YAW CONTROL MODE! \n");
 				}

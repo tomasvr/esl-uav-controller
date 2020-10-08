@@ -257,7 +257,8 @@ bool ESC = false;
 // 			message |= 0x00000100;
 // 			break;
 // 		case 3:
-// 			message |= 0x00000200;
+// 			message |= 0#define ENABLE_JOYSTICK
+x00000200;
 // 			break;
 // 		case 4:
 // 			message |= 0x00000300;
@@ -284,6 +285,7 @@ uint32_t message_encode(int c){
 			break;
 		case 'a':
 			// keyboard 'a' pressed, drone lift up
+			printf("a pressed\n");
 			message = 0b10111111001101110000000101010101; // keyboard 'a' pressed, drone lift up, this command has a default mode -> MANUAL_ST
 			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state); 
 			break;
@@ -333,8 +335,8 @@ uint32_t message_encode(int c){
 
 		// ESC
 		case 27: // keyboard 'ESC' pressed, drone switches to PANIC_ST
-			//message = 0b00000000000000001111000001010101;
-			message = append_comm_type(message, MODE_SW_COMM);
+			//message = 0b 00000000 00000000 11110000 01010101;
+			message = append_comm_type(message, ESC_COMM);
 			message = append_mode(message, g_current_state); 
 			ESC = true;
 			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
@@ -387,7 +389,7 @@ uint32_t message_encode(int c){
 			break;
 		default:
 			printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
-			exit(-1);
+			//exit(-1);
 	}
 	return message;
 }
@@ -396,7 +398,9 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 
 	uint32_t message = 0b00000000000000000000000001010101; // base message
 	if (js_type == 1) { //buttons
-		message = append_comm_type(message, MODE_SW_COMM);
+		if (js_number == 0) message = append_comm_type(message, ESC_COMM);
+		else message = append_comm_type(message, MODE_SW_COMM);
+		
 		STATE_t state_from_js_button = js_number; // The button number indicates which state (see states.h)
 		message = append_mode(message, state_from_js_button);
 	}
