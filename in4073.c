@@ -443,15 +443,16 @@ void process_key(uint8_t c){
 
 
 
-void execute(){ //TODO: remove this function
-	if (g_current_comm_type == ESC_COMM){ // terminate program
-		demo_done = true;
-		g_current_comm_type = NO_COMM;
-	}
-	if (g_current_comm_type == CTRL_COMM){
-		ctrl_action();
-		// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
-	}
+// void execute(){ //TODO: remove this function
+// 	if (g_current_comm_type == ESC_COMM){ // terminate program
+// 		demo_done = true;
+// 		g_current_comm_type = NO_COMM;
+// 		enter_panic_mode(false);
+// 	}
+// 	if (g_current_comm_type == CTRL_COMM){
+// 		ctrl_action();
+// 		// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
+// 	}
 
 	// if(g_current_comm_type == JS_AXIS_COMM){
 	// 	// handled by the thread
@@ -462,7 +463,7 @@ void execute(){ //TODO: remove this function
 	// 	g_dest_state = NO_WHERE;
 	// 	g_current_comm_type = NO_COMM;
 	// }
-}
+// }
 
 uint8_t calibration_counter = 0;
 int16_t sensor_calib = 0, sensor_sum = 0;
@@ -518,7 +519,7 @@ int main(void)
 		{
 			process_key( dequeue(&rx_queue) );
 		}
-		execute();
+		//execute();
 
 		// check if USB connection is still alive by checking last time received
 		if (counter % 100 == 0) check_USB_connection_alive(); // use counter so this doesn't happen too often
@@ -552,6 +553,15 @@ int main(void)
 		if (g_current_state == PANIC_ST)
 		{
 			enter_panic_mode(false); //enter panic mode for any reason other than cable
+		}
+		if (g_current_comm_type == ESC_COMM){ // terminate program
+			demo_done = true;
+			g_current_comm_type = NO_COMM;
+			enter_panic_mode(false);
+		}
+		if (g_current_comm_type == CTRL_COMM){
+			ctrl_action();
+			// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
 		}
 		if (g_current_state == CALIBRATION_ST) 
 		{

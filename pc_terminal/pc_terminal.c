@@ -60,7 +60,7 @@
 #define USB_SEND_CHECK_INTERVAL 1000000 // Control how often USB check messages are send
 #define USB_CHECK_MESSAGE 0 // Message ID for check USB type message (no need to change)
 
-// #define ENABLE_JOYSTICK
+#define ENABLE_JOYSTICK
 
 // current axis and button readings
 int	axis[6];
@@ -285,6 +285,7 @@ uint32_t message_encode(int c){
 			break;
 		case 'a':
 			// keyboard 'a' pressed, drone lift up
+			printf("a pressed\n");
 			message = 0b10111111001101110000000101010101; // keyboard 'a' pressed, drone lift up, this command has a default mode -> MANUAL_ST
 			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state); 
 			break;
@@ -397,7 +398,9 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 
 	uint32_t message = 0b00000000000000000000000001010101; // base message
 	if (js_type == 1) { //buttons
-		message = append_comm_type(message, MODE_SW_COMM);
+		if (js_number == 0) message = append_comm_type(message, ESC_COMM);
+		else message = append_comm_type(message, MODE_SW_COMM);
+		
 		STATE_t state_from_js_button = js_number; // The button number indicates which state (see states.h)
 		message = append_mode(message, state_from_js_button);
 	}
