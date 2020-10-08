@@ -550,7 +550,6 @@ int main(void)
 			adc_request_sample();
 			read_baro();
 
-<<<<<<< HEAD
 			// printf("%10ld | ", get_time_us());
 			//printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
 			// printf("%6d %6d %6d | ", phi, theta, psi);
