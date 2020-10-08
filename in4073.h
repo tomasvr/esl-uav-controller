@@ -37,11 +37,17 @@
 #define BLUE		30
 #define INT_PIN		5
 
+#define MOTOR_MAX_CHANGE 50
+#define MOTOR_UPPER_LIMIT 1000
+
+
 #define PANIC_MODE_MOTOR_SPEED 400
 
 bool demo_done;
 
+
 // Control
+uint16_t motor_lift_level;
 int16_t motor[4],ae[4];
 void run_filters_and_control();
 

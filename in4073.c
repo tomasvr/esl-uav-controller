@@ -179,7 +179,7 @@ void check_USB_connection_alive() {
 
 void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
 
-	printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
+	// printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
 	// example js_total_value = 32776
 	// TODO: implementation of js cmds handling 
 	uint8_t percentage = 0; // (percent%)
@@ -188,52 +188,52 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
 		case ROLL_AXIS:
 			if(js_total_value <= 32767){ // roll counterclockwise
 				percentage = (uint8_t) (100.f * js_total_value / 32767);
-				ae[0] = (int16_t) UPPER_LIMIT * 50 / 100;
-				ae[1] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
-				ae[2] = (int16_t) UPPER_LIMIT * 50 / 100;
-				ae[3] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
+				//ae[0] = (int16_t) UPPER_LIMIT * 50 / 100;
+				ae[1] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
+				//ae[2] = (int16_t) UPPER_LIMIT * 50 / 100;
+				ae[3] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
 			}
 			else{ // roll clockwise
 				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
-				ae[0] = (int16_t) UPPER_LIMIT * 50 / 100;
-				ae[1] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
-				ae[2] = (int16_t) UPPER_LIMIT * 50 / 100;
-				ae[3] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
+				//ae[0] = (int16_t) UPPER_LIMIT * 50 / 100;
+				ae[1] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
+				//ae[2] = (int16_t) UPPER_LIMIT * 50 / 100;
+				ae[3] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
 			}
 			break;
 
 		case PITCH_AXIS:
 			if(js_total_value <= 32767){ // pitch down
 				percentage = (uint8_t) (100.f * js_total_value / 32767);
-				ae[0] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
-				ae[1] = (int16_t) UPPER_LIMIT * 50 / 100;
-				ae[2] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
-				ae[3] = (int16_t) UPPER_LIMIT * 50 / 100;
+				ae[0] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
+				//ae[1] = (int16_t) UPPER_LIMIT * 50 / 100;
+				ae[2] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
+				//ae[3] = (int16_t) UPPER_LIMIT * 50 / 100;
 			}
 			else{ // pitch up
 				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
-				ae[0] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
-				ae[1] = (int16_t) UPPER_LIMIT * 50 / 100;
-				ae[2] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
-				ae[3] = (int16_t) UPPER_LIMIT * 50 / 100;
+				ae[0] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
+				//ae[1] = (int16_t) UPPER_LIMIT * 50 / 100;
+				ae[2] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
+				//ae[3] = (int16_t) UPPER_LIMIT * 50 / 100;
 			}
 			break;
 
 		case YAW_AXIS:
-			if(js_total_value <= 32767){ // yaw counterclockwise
-				percentage = (uint8_t) (100.f * js_total_value / 32767);
-				ae[0] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
-				ae[1] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
-				ae[2] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
-				ae[3] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
-			}
-			else{ // yaw clockwise
-				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
-				ae[0] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
-				ae[1] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
-				ae[2] = (int16_t) UPPER_LIMIT/2 + UPPER_LIMIT/2 * percentage / 100;
-				ae[3] = (int16_t) UPPER_LIMIT/2 - UPPER_LIMIT/2 * percentage / 100;
-			}
+			// if(js_total_value <= 32767){ // yaw counterclockwise
+			// 	percentage = (uint8_t) (100.f * js_total_value / 32767);
+			// 	ae[0] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
+			// 	ae[1] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
+			// 	ae[2] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
+			// 	ae[3] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
+			// }
+			// else{ // yaw clockwise
+			// 	percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+			// 	ae[0] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
+			// 	ae[1] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
+			// 	ae[2] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
+			// 	ae[3] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
+			// }
 			break;
 
 		case LIFT_THROTTLE:
@@ -243,15 +243,17 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
 			else{
 				percentage = (uint8_t) (100.f * (65536-js_total_value+32767) / 65535);
 			}
-			ae[0] = (int16_t) UPPER_LIMIT * percentage / 100;
-			ae[1] = (int16_t) UPPER_LIMIT * percentage / 100;
-			ae[2] = (int16_t) UPPER_LIMIT * percentage / 100;
-			ae[3] = (int16_t) UPPER_LIMIT * percentage / 100;
+			motor_lift_level = MOTOR_UPPER_LIMIT * percentage / 100;
+			ae[0] = motor_lift_level;
+			ae[1] = motor_lift_level;
+			ae[2] = motor_lift_level;
+			ae[3] = motor_lift_level;
 			break;
 
 		default:
 			break;
 	}
+	//printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);		
 	return;
 }
 
@@ -445,13 +447,14 @@ void process_key(uint8_t c){
 
 void execute(){ //TODO: remove this function
 	if (g_current_comm_type == ESC_COMM){ // terminate program
+		enter_panic_mode(false);
 		demo_done = true;
 		g_current_comm_type = NO_COMM;
 	}
-	if (g_current_comm_type == CTRL_COMM){
-		ctrl_action();
-		// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
-	}
+	// if (g_current_comm_type == CTRL_COMM){
+	// 	ctrl_action();
+	// 	// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
+	// }
 
 	// if(g_current_comm_type == JS_AXIS_COMM){
 	// 	// handled by the thread
@@ -509,6 +512,8 @@ int main(void)
 	demo_done = false;
 	usb_comm_last_received = get_time_us();
 
+	motor_lift_level = 0;
+
 	yaw_control_init(&yaw_control);
 
 	printf("    TIME   | AE0 AE1 AE2 AE3 |   PHI    THETA   PSI |     SP     SQ     SR |  BAT | TEMP | PRESSURE | MODE \n");
@@ -532,12 +537,12 @@ int main(void)
 			adc_request_sample();
 			read_baro();
 
-			printf("%10ld | ", get_time_us());
-			printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
-			printf("%6d %6d %6d | ", phi, theta, psi);
-			printf("%6d %6d %6d | ", sp, sq, sr);
-			printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
-			printf("%4d \n", g_current_state);
+			// printf("%10ld | ", get_time_us());
+			//printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
+			// printf("%6d %6d %6d | ", phi, theta, psi);
+			// printf("%6d %6d %6d | ", sp, sq, sr);
+			// printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
+			// printf("%4d \n", g_current_state);
 
 			
 
