@@ -574,7 +574,7 @@ int main(void)
 				g_current_state = SAFE_ST;
 			}
 		}
-<<<<<<< HEAD
+
 		if (g_current_state == YAWCONTROL_ST)
 		{
 			sensor_calibration(sr, 10); sr_calib = sensor_calib;
@@ -585,15 +585,6 @@ int main(void)
 					yaw_control_motor_output();
 					speed_limit();
 					printf("%4d | %4d | %4d | %4d | %4d | %2d | %2d | %2d | %2d\n ", Yaw_Target, Yaw_Measure, sr_calib, Yaw_Err, Yaw_Output, ae[0], ae[1], ae[2], ae[3]);
-=======
-		if (g_current_state == YAWCONTROL_ST){
-			if (counter % 200 == 0) {
-				if (calibration_done) {
-					//input: setpoint signal + psi signal
-					//output: motor speed
-					//setpoint = 0, yaw rate = 0
-					yaw_control_speed_calculate(&yaw_control, psi);
->>>>>>> parent of 6aafbfb... yaw control temp
 				} else {
 					//printf("\n DO CALIBRATION BEFORE YAW CONTROL MODE! \n");
 				}

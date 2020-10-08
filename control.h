@@ -41,7 +41,6 @@ extern MOTOR_CTRL g_current_m3_state;
 void ctrl_action();
 
 typedef struct {
-<<<<<<< HEAD
 	uint8_t P;
 	uint8_t I;
 	uint8_t D;
@@ -78,23 +77,5 @@ void speed_limit(void);
 
 void increase_p_value(CONTROL_T*);
 void decrease_p_value(CONTROL_T*);
-=======
-	int16_t err;
-	uint8_t kp;
-	uint8_t ki;
-	uint16_t integral;
-	int16_t speed_comm;
-	int16_t speed_diff;
-	int16_t set_yaw_rate;
-	int16_t actual_yaw_rate;
-	int16_t actual_speed_plus;
-	int16_t actual_speed_minus;
-} YAW_CONTROL_T;
-
-void yaw_control_speed_calculate(YAW_CONTROL_T*, int16_t);
-void yaw_control_init(YAW_CONTROL_T*);
-void increase_p_value(YAW_CONTROL_T*);
-void decrease_p_value(YAW_CONTROL_T*);
->>>>>>> parent of 6aafbfb... yaw control temp
 
 #endif // CONTROL_H__
