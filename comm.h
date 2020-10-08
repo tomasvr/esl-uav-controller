@@ -26,6 +26,7 @@
 
 // the command types during communication
 typedef enum {
+		
 		CTRL_COMM, // this means keyboard command
 		MODE_SW_COMM,
 		JS_AXIS_COMM, // joystick commands

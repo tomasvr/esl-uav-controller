@@ -13,13 +13,14 @@
 #include <stdio.h>
 
 typedef enum {
+		NO_WHERE,
 		SAFE_ST, 
 		PANIC_ST,
 		MANUAL_ST,
 		CALIBRATION_ST,
 		YAWCONTROL_ST,
-		FULLCONTROL_ST,
-		NO_WHERE
+		FULLCONTROL_ST
+		
 	} STATE_t ;
 
 /**

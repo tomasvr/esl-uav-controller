@@ -234,20 +234,19 @@ void yaw_control_speed_calculate(CONTROL_T *yaw_control, int16_t sr, int setpoin
 	printf(" setpoint %2d", setpoint);
 	yaw_control->actual_yaw_rate = sr; //todo fix this (ugly hack)
 	yaw_control->set_yaw_rate = setpoint; //interpret js value here
-	yaw_control->err = yaw_control->set_yaw_rate - yaw_control->actual_yaw_rate;
-	yaw_control->integral += yaw_control->err;
-	printf(" err %2d", yaw_control->err);
-	yaw_control->speed_comm = yaw_speed_init;
-	yaw_control->speed_diff = yaw_control->kp * yaw_control->err;
-	//yaw_speed_diff = yaw_control.kp * yaw_control.err + yaw_control.ki * yaw_control.integral;
-	yaw_control->actual_speed_plus = yaw_control->speed_comm + yaw_control->speed_diff;
-	yaw_control->actual_speed_minus = yaw_control->speed_comm - yaw_control->speed_diff;
-	ae[0] = yaw_control->actual_speed_plus; //turn right M1 M3 + M2 M4 -  turn left M1 M3 - M2 M4 +
-	ae[1] = yaw_control->actual_speed_minus;
-	ae[2] = yaw_control->actual_speed_plus;
-	ae[3] = yaw_control->actual_speed_minus;
-	printf(" %6d | %6d ", yaw_control->actual_speed_plus, yaw_control->actual_speed_minus);
-	printf(" %2d | %2d | %2d | %2d\n ", ae[0], ae[1], ae[2], ae[3]);
+void yaw_control_init(YAW_CONTROL_T *yaw_control)
+{
+	yaw_control->kp = 1; //from keyboard
+	yaw_control->ki = 0;
+	yaw_control->err = 0;
+	yaw_control->integral = 0;
+	yaw_control->speed_comm = 0;
+	yaw_control->speed_diff = 0;
+	yaw_control->set_yaw_rate = 0; //from js
+	yaw_control->actual_yaw_rate = 0; //from sensor
+	yaw_control->actual_speed_plus = 0; 
+	yaw_control->actual_speed_minus = 0; 
+	printf("yaw_control initalized.\n");
 }
 */
 
