@@ -144,16 +144,16 @@ void control_init(CONTROL_T *Control)
 	Yaw_rate_control.P = 3; 
 	Yaw_rate_control.I = 0; 
 
-	printf("Control struct initalized");
+	// printf("Control struct initalized");
 }
 
 void yaw_control_err_cal(CONTROL_T *Control, int16_t target, int measure)//setpoint sr
 {
-	Control->Err = target - measure; //target - measure
+	Control->Err = (target - measure)/100; //target - measure
 	Control->Output = Control->Err * Control->P;
 	Yaw_Target = target;
 	Yaw_Measure = measure;
-	Yaw_Err = Yaw_rate_control.Err/10;
+	Yaw_Err = Yaw_rate_control.Err;
 	Yaw_Output = Yaw_rate_control.Output;
 }
 
