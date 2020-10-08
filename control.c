@@ -95,50 +95,171 @@ void switch_led(int color) {
 // 	g_current_m3_state = MOTOR_REMAIN;
 // }
 
-#define yaw_speed_init 170
+/**
+ * @brief      Control Loop Structure
+ *
+ * @author     Xinyun Xu
+ *
+ * @param      data  The data
+ *
+ * @return     { description_of_the_return_value }
+ */
+int16_t dt = 0.004; //integral time =  control period <= 0.1-0.2 * sample period
+int16_t Integral_max; //maximum bound
 
+int16_t Pitch_Output;
+int16_t Roll_Output;
+int16_t Yaw_Output;
 
+CONTROL_T Pitch_angle_control;
+CONTROL_T Pitch_rate_control;
 
-void yaw_control_init(YAW_CONTROL_T *yaw_control)
+CONTROL_T Roll_angle_control;
+CONTROL_T Roll_rate_control;
+
+CONTROL_T Yaw_angle_control;
+CONTROL_T Yaw_rate_control;
+
+void control_init(CONTROL_T *Control)
 {
-	yaw_control->kp = 1; //from keyboard
-	yaw_control->ki = 0;
-	yaw_control->err = 0;
-	yaw_control->integral = 0;
-	yaw_control->speed_comm = 0;
-	yaw_control->speed_diff = 0;
-	yaw_control->set_yaw_rate = 0; //from js
-	yaw_control->actual_yaw_rate = 0; //from sensor
-	yaw_control->actual_speed_plus = 0; 
-	yaw_control->actual_speed_minus = 0; 
-	printf("yaw_control struct initalized");
+	Roll_angle_control.P = 0;
+	Roll_angle_control.I = 0;
+	Roll_angle_control.D = 0;
+
+	Roll_rate_control.P = 0; 
+	Roll_rate_control.I = 0;
+	Roll_rate_control.D = 0;
+
+	Pitch_angle_control.P = 0;
+	Pitch_angle_control.I = 0;
+	Pitch_angle_control.D = 0;
+
+	Pitch_rate_control.P = 0;
+	Pitch_rate_control.I = 0;
+	Pitch_rate_control.D = 0;
+
+	Yaw_angle_control.P = 10; //from keyboard
+	Yaw_angle_control.I = 0;
+
+	Yaw_rate_control.P = 3; 
+	Yaw_rate_control.I = 0; 
+
+	printf("Control struct initalized");
 }
 
-void yaw_control_speed_calculate(YAW_CONTROL_T *yaw_control, int16_t psi)//input js value here as set value;
+void yaw_control_err_cal(CONTROL_T *Control, int16_t target, int measure)//setpoint sr
 {
-	yaw_control->actual_yaw_rate = psi; //todo fix this (ugly hack)
+	Control->Err = target - measure; //target - measure
+	Control->Output = Control->Err * Control->P;
+	Yaw_Target = target;
+	Yaw_Measure = measure;
+	Yaw_Err = Yaw_rate_control.Err/10;
+	Yaw_Output = Yaw_rate_control.Output;
+}
 
-	yaw_control->set_yaw_rate = 0; //interpret js value here
+void control_err_cal(CONTROL_T *Control, int16_t target, int measure)
+{
+	Control->Err = target - measure;
+	Control->Integral = Control->Err * dt;
+	if(Control->Integral > Integral_max) Control->Integral = Integral_max;
+	if(Control->Integral < -Integral_max) Control->Integral = -Integral_max;
+	Control->Deriv = Control->Err - Control->Pre_Err;
+	Control->Output = Control->P*Control->Err + Control->I*Control->Integral + Control->D*Control->Deriv;
+	Control->Pre_Err = Control->Err;
+}
+
+void yaw_control()
+{
+	//control_err_cal(&Yaw_angle_control, TARGET_Z, psi);
+	yaw_control_err_cal(&Yaw_rate_control, 0, sr_calib);
+	// if(Yaw_Output > 1000) Yaw_Output = 1000;
+
+}
+
+void control()
+{
+	control_err_cal(&Roll_angle_control, TARGET_X, phi);
+	control_err_cal(&Pitch_angle_control, TARGET_Y, theta);	
+	// control_err_cal(&Yaw_angle_control, TARGET_Z, psi);
+
+	control_err_cal(&Roll_rate_control, Roll_angle_control.Output, sp);
+	control_err_cal(&Pitch_rate_control, Pitch_angle_control.Output, sq);
+	// yaw_control_err_cal(&Yaw_rate_control, Yaw_rate_control.Output, sr);
+	Roll_Output = Roll_rate_control.Output;
+	Pitch_Output = Pitch_rate_control.Output;
+
+	if(Roll_Output > ROLL_THRE) Roll_Output = ROLL_THRE;
+	if(Roll_Output < -ROLL_THRE) Roll_Output = -ROLL_THRE;
+
+	if(Pitch_Output > PITCH_THRE) Pitch_Output = PITCH_THRE;
+	if(Pitch_Output < -PITCH_THRE) Pitch_Output = -PITCH_THRE;
+}
+
+void yaw_control_motor_output()
+{
+	ae[0] = SPEED_REF + Yaw_Output;
+	ae[1] = SPEED_REF - Yaw_Output;
+	ae[2] = SPEED_REF + Yaw_Output;
+	ae[3] = SPEED_REF - Yaw_Output;
+}
+
+void control_motor_output()
+{
+	ae[0] = SPEED_REF + Pitch_Output;
+	ae[1] = SPEED_REF - Roll_Output;
+	ae[2] = SPEED_REF - Pitch_Output;
+	ae[3] = SPEED_REF + Roll_Output;
+	/*
+	ae[0] = SPEED_REF + Pitch_Output + Yaw_Output;
+	ae[1] = SPEED_REF - Roll_Output - Yaw_Output;
+	ae[2] = SPEED_REF - Pitch_Output + Yaw_Output;
+	ae[3] = SPEED_REF + Roll_Output - Yaw_Output;
+	*/
+}
+
+void speed_limit()
+{
+	for(uint8_t i = 0; i < 4; i++)
+	{
+	if(ae[i] > 350) ae[i] = 350;
+	if(ae[i] < 170) ae[i] = 170;
+	}
+}
+
+/*
+void yaw_control_speed_calculate(CONTROL_T *yaw_control, int16_t sr, int setpoint)//input js value here as set value; int setpoint
+{
+	sr = sr / 10;
+	setpoint = setpoint / 32768 * 10000;
+	printf(" setpoint %2d", setpoint);
+	yaw_control->actual_yaw_rate = sr; //todo fix this (ugly hack)
+	yaw_control->set_yaw_rate = setpoint; //interpret js value here
 	yaw_control->err = yaw_control->set_yaw_rate - yaw_control->actual_yaw_rate;
 	yaw_control->integral += yaw_control->err;
+	printf(" err %2d", yaw_control->err);
 	yaw_control->speed_comm = yaw_speed_init;
 	yaw_control->speed_diff = yaw_control->kp * yaw_control->err;
 	//yaw_speed_diff = yaw_control.kp * yaw_control.err + yaw_control.ki * yaw_control.integral;
 	yaw_control->actual_speed_plus = yaw_control->speed_comm + yaw_control->speed_diff;
 	yaw_control->actual_speed_minus = yaw_control->speed_comm - yaw_control->speed_diff;
-	//turn right M1 M3 + M2 M4 -
-	//turn left M1 M3 - M2 M4 +
+	ae[0] = yaw_control->actual_speed_plus; //turn right M1 M3 + M2 M4 -  turn left M1 M3 - M2 M4 +
+	ae[1] = yaw_control->actual_speed_minus;
+	ae[2] = yaw_control->actual_speed_plus;
+	ae[3] = yaw_control->actual_speed_minus;
+	printf(" %6d | %6d ", yaw_control->actual_speed_plus, yaw_control->actual_speed_minus);
+	printf(" %2d | %2d | %2d | %2d\n ", ae[0], ae[1], ae[2], ae[3]);
 }
+*/
 
-void increase_p_value(YAW_CONTROL_T *yaw_control) {
-	if (yaw_control->kp < YAW_P_UPPER_LIMIT) {
-		yaw_control->kp += YAW_P_STEP_SIZE;
+void increase_p_value(CONTROL_T *Control) {
+	if (Control->P < YAW_P_UPPER_LIMIT) {
+		Control->P += YAW_P_STEP_SIZE;
 	}
 }
 
-void decrease_p_value(YAW_CONTROL_T *yaw_control) {
-	if (yaw_control->kp > YAW_P_LOWER_LIMIT) {
-		yaw_control->kp -= YAW_P_STEP_SIZE;
+void decrease_p_value(CONTROL_T *Control) {
+	if (Control->P > YAW_P_LOWER_LIMIT) {
+		Control->P -= YAW_P_STEP_SIZE;
 	}
 }
 

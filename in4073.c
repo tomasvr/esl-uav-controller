@@ -66,7 +66,7 @@ MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m2_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m3_state = MOTOR_REMAIN;
 
-YAW_CONTROL_T yaw_control;
+CONTROL_T Control;
 
 uint8_t find_motor_state(uint8_t messg){
 	uint8_t m_ctrl_1 = messg & 0xf0; 		
@@ -176,7 +176,6 @@ void check_USB_connection_alive() {
 		enter_panic_mode(true);
 	}
 }
-
 
 void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
 		joystick_axis_stored_values[joystick_axis] = js_total_value;
@@ -399,11 +398,11 @@ void messg_decode(uint8_t messg){
 			printf("  CHANGE_P_COMM message: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
 	 		if (messg == 0x01) {
 	 			printf("FCB: P CONTROL UP\n");
-	 			increase_p_value(&yaw_control);
+	 			increase_p_value(&Control);
 	 		}
 	 		if (messg == 0x00) {
 		 		printf("FCB: P CONTROL DOWN\n");
-		 		decrease_p_value(&yaw_control);
+		 		decrease_p_value(&Control);
 	 		}
 	 	}
 	 	else {
@@ -484,6 +483,7 @@ void process_key(uint8_t c){
 uint8_t calibration_counter = 0;
 int16_t sensor_calib = 0, sensor_sum = 0;
 int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
+int16_t sr_calib = 0;
 int16_t calib_return;
 bool calibration_done = false;
 
@@ -498,9 +498,10 @@ int16_t sensor_calibration(int16_t sensor_ori, uint8_t num)//average
 		sensor_sum = 0;
 		calibration_counter = 0;
 		calibration_done = true;
-		printf("| Calib done: %6d \n", sensor_calib);
+		// printf("| Calib done: %6d \n", sensor_calib);
 		return sensor_calib;
 	}
+	else calibration_done = false;
 	// not calibrated yet
 	return -1;
 }
@@ -528,8 +529,6 @@ int main(void)
 
 	motor_lift_level = 0;
 
-	yaw_control_init(&yaw_control);
-
 	printf("    TIME   | AE0 AE1 AE2 AE3 |   PHI    THETA   PSI |     SP     SQ     SR |  BAT | TEMP | PRESSURE | MODE \n");
 	while (!demo_done)
 	{
@@ -551,6 +550,7 @@ int main(void)
 			adc_request_sample();
 			read_baro();
 
+<<<<<<< HEAD
 			// printf("%10ld | ", get_time_us());
 			//printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
 			// printf("%6d %6d %6d | ", phi, theta, psi);
@@ -583,28 +583,29 @@ int main(void)
 		// }
 		if (g_current_state == CALIBRATION_ST) 
 		{
-			calib_return = sensor_calibration(psi, 10); 
+			calib_return = sensor_calibration(sr, 10); 
+			calibration_done = true;
 			if (calib_return != -1) 
 			{
-				psi_calib = sensor_calib;
-				printf("\n PSI CALIB DONE, PSI_CALIB: %6d\n", psi_calib);	
+				sr_calib = sensor_calib;
+				printf("\n PSI CALIB DONE, PSI_CALIB: %6d\n", sr_calib);	
 				g_current_state = SAFE_ST;
 			}
 		}
 		if (g_current_state == YAWCONTROL_ST)
 		{
-			if (counter % 200 == 0) {
-				if (calibration_done) {
-					//input: setpoint signal + psi signal
-					//output: motor speed
-					//setpoint = 0, yaw rate = 0
-					yaw_control_speed_calculate(&yaw_control, psi, 0);
-				} else {
-					printf("\n DO CALIBRATION BEFORE YAW CONTROL MODE! \n");
-				}
-			}
 
-		
+			sensor_calibration(sr, 10); sr_calib = sensor_calib;
+			if (counter % 200 == 0) {	
+			// if (calibration_done) {
+					control_init(&Control);
+					yaw_control();
+					yaw_control_motor_output();
+					speed_limit();
+					printf("%4d | %4d | %4d | %4d | %4d | %2d | %2d | %2d | %2d\n ", Yaw_Target, Yaw_Measure, sr_calib, Yaw_Err, Yaw_Output, ae[0], ae[1], ae[2], ae[3]);
+				} else {
+					//printf("\n DO CALIBRATION BEFORE YAW CONTROL MODE! \n");
+				}
 		}
 		counter++;
 	}

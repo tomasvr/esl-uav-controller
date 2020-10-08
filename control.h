@@ -41,21 +41,41 @@ extern MOTOR_CTRL g_current_m3_state;
 void ctrl_action();
 
 typedef struct {
-	int16_t err;
-	uint8_t kp;
-	uint8_t ki;
-	uint16_t integral;
-	int16_t speed_comm;
-	int16_t speed_diff;
-	int16_t set_yaw_rate;
-	int16_t actual_yaw_rate;
-	int16_t actual_speed_plus;
-	int16_t actual_speed_minus;
-} YAW_CONTROL_T;
+	uint8_t P;
+	uint8_t I;
+	uint8_t D;
+	int16_t Err;
+	int16_t Pre_Err;
+	int16_t Integral;
+	int16_t Deriv;
+	int16_t Output;
+} CONTROL_T;
 
-void yaw_control_speed_calculate(YAW_CONTROL_T*, int16_t);
-void yaw_control_init(YAW_CONTROL_T*);
-void increase_p_value(YAW_CONTROL_T*);
-void decrease_p_value(YAW_CONTROL_T*);
+#define SPEED_REF 170
+//test points before js
+#define TARGET_X 0
+#define TARGET_Y 0
+#define TARGET_Z 0
+
+#define PITCH_THRE 1500
+#define ROLL_THRE 1500
+
+int16_t Pitch_Output;
+int16_t Roll_Output;
+int16_t Yaw_Target, Yaw_Measure;
+int16_t Yaw_Err;
+int16_t Yaw_Output;
+
+void control_init(CONTROL_T*);
+void yaw_control_err_cal(CONTROL_T*, int16_t, int);
+void control_err_cal(CONTROL_T*, int16_t, int);
+void yaw_control(void);
+void control(void);
+void yaw_control_motor_output(void);
+void control_motor_output(void);
+void speed_limit(void);
+
+void increase_p_value(CONTROL_T*);
+void decrease_p_value(CONTROL_T*);
 
 #endif // CONTROL_H__
