@@ -177,7 +177,7 @@ void check_USB_connection_alive() {
 	}
 }
 
-void process_js_axis_cmd(joystick_axis, uint16_t js_total_value) {
+void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
 
 	printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
 	// example js_total_value = 32776
@@ -532,12 +532,12 @@ int main(void)
 			adc_request_sample();
 			read_baro();
 
-			// printf("%10ld | ", get_time_us());
-			// printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
-			// printf("%6d %6d %6d | ", phi, theta, psi);
-			// printf("%6d %6d %6d | ", sp, sq, sr);
-			// printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
-			// printf("%4d \n", g_current_state);
+			printf("%10ld | ", get_time_us());
+			printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
+			printf("%6d %6d %6d | ", phi, theta, psi);
+			printf("%6d %6d %6d | ", sp, sq, sr);
+			printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
+			printf("%4d \n", g_current_state);
 
 			
 
