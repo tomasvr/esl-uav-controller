@@ -97,8 +97,6 @@ void ctrl_action(){
 
 #define yaw_speed_init 170
 
-
-
 void yaw_control_init(YAW_CONTROL_T *yaw_control)
 {
 	yaw_control->kp = 1; //from keyboard
@@ -111,14 +109,15 @@ void yaw_control_init(YAW_CONTROL_T *yaw_control)
 	yaw_control->actual_yaw_rate = 0; //from sensor
 	yaw_control->actual_speed_plus = 0; 
 	yaw_control->actual_speed_minus = 0; 
-	printf("yaw_control struct initalized");
+	printf("yaw_control initalized.\n");
 }
 
-void yaw_control_speed_calculate(YAW_CONTROL_T *yaw_control, int16_t psi)//input js value here as set value;
+void yaw_control_speed_calculate(YAW_CONTROL_T *yaw_control, int16_t psi, int js_setpoint)//input js value here as set value;
 {
-	yaw_control->actual_yaw_rate = psi; //todo fix this (ugly hack)
+	yaw_control->actual_yaw_rate = sr; 
 
-	yaw_control->set_yaw_rate = 0; //interpret js value here
+	yaw_control->set_yaw_rate = js_setpoint; //interpret js value here
+	
 	yaw_control->err = yaw_control->set_yaw_rate - yaw_control->actual_yaw_rate;
 	yaw_control->integral += yaw_control->err;
 	yaw_control->speed_comm = yaw_speed_init;
