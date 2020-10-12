@@ -51,11 +51,6 @@ typedef struct // TODO: should use float?
 
 } CONTROLLER;
 
-// void yaw_control_speed_calculate(CONTROLLER*, int16_t, int);
-// void yaw_control_init(CONTROLLER*);
-// void increase_p_value(CONTROLLER*);
-// void decrease_p_value(CONTROLLER*);
-
 void controller_init(CONTROLLER *controller);
 int16_t controller_calc(CONTROLLER *controller, int16_t set_point, int16_t sensor_value);
 void increase_p_value(CONTROLLER *controller);

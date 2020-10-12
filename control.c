@@ -97,21 +97,6 @@ void ctrl_action(){
 
 #define yaw_speed_init 170
 
-// void yaw_control_init(YAW_CONTROL_T *yaw_control)
-// {
-// 	yaw_control->kp = 1; //from keyboard
-// 	yaw_control->ki = 0;
-// 	yaw_control->err = 0;
-// 	yaw_control->integral = 0;
-// 	yaw_control->speed_comm = 0;
-// 	yaw_control->speed_diff = 0;
-// 	yaw_control->set_yaw_rate = 0; //from js
-// 	yaw_control->actual_yaw_rate = 0; //from sensor
-// 	yaw_control->actual_speed_plus = 0; 
-// 	yaw_control->actual_speed_minus = 0; 
-// 	printf("yaw_control initalized.\n");
-// }
-
 void controller_init(CONTROLLER *controller)
 {
 	// prinf('Controller init begin... \n');
@@ -125,23 +110,6 @@ void controller_init(CONTROLLER *controller)
 	// prinf('Controller init end. \n');
 };
 
-// void yaw_control_speed_calculate(YAW_CONTROL_T *yaw_control, int16_t psi, int js_setpoint)//input js value here as set value;
-// {
-// 	yaw_control->actual_yaw_rate = sr; 
-
-// 	yaw_control->set_yaw_rate = js_setpoint; //interpret js value here
-	
-// 	yaw_control->err = yaw_control->set_yaw_rate - yaw_control->actual_yaw_rate;
-// 	yaw_control->integral += yaw_control->err;
-// 	yaw_control->speed_comm = yaw_speed_init;
-// 	yaw_control->speed_diff = yaw_control->kp * yaw_control->err;
-// 	//yaw_speed_diff = yaw_control.kp * yaw_control.err + yaw_control.ki * yaw_control.integral;
-// 	yaw_control->actual_speed_plus = yaw_control->speed_comm + yaw_control->speed_diff;
-// 	yaw_control->actual_speed_minus = yaw_control->speed_comm - yaw_control->speed_diff;
-// 	//turn right M1 M3 + M2 M4 -
-// 	//turn left M1 M3 - M2 M4 +
-// }
-
 int16_t controller_calc(CONTROLLER *controller, int16_t set_point, int16_t sensor_value)
 {
 	controller->set_point = set_point;
@@ -150,18 +118,6 @@ int16_t controller_calc(CONTROLLER *controller, int16_t set_point, int16_t senso
 	controller->output = controller->kp * controller->err + controller->ki * controller->integral;
 	return controller->output;
 };
-
-// void increase_p_value(YAW_CONTROL_T *yaw_control) {
-// 	if (yaw_control->kp < YAW_P_UPPER_LIMIT) {
-// 		yaw_control->kp += YAW_P_STEP_SIZE;
-// 	}
-// }
-
-// void decrease_p_value(YAW_CONTROL_T *yaw_control) {
-// 	if (yaw_control->kp > YAW_P_LOWER_LIMIT) {
-// 		yaw_control->kp -= YAW_P_STEP_SIZE;
-// 	}
-// }
 
 void increase_p_value(CONTROLLER *controller)
 {

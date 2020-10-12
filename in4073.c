@@ -576,12 +576,7 @@ int main(void)
 		if (g_current_state == YAWCONTROL_ST)
 		{
 			if (counter % 200 == 0) {
-				if (calibration_done) {
-					//input: setpoint signal + psi signal
-					//output: motor speed
-					//setpoint = 0, yaw rate = 0
-					
-					// yaw_control_speed_calculate(&yaw_control, psi, 0);
+				if (calibration_done) {					
 					controller_calc(&yaw_control, 100, psi);
 				} else {
 					printf("\n DO CALIBRATION BEFORE YAW CONTROL MODE! \n");
