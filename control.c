@@ -97,50 +97,38 @@ void ctrl_action(){
 
 #define yaw_speed_init 170
 
-void yaw_control_init(YAW_CONTROL_T *yaw_control)
+void controller_init(CONTROLLER *controller)
 {
-	yaw_control->kp = 1; //from keyboard
-	yaw_control->ki = 0;
-	yaw_control->err = 0;
-	yaw_control->integral = 0;
-	yaw_control->speed_comm = 0;
-	yaw_control->speed_diff = 0;
-	yaw_control->set_yaw_rate = 0; //from js
-	yaw_control->actual_yaw_rate = 0; //from sensor
-	yaw_control->actual_speed_plus = 0; 
-	yaw_control->actual_speed_minus = 0; 
-	printf("yaw_control initalized.\n");
-}
+	// prinf('Controller init begin... \n');
+	controller->set_point = 0;
+	controller->sensor_value = 0;
+	controller->err = 0;
+	controller->kp = 1;
+	controller->ki = 1;
+	controller->integral = 0;
+	controller->output = 0;
+	// prinf('Controller init end. \n');
+};
 
-void yaw_control_speed_calculate(YAW_CONTROL_T *yaw_control, int16_t psi, int js_setpoint)//input js value here as set value;
+int16_t controller_calc(CONTROLLER *controller, int16_t set_point, int16_t sensor_value)
 {
-	yaw_control->actual_yaw_rate = sr; 
+	controller->set_point = set_point;
+	controller->err = controller->set_point - sensor_value;
+	controller->integral += controller->err;
+	controller->output = controller->kp * controller->err + controller->ki * controller->integral;
+	return controller->output;
+};
 
-	yaw_control->set_yaw_rate = js_setpoint; //interpret js value here
-	
-	yaw_control->err = yaw_control->set_yaw_rate - yaw_control->actual_yaw_rate;
-	yaw_control->integral += yaw_control->err;
-	yaw_control->speed_comm = yaw_speed_init;
-	yaw_control->speed_diff = yaw_control->kp * yaw_control->err;
-	//yaw_speed_diff = yaw_control.kp * yaw_control.err + yaw_control.ki * yaw_control.integral;
-	yaw_control->actual_speed_plus = yaw_control->speed_comm + yaw_control->speed_diff;
-	yaw_control->actual_speed_minus = yaw_control->speed_comm - yaw_control->speed_diff;
-	//turn right M1 M3 + M2 M4 -
-	//turn left M1 M3 - M2 M4 +
-}
-
-void increase_p_value(YAW_CONTROL_T *yaw_control) {
-	if (yaw_control->kp < YAW_P_UPPER_LIMIT) {
-		yaw_control->kp += YAW_P_STEP_SIZE;
-	}
-}
-
-void decrease_p_value(YAW_CONTROL_T *yaw_control) {
-	if (yaw_control->kp > YAW_P_LOWER_LIMIT) {
-		yaw_control->kp -= YAW_P_STEP_SIZE;
-	}
-}
-
+void increase_p_value(CONTROLLER *controller)
+{
+	controller->kp += CONTROLLER_P_STEP_SIZE;
+	if(controller->kp > CONTROLLER__P_UPPER_LIMIT) controller->kp -= CONTROLLER_P_STEP_SIZE;
+};
+void decrease_p_value(CONTROLLER *controller)
+{
+	controller->kp -= CONTROLLER_P_STEP_SIZE;
+	if(controller->kp < CONTROLLER_P_LOWER_LIMIT) controller->kp += CONTROLLER_P_STEP_SIZE;
+};
 
 void update_motors(void)
 {					
