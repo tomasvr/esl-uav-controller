@@ -94,6 +94,7 @@ void ctrl_action(){
 	g_current_m2_state = MOTOR_REMAIN;
 	g_current_m3_state = MOTOR_REMAIN;
 }
+
 bool DMP = true;
 bool calib_done = false;
 uint8_t calib_counter = 0;
@@ -105,7 +106,7 @@ int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
 int16_t sp_calib = 0, sq_calib = 0, sr_calib = 0;
 int16_t sax_calib = 0, say_calib = 0, saz_calib = 0;
 
-void sensor_calcu(uint8_t num)
+void sensor_calc(uint8_t num)
 {
 	angle_calib[0] += phi; angle_calib[1] += theta; angle_calib[2] += psi; 
 	gyro_calib[0] += sp; gyro_calib[1] += sq; gyro_calib[2] += sr; 
@@ -133,7 +134,7 @@ void sensor_calcu(uint8_t num)
 	// 	return -1;
 }
 
-void sensor_caib()
+void sensor_calib()
 {
 	sensor_calcu(100); 
 	if (calib_done) 
@@ -170,7 +171,7 @@ void controller_init(CONTROLLER *controller)
 	controller->integral = 0;
 	controller->output = 0;
 	// prinf('Controller init end. \n');
-};
+}
 
 int16_t controller_calc(CONTROLLER *controller, int16_t set_point, int16_t sensor_value)
 {
@@ -179,18 +180,19 @@ int16_t controller_calc(CONTROLLER *controller, int16_t set_point, int16_t senso
 	controller->integral += controller->err;
 	controller->output = controller->kp * controller->err + controller->ki * controller->integral;
 	return controller->output;
-};
+}
 
 void increase_p_value(CONTROLLER *controller)
 {
 	controller->kp += CONTROLLER_P_STEP_SIZE;
 	if(controller->kp > CONTROLLER__P_UPPER_LIMIT) controller->kp -= CONTROLLER_P_STEP_SIZE;
-};
+}
+
 void decrease_p_value(CONTROLLER *controller)
 {
 	controller->kp -= CONTROLLER_P_STEP_SIZE;
 	if(controller->kp < CONTROLLER_P_LOWER_LIMIT) controller->kp += CONTROLLER_P_STEP_SIZE;
-};
+}
 
 void update_motors(void)
 {					

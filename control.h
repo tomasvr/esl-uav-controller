@@ -40,8 +40,8 @@ extern MOTOR_CTRL g_current_m3_state;
 
 void ctrl_action();
 
-void sensor_calcu(uint8_t);
-void sensor_caib(void);
+void sensor_calc(uint8_t);
+void sensor_calib(void);
 void offset_remove(void);
 
 typedef struct // TODO: should use float?
