@@ -55,7 +55,7 @@ typedef struct {
 	int16_t Output;
 } CONTROL_T;
 
-#define SPEED_REF 170
+#define SPEED_REF 230
 //test points before js
 #define TARGET_X 0
 #define TARGET_Y 0
