@@ -465,30 +465,6 @@ void process_key(uint8_t c){
 	// }
 // }
 
-uint8_t calibration_counter = 0;
-int16_t sensor_calib = 0, sensor_sum = 0;
-int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
-int16_t calib_return;
-bool calibration_done = false;
-
-int16_t sensor_calibration(int16_t sensor_ori, uint8_t num)//average
-{
-	int16_t sensor_temp = 0;
-	sensor_temp = sensor_ori;
-	sensor_sum += sensor_temp;
-	calibration_counter++;
-	if(calibration_counter == num){
-		sensor_calib = sensor_sum / num;
-		sensor_sum = 0;
-		calibration_counter = 0;
-		calibration_done = true;
-		printf("| Calib done: %6d \n", sensor_calib);
-		return sensor_calib;
-	}
-	// not calibrated yet
-	return -1;
-}
-
 
 /*------------------------------------------------------------------
  * main -- everything you need is here :)
@@ -565,25 +541,20 @@ int main(void)
 		}
 		if (g_current_state == CALIBRATION_ST) 
 		{
-			calib_return = sensor_calibration(psi, 10); 
-			if (calib_return != -1) 
-			{
-				psi_calib = sensor_calib;
-				printf("\n PSI CALIB DONE, PSI_CALIB: %6d\n", psi_calib);	
-				g_current_state = SAFE_ST;
-			}
+			sensor_caib();	
+			g_current_state = SAFE_ST;
 		}
+
 		if (g_current_state == YAWCONTROL_ST)
 		{
-			if (counter % 200 == 0) {
-				if (calibration_done) {					
-					controller_calc(&yaw_control, 100, psi);
-				} else {
-					printf("\n DO CALIBRATION BEFORE YAW CONTROL MODE! \n");
-				}
-			}
-
-		
+			// if (counter % 200 == 0) {
+			// offset_remove();
+			// control_init(&Control);
+			// yaw_control();
+			// yaw_control_motor_output();
+			// speed_limit();
+			// printf("%4d | %4d | %4d | %4d | %4d | %2d | %2d | %2d | %2d\n ", Yaw_Target, Yaw_Measure, sr, Yaw_Err, Yaw_Output, ae[0], ae[1], ae[2], ae[3]);
+				// }
 		}
 		counter++;
 	}

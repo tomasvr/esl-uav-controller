@@ -40,6 +40,10 @@ extern MOTOR_CTRL g_current_m3_state;
 
 void ctrl_action();
 
+void sensor_calcu(uint8_t);
+void sensor_caib(void);
+void offset_remove(void);
+
 typedef struct // TODO: should use float?
 {
 	int16_t set_point;

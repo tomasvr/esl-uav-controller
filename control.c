@@ -94,6 +94,68 @@ void ctrl_action(){
 	g_current_m2_state = MOTOR_REMAIN;
 	g_current_m3_state = MOTOR_REMAIN;
 }
+bool DMP = true;
+bool calib_done = false;
+uint8_t calib_counter = 0;
+int16_t sensor_calib = 0, sensor_sum = 0;
+int32_t angle_calib[3] = {0};
+int32_t gyro_calib[3] = {0};
+int32_t acce_calib[3] = {0};
+int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
+int16_t sp_calib = 0, sq_calib = 0, sr_calib = 0;
+int16_t sax_calib = 0, say_calib = 0, saz_calib = 0;
+
+void sensor_calcu(uint8_t num)
+{
+	angle_calib[0] += phi; angle_calib[1] += theta; angle_calib[2] += psi; 
+	gyro_calib[0] += sp; gyro_calib[1] += sq; gyro_calib[2] += sr; 
+	acce_calib[0] += sax; acce_calib[1] += say; acce_calib[2] += saz;
+	calib_counter++;
+	if(calib_counter == num)
+	{
+		// printf("| SUM: %6d \n", gyro_calib[2]);
+		angle_calib[0] /= num; angle_calib[1] /= num; angle_calib[2] /= num;//phi theta psi 
+		gyro_calib[0] /= num; gyro_calib[1] /= num; gyro_calib[2] /= num;//sp sq sr
+		acce_calib[0] /= num; acce_calib[1] /= num; acce_calib[2] /= num;//sax say saz
+		// printf("| PSI_CALIB: %6d \n", gyro_calib[2]);
+		calib_done = true;
+		calib_counter = 0;
+
+		phi_calib = angle_calib[0]; theta_calib = angle_calib[1]; psi_calib = angle_calib[2];
+		sp_calib = gyro_calib[0]; sq_calib = gyro_calib[1]; sr_calib = gyro_calib[2];
+		sax_calib = acce_calib[0]; say_calib = acce_calib[1]; saz_calib = acce_calib[2];
+
+		angle_calib[0] = 0; angle_calib[1] = 0; angle_calib[2] = 0;
+		gyro_calib[0] = 0; gyro_calib[1] = 0; gyro_calib[2] = 0;
+		acce_calib[0] = 0; acce_calib[1] = 0; acce_calib[2] = 0;
+	}
+	else calib_done = false; // not calibrated yet
+	// 	return -1;
+}
+
+void sensor_caib()
+{
+	sensor_calcu(100); 
+	if (calib_done) 
+	{	
+		printf("\n CALIB DONE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+		printf("\n SR CALIB DONE, SR_CALIB: %6d\n", sr_calib);//sr
+	}
+
+	if(DMP)
+	{
+		dmp_set_gyro_bias(gyro_calib);
+		dmp_set_accel_bias(acce_calib);
+	}
+}
+
+void offset_remove()
+{
+	phi -= phi_calib; theta -= theta_calib; psi -= psi_calib;
+	sp -= sp_calib; sq -= sq_calib; sr -= sr_calib;
+	sax -= sax_calib; say -= say_calib; saz -= saz_calib;
+}
+
 
 #define yaw_speed_init 170
 
