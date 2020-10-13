@@ -95,14 +95,73 @@ void ctrl_action(){
 	g_current_m3_state = MOTOR_REMAIN;
 }
 
+bool DMP = true;
+bool calib_done = false;
+uint8_t calib_counter = 0;
+int16_t sensor_calib = 0, sensor_sum = 0;
+int32_t angle_calib[3] = {0};
+int32_t gyro_calib[3] = {0};
+int32_t acce_calib[3] = {0};
+int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
+int16_t sp_calib = 0, sq_calib = 0, sr_calib = 0;
+int16_t sax_calib = 0, say_calib = 0, saz_calib = 0;
+
+void sensor_calcu(uint8_t num)
+{
+	angle_calib[0] += phi; angle_calib[1] += theta; angle_calib[2] += psi; 
+	gyro_calib[0] += sp; gyro_calib[1] += sq; gyro_calib[2] += sr; 
+	acce_calib[0] += sax; acce_calib[1] += say; acce_calib[2] += saz;
+	calib_counter++;
+	if(calib_counter == num)
+	{
+		// printf("| SUM: %6d \n", gyro_calib[2]);
+		angle_calib[0] /= num; angle_calib[1] /= num; angle_calib[2] /= num;//phi theta psi 
+		gyro_calib[0] /= num; gyro_calib[1] /= num; gyro_calib[2] /= num;//sp sq sr
+		acce_calib[0] /= num; acce_calib[1] /= num; acce_calib[2] /= num;//sax say saz
+		// printf("| PSI_CALIB: %6d \n", gyro_calib[2]);
+		calib_done = true;
+		calib_counter = 0;
+
+		phi_calib = angle_calib[0]; theta_calib = angle_calib[1]; psi_calib = angle_calib[2];
+		sp_calib = gyro_calib[0]; sq_calib = gyro_calib[1]; sr_calib = gyro_calib[2];
+		sax_calib = acce_calib[0]; say_calib = acce_calib[1]; saz_calib = acce_calib[2];
+
+		angle_calib[0] = 0; angle_calib[1] = 0; angle_calib[2] = 0;
+		gyro_calib[0] = 0; gyro_calib[1] = 0; gyro_calib[2] = 0;
+		acce_calib[0] = 0; acce_calib[1] = 0; acce_calib[2] = 0;
+	}
+	else calib_done = false; // not calibrated yet
+	// 	return -1;
+}
+
+void sensor_caib()
+{
+	sensor_calcu(100); 
+	if (calib_done) 
+	{	
+		printf("\n CALIB DONE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+		printf("\n SR CALIB DONE, SR_CALIB: %6d\n", sr_calib);//sr
+	}
+
+	if(DMP)
+	{
+		dmp_set_gyro_bias(gyro_calib);
+		dmp_set_accel_bias(acce_calib);
+	}
+}
+
+void offset_remove()
+{
+	phi -= phi_calib; theta -= theta_calib; psi -= psi_calib;
+	sp -= sp_calib; sq -= sq_calib; sr -= sr_calib;
+	sax -= sax_calib; say -= say_calib; saz -= saz_calib;
+}
+
+
 /**
  * @brief      Control Loop Structure
  *
  * @author     Xinyun Xu
- *
- * @param      data  The data
- *
- * @return     { description_of_the_return_value }
  */
 int16_t dt = 0.004; //integral time =  control period <= 0.1-0.2 * sample period
 int16_t Integral_max; //maximum bound
@@ -141,15 +200,15 @@ void control_init(CONTROL_T *Control)
 	Yaw_angle_control.P = 10; //from keyboard
 	Yaw_angle_control.I = 0;
 
-	Yaw_rate_control.P = 3; 
+	Yaw_rate_control.P = 5; 
 	Yaw_rate_control.I = 0; 
 
 	// printf("Control struct initalized");
-}
+}	
 
-void yaw_control_err_cal(CONTROL_T *Control, int16_t target, int measure)//setpoint sr
+void yaw_control_err_calcu(CONTROL_T *Control, int16_t target, int measure)//setpoint sr
 {
-	Control->Err = (target - measure)/100; //target - measure
+	Control->Err = (target - measure)>>5; //target - measure
 	Control->Output = Control->Err * Control->P;
 	Yaw_Target = target;
 	Yaw_Measure = measure;
@@ -157,7 +216,7 @@ void yaw_control_err_cal(CONTROL_T *Control, int16_t target, int measure)//setpo
 	Yaw_Output = Yaw_rate_control.Output;
 }
 
-void control_err_cal(CONTROL_T *Control, int16_t target, int measure)
+void control_err_calcu(CONTROL_T *Control, int16_t target, int measure)
 {
 	Control->Err = target - measure;
 	Control->Integral = Control->Err * dt;
@@ -171,19 +230,19 @@ void control_err_cal(CONTROL_T *Control, int16_t target, int measure)
 void yaw_control()
 {
 	//control_err_cal(&Yaw_angle_control, TARGET_Z, psi);
-	yaw_control_err_cal(&Yaw_rate_control, 0, sr_calib);
+	yaw_control_err_calcu(&Yaw_rate_control, 0, sr);
 	// if(Yaw_Output > 1000) Yaw_Output = 1000;
 
 }
 
 void control()
 {
-	control_err_cal(&Roll_angle_control, TARGET_X, phi);
-	control_err_cal(&Pitch_angle_control, TARGET_Y, theta);	
+	control_err_calcu(&Roll_angle_control, TARGET_X, phi);
+	control_err_calcu(&Pitch_angle_control, TARGET_Y, theta);	
 	// control_err_cal(&Yaw_angle_control, TARGET_Z, psi);
 
-	control_err_cal(&Roll_rate_control, Roll_angle_control.Output, sp);
-	control_err_cal(&Pitch_rate_control, Pitch_angle_control.Output, sq);
+	control_err_calcu(&Roll_rate_control, Roll_angle_control.Output, sp);
+	control_err_calcu(&Pitch_rate_control, Pitch_angle_control.Output, sq);
 	// yaw_control_err_cal(&Yaw_rate_control, Yaw_rate_control.Output, sr);
 	Roll_Output = Roll_rate_control.Output;
 	Pitch_Output = Pitch_rate_control.Output;
@@ -221,7 +280,7 @@ void speed_limit()
 {
 	for(uint8_t i = 0; i < 4; i++)
 	{
-	if(ae[i] > 350) ae[i] = 350;
+	if(ae[i] > 420) ae[i] = 420;
 	if(ae[i] < 170) ae[i] = 170;
 	}
 }

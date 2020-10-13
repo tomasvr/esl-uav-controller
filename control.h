@@ -40,6 +40,10 @@ extern MOTOR_CTRL g_current_m3_state;
 
 void ctrl_action();
 
+void sensor_calcu(uint8_t);
+void sensor_caib(void);
+void offset_remove(void);
+
 typedef struct {
 	uint8_t P;
 	uint8_t I;
@@ -67,8 +71,8 @@ int16_t Yaw_Err;
 int16_t Yaw_Output;
 
 void control_init(CONTROL_T*);
-void yaw_control_err_cal(CONTROL_T*, int16_t, int);
-void control_err_cal(CONTROL_T*, int16_t, int);
+void yaw_control_err_calcu(CONTROL_T*, int16_t, int);
+void control_err_calcu(CONTROL_T*, int16_t, int);
 void yaw_control(void);
 void control(void);
 void yaw_control_motor_output(void);
