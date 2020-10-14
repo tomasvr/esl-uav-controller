@@ -119,4 +119,26 @@ volatile bool radio_active;
 void ble_init(void);
 void ble_send(void);
 
+// calibraiton
+// bool DMP = true;
+// bool calib_done = false;
+// uint8_t calib_counter = 0;
+// // int16_t sensor_calib = 0:
+// int16_t sensor_sum = 0;
+// int32_t angle_calib[3] = {0};
+// int32_t gyro_calib[3] = {0};
+// int32_t acce_calib[3] = {0};
+// int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
+// int16_t sp_calib = 0, sq_calib = 0, sr_calib = 0;
+// int16_t sax_calib = 0, say_calib = 0, saz_calib = 0;
+
+// controller
+// int16_t yaw_set_point = 0;
+// int16_t roll_set_point = 0;
+// int16_t pitch_set_point = 0;
+// int16_t Z_needed = 0;
+// int16_t L_needed = 0;
+// int16_t M_needed = 0;
+// int16_t N_needed = 0;
+
 #endif // IN4073_H__

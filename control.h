@@ -38,12 +38,6 @@ extern MOTOR_CTRL g_current_m1_state;
 extern MOTOR_CTRL g_current_m2_state;
 extern MOTOR_CTRL g_current_m3_state;
 
-void ctrl_action();
-
-void sensor_calc(uint8_t);
-void sensor_calib(void);
-void offset_remove(void);
-
 typedef struct // TODO: should use float?
 {
 	int16_t set_point;
@@ -55,9 +49,37 @@ typedef struct // TODO: should use float?
 
 } CONTROLLER;
 
+// calibraiton
+bool DMP = true;
+bool calib_done = false;
+uint8_t calib_counter = 0;
+// int16_t sensor_calib = 0:
+int16_t sensor_sum = 0;
+int32_t angle_calib[3] = {0};
+int32_t gyro_calib[3] = {0};
+int32_t acce_calib[3] = {0};
+int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
+int16_t sp_calib = 0, sq_calib = 0, sr_calib = 0;
+int16_t sax_calib = 0, say_calib = 0, saz_calib = 0;
+void sensor_calc(uint8_t);
+void sensor_calib(void);
+void offset_remove(void);
+
+void ctrl_action();
+
+
+// controller
+int16_t yaw_set_point = 0;
+int16_t roll_set_point = 0;
+int16_t pitch_set_point = 0;
+int16_t Z_needed = 0;
+int16_t L_needed = 0;
+int16_t M_needed = 0;
+int16_t N_needed = 0;
 void controller_init(CONTROLLER *controller);
-int16_t controller_calc(CONTROLLER *controller, int16_t set_point, int16_t sensor_value);
 void increase_p_value(CONTROLLER *controller);
 void decrease_p_value(CONTROLLER *controller);
+int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr);
+void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed);
 
 #endif // CONTROL_H__
