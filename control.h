@@ -63,12 +63,14 @@ extern int16_t sp_calib, sq_calib, sr_calib;
 extern int16_t sax_calib, say_calib, saz_calib;
 void sensor_calc(uint8_t);
 void sensor_calib(void);
-void offset_remove(void);
+// void offset_remove(void);
 
 void ctrl_action();
 
 
 // controller
+#define b 1 
+#define d 1
 extern int16_t yaw_set_point;
 extern int16_t roll_set_point;
 extern int16_t pitch_set_point;
