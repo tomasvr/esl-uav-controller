@@ -1,7 +1,5 @@
 /*
-
 	control.h - header file for (motor) control
-
 */
 
 #ifndef CONTROL_H__
@@ -11,9 +9,9 @@
 #define STEP_SIZE 10
 #define UPPER_LIMIT 1000
 
-#define YAW_P_STEP_SIZE 1
-#define YAW_P_UPPER_LIMIT 50
-#define YAW_P_LOWER_LIMIT 1 
+#define CONTROLLER_P_STEP_SIZE 1
+#define CONTROLLER__P_UPPER_LIMIT 50
+#define CONTROLLER_P_LOWER_LIMIT 1 
 
 // the states that a motor has
 typedef enum {
@@ -38,48 +36,48 @@ extern MOTOR_CTRL g_current_m1_state;
 extern MOTOR_CTRL g_current_m2_state;
 extern MOTOR_CTRL g_current_m3_state;
 
-void ctrl_action();
+typedef struct // TODO: should use float?
+{
+	int16_t set_point;
+	int16_t sensor_value;
+	int16_t err;
+	uint8_t kp, ki;
+	int16_t integral;
+	int16_t output;
 
-void sensor_calcu(uint8_t);
-void sensor_caib(void);
+} CONTROLLER;
+
+// calibraiton
+extern bool DMP;
+extern bool calib_done;
+extern uint8_t calib_counter;
+// int16_t sensor_calib = 0:
+extern int16_t sensor_sum;
+extern int32_t angle_calib[3];
+extern int32_t gyro_calib[3];
+extern int32_t acce_calib[3];
+extern int16_t phi_calib, theta_calib, psi_calib;
+extern int16_t sp_calib, sq_calib, sr_calib;
+extern int16_t sax_calib, say_calib, saz_calib;
+void sensor_calc(uint8_t);
+void sensor_calib(void);
 void offset_remove(void);
 
-typedef struct {
-	uint8_t P;
-	uint8_t I;
-	uint8_t D;
-	int16_t Err;
-	int16_t Pre_Err;
-	int16_t Integral;
-	int16_t Deriv;
-	int16_t Output;
-} CONTROL_T;
+void ctrl_action();
 
-#define SPEED_REF 230
-//test points before js
-#define TARGET_X 0
-#define TARGET_Y 0
-#define TARGET_Z 0
 
-#define PITCH_THRE 1500
-#define ROLL_THRE 1500
-
-int16_t Pitch_Output;
-int16_t Roll_Output;
-int16_t Yaw_Target, Yaw_Measure;
-int16_t Yaw_Err;
-int16_t Yaw_Output;
-
-void control_init(CONTROL_T*);
-void yaw_control_err_calcu(CONTROL_T*, int16_t, int);
-void control_err_calcu(CONTROL_T*, int16_t, int);
-void yaw_control(void);
-void control(void);
-void yaw_control_motor_output(void);
-void control_motor_output(void);
-void speed_limit(void);
-
-void increase_p_value(CONTROL_T*);
-void decrease_p_value(CONTROL_T*);
+// controller
+extern int16_t yaw_set_point;
+extern int16_t roll_set_point;
+extern int16_t pitch_set_point;
+extern int16_t Z_needed;
+extern int16_t L_needed;
+extern int16_t M_needed;
+extern int16_t N_needed;
+void controller_init(CONTROLLER *controller);
+void increase_p_value(CONTROLLER *controller);
+void decrease_p_value(CONTROLLER *controller);
+int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr);
+void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed);
 
 #endif // CONTROL_H__
