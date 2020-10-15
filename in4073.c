@@ -302,7 +302,7 @@ void messg_decode(uint8_t messg){
 		g_current_comm_type = retrieve_comm_type(comm_type_bits >> 4); //shift right to get bits at beginning of byte
 		//assert( == 1 && "QR: No such command found.");
 
-	 	else if (g_current_comm_type == JS_AXIS_COMM) {
+	 	if (g_current_comm_type == JS_AXIS_COMM) {
 	 		joystick_axis = retrieve_js_axis(state_or_jsaxis_bits);
 	 	}	
 	 	else if (g_current_comm_type == MODE_SW_COMM){

@@ -50,6 +50,18 @@ void switch_led(int color) {
 	}
 }
 
+void increase_motor_speed(int16_t *ae, uint8_t motor){
+	ae[motor] += STEP_SIZE;
+	if (ae[motor] > UPPER_LIMIT) ae[motor] = UPPER_LIMIT;
+	return;
+}
+
+void decrease_motor_speed(int16_t *ae, uint8_t motor){
+	ae[motor] -= STEP_SIZE;
+	if (ae[motor] < 0) ae[motor] = 0;
+	return;
+}
+
 void ctrl_action(){
 	switch (g_current_m0_state){			//M0
 		case MOTOR_UP:
