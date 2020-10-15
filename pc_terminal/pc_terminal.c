@@ -154,7 +154,7 @@ void rs232_open(void){
   	int 		result;
   	struct termios	tty;
 
-       	fd_RS232 = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY);  // Hardcode your serial port here, or request it as an argument at runtime
+       	fd_RS232 = open("/dev/ttyUSB1", O_RDWR | O_NOCTTY);  // Hardcode your serial port here, or request it as an argument at runtime
 
 	assert(fd_RS232>=0);
 
@@ -257,8 +257,7 @@ bool ESC = false;
 // 			message |= 0x00000100;
 // 			break;
 // 		case 3:
-// 			message |= 0#define ENABLE_JOYSTICK
-x00000200;
+// 			message |= 0x00000200;
 // 			break;
 // 		case 4:
 // 			message |= 0x00000300;
