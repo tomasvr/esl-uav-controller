@@ -14,10 +14,33 @@
 #include "in4073.h"
 #include "control.h"
 
+// calibraiton
+bool DMP = true;
+bool calib_done = false;
+uint8_t calib_counter = 0;
+// int16_t sensor_calib = 0:
+int16_t sensor_sum = 0;
+int32_t angle_calib[3] = {0};
+int32_t gyro_calib[3] = {0};
+int32_t acce_calib[3] = {0};
+int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
+int16_t sp_calib = 0, sq_calib = 0, sr_calib = 0;
+int16_t sax_calib = 0, say_calib = 0, saz_calib = 0;
+
+// controller
+int16_t yaw_set_point = 0;
+int16_t roll_set_point = 0;
+int16_t pitch_set_point = 0;
+int16_t Z_needed = 0;
+int16_t L_needed = 0;
+int16_t M_needed = 0;
+int16_t N_needed = 0;
+
 // This funciton is used for debugging
 // if color == -1, then all leds are turned off
 // gpio_pin_set TURNS OFF led
 // gpio_pin_clear TURNS ON led
+
 void switch_led(int color) {
 	nrf_gpio_pin_set(GREEN);
 	nrf_gpio_pin_set(RED);
@@ -170,18 +193,18 @@ void sensor_calib()
 	}
 }
 
-// void offset_remove()
-// {
-// 	phi -= phi_calib; 
-// 	theta -= theta_calib; 
-// 	psi -= psi_calib;
-// 	sp -= sp_calib; 
-// 	sq -= sq_calib; 
-// 	sr -= sr_calib;
-// 	sax -= sax_calib; 
-// 	say -= say_calib; 
-// 	saz -= saz_calib;
-// }
+void offset_remove()
+{
+	phi -= phi_calib; 
+	theta -= theta_calib; 
+	psi -= psi_calib;
+	sp -= sp_calib; 
+	sq -= sq_calib; 
+	sr -= sr_calib;
+	sax -= sax_calib; 
+	say -= say_calib; 
+	saz -= saz_calib;
+}
 
 
 // #define yaw_speed_init 170
