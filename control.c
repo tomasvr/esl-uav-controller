@@ -169,6 +169,7 @@ int16_t Integral_max; //maximum bound
 int16_t Pitch_Output;
 int16_t Roll_Output;
 int16_t Yaw_Output;
+int16_t Lift = 0;
 
 CONTROL_T Pitch_angle_control;
 CONTROL_T Pitch_rate_control;
@@ -208,7 +209,7 @@ void control_init(CONTROL_T *Control)
 
 void yaw_control_err_calcu(CONTROL_T *Control, int16_t target, int measure)//setpoint sr
 {
-	Control->Err = (target - measure)>>5; //target - measure
+	Control->Err = (target - measure)>>6; //target - measure
 	Control->Output = Control->Err * Control->P;
 	Yaw_Target = target;
 	Yaw_Measure = measure;
@@ -231,7 +232,7 @@ void yaw_control()
 {
 	//control_err_cal(&Yaw_angle_control, TARGET_Z, psi);
 	yaw_control_err_calcu(&Yaw_rate_control, 0, sr);
-	// if(Yaw_Output > 1000) Yaw_Output = 1000;
+	// if(Yaw_Output > 5000) Yaw_Output = 5000;
 
 }
 
