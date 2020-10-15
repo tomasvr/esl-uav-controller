@@ -63,13 +63,9 @@ MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m2_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m3_state = MOTOR_REMAIN;
 
-<<<<<<< HEAD
 
-CONTROLLER yaw_control;
-=======
 // controller object declaration
 CONTROLLER *yaw_control;
->>>>>>> master
 
 uint8_t find_motor_state(uint8_t messg){
 	uint8_t m_ctrl_1 = messg & 0xf0; 		
@@ -179,11 +175,6 @@ void check_USB_connection_alive() {
 	}
 }
 
-<<<<<<< HEAD
-=======
-void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) { // Quesiton: this function only called in mannual mode?
->>>>>>> master
-
 void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
 	if (joystick_axis == LIFT_THROTTLE) { // Throttle axis needs seperate calculation to determine when it is all the way down
 		if(js_total_value <= 32767){
@@ -196,7 +187,7 @@ void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_val
 	joystick_axis_stored_values[joystick_axis] = js_total_value;
 }
 
-void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
+void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {  // Quesiton: this function only called in mannual mode?
 	printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
 	// example js_total_value = 32776
 	uint8_t percentage = 0; // (percentage%)
@@ -236,7 +227,7 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
 			}
 			break;
 
-		case YAW_AXIS:
+		case YAW_AXIS: //TODO
 			// if(js_total_value <= 32767){ // yaw counterclockwise
 			// 	percentage = (uint8_t) (100.f * js_total_value / 32767);
 			// 	ae[0] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
@@ -439,59 +430,6 @@ void process_key(uint8_t c){
 	}
 }
 
-// void process_message() {
-// 	uint8_t c = dequeue(&rx_queue);
-// 	if (c == 0x55 && FRAG_COUNT == 0 && g_current_state != PANIC_ST) { // '0x55': 0b01010101(start byte)
-// 			FRAG_COUNT = 3;
-// 			uint32_t message = c; //append startbit
-// 			nrf_delay_ms(200);
-// 			while (FRAG_COUNT >  0 && rx_queue.count) {
-// 				nrf_delay_ms(200);
-// 				uint8_t byte = dequeue(&rx_queue);
-// 				message = (message << 8) | byte;
-// 				FRAG_COUNT--;
-// 			} 
-// 			if (FRAG_COUNT > 0) {
-// 				printf("ERROR: DEQUEUE WHILE-LOOP WAS EXITED BUT FRAG_COUNT WAS NOT ZERO - process_message\n");
-// 			} else {
-// 				//messg_decode(message);
-// 				print_packet(message, "RECEIVED MESSAGE AT FCB WAS: ");
-// 				FRAG_COUNT = 0;	
-// 			}
-// 		}
-// 	else {
-// 		printf("ERROR: FIRST BIT RECEIVED WAS NOT A START-BIT - process_message(), FRAG_COUNT: %d, c: %c\n", FRAG_COUNT, c);
-// 	}
-// }
-
-<<<<<<< HEAD
-
-
-
-=======
->>>>>>> master
-// void execute(){ //TODO: remove this function
-// 	if (g_current_comm_type == ESC_COMM){ // terminate program
-// 		demo_done = true;
-// 		g_current_comm_type = NO_COMM;
-// 		enter_panic_mode(false);
-// 	}
-// 	if (g_current_comm_type == CTRL_COMM){
-// 		ctrl_action();
-// 		// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
-// 	}
-
-	// if(g_current_comm_type == JS_AXIS_COMM){
-	// 	// handled by the thread
-	// }
-
-	// if (g_current_comm_type == MODE_SW_COMM && g_dest_state != NO_WHERE){
-	// 	g_current_state = mode_sw_action("FCB", g_current_state, g_dest_state, false);
-	// 	g_dest_state = NO_WHERE;
-	// 	g_current_comm_type = NO_COMM;
-	// }
-// }
-
 uint8_t calibration_counter = 0;
 int16_t sensor_calib = 0, sensor_sum = 0;
 int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
@@ -517,8 +455,6 @@ int16_t sensor_calibration(int16_t sensor_ori, uint8_t num)//average
 	// not calibrated yet
 	return -1;
 }
-
-
 
 /*------------------------------------------------------------------
  * main -- everything you need is here :)
