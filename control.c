@@ -168,55 +168,6 @@ void control_err_cal(CONTROL_T *Control, int16_t target, int measure)
 	Control->Pre_Err = Control->Err;
 }
 
-void yaw_control()
-{
-	//control_err_cal(&Yaw_angle_control, TARGET_Z, psi);
-	yaw_control_err_cal(&Yaw_rate_control, 0, sr_calib);
-	// if(Yaw_Output > 1000) Yaw_Output = 1000;
-
-}
-
-void control()
-{
-	control_err_cal(&Roll_angle_control, TARGET_X, phi);
-	control_err_cal(&Pitch_angle_control, TARGET_Y, theta);	
-	// control_err_cal(&Yaw_angle_control, TARGET_Z, psi);
-
-	control_err_cal(&Roll_rate_control, Roll_angle_control.Output, sp);
-	control_err_cal(&Pitch_rate_control, Pitch_angle_control.Output, sq);
-	// yaw_control_err_cal(&Yaw_rate_control, Yaw_rate_control.Output, sr);
-	Roll_Output = Roll_rate_control.Output;
-	Pitch_Output = Pitch_rate_control.Output;
-
-	if(Roll_Output > ROLL_THRE) Roll_Output = ROLL_THRE;
-	if(Roll_Output < -ROLL_THRE) Roll_Output = -ROLL_THRE;
-
-	if(Pitch_Output > PITCH_THRE) Pitch_Output = PITCH_THRE;
-	if(Pitch_Output < -PITCH_THRE) Pitch_Output = -PITCH_THRE;
-}
-
-void yaw_control_motor_output()
-{
-	ae[0] = SPEED_REF + Yaw_Output;
-	ae[1] = SPEED_REF - Yaw_Output;
-	ae[2] = SPEED_REF + Yaw_Output;
-	ae[3] = SPEED_REF - Yaw_Output;
-}
-
-void control_motor_output()
-{
-	ae[0] = SPEED_REF + Pitch_Output;
-	ae[1] = SPEED_REF - Roll_Output;
-	ae[2] = SPEED_REF - Pitch_Output;
-	ae[3] = SPEED_REF + Roll_Output;
-	/*
-	ae[0] = SPEED_REF + Pitch_Output + Yaw_Output;
-	ae[1] = SPEED_REF - Roll_Output - Yaw_Output;
-	ae[2] = SPEED_REF - Pitch_Output + Yaw_Output;
-	ae[3] = SPEED_REF + Roll_Output - Yaw_Output;
-	*/
-}
-
 void speed_limit()
 {
 	for(uint8_t i = 0; i < 4; i++)
@@ -226,50 +177,123 @@ void speed_limit()
 	}
 }
 
-/*
-void yaw_control_speed_calculate(CONTROL_T *yaw_control, int16_t sr, int setpoint)//input js value here as set value; int setpoint
-{
-	sr = sr / 10;
-	setpoint = setpoint / 32768 * 10000;
-	printf(" setpoint %2d", setpoint);
-	yaw_control->actual_yaw_rate = sr; //todo fix this (ugly hack)
-	yaw_control->set_yaw_rate = setpoint; //interpret js value here
-	yaw_control->err = yaw_control->set_yaw_rate - yaw_control->actual_yaw_rate;
-	yaw_control->integral += yaw_control->err;
-	printf(" err %2d", yaw_control->err);
-	yaw_control->speed_comm = yaw_speed_init;
-	yaw_control->speed_diff = yaw_control->kp * yaw_control->err;
-	//yaw_speed_diff = yaw_control.kp * yaw_control.err + yaw_control.ki * yaw_control.integral;
-	yaw_control->actual_speed_plus = yaw_control->speed_comm + yaw_control->speed_diff;
-	yaw_control->actual_speed_minus = yaw_control->speed_comm - yaw_control->speed_diff;
-	ae[0] = yaw_control->actual_speed_plus; //turn right M1 M3 + M2 M4 -  turn left M1 M3 - M2 M4 +
-	ae[1] = yaw_control->actual_speed_minus;
-	ae[2] = yaw_control->actual_speed_plus;
-	ae[3] = yaw_control->actual_speed_minus;
-	printf(" %6d | %6d ", yaw_control->actual_speed_plus, yaw_control->actual_speed_minus);
-	printf(" %2d | %2d | %2d | %2d\n ", ae[0], ae[1], ae[2], ae[3]);
-}
-*/
-
-void increase_p_value(CONTROL_T *Control) {
-	if (Control->P < YAW_P_UPPER_LIMIT) {
-		Control->P += YAW_P_STEP_SIZE;
-	}
-}
-
-void decrease_p_value(CONTROL_T *Control) {
-	if (Control->P > YAW_P_LOWER_LIMIT) {
-		Control->P -= YAW_P_STEP_SIZE;
-	}
-}
 
 void clip_motors() {
 	for (int i = 0; i < 4; i++) {
 		if (ae[i] > 1000) 	ae[i] = 1000;
 		if (ae[i] < 0)		ae[i] = 0;		
 	}
+
+bool DMP = true;
+bool calib_done = false;
+uint8_t calib_counter = 0;
+int16_t sensor_calib = 0, sensor_sum = 0;
+int32_t angle_calib[3] = {0};
+int32_t gyro_calib[3] = {0};
+int32_t acce_calib[3] = {0};
+int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
+int16_t sp_calib = 0, sq_calib = 0, sr_calib = 0;
+int16_t sax_calib = 0, say_calib = 0, saz_calib = 0;
+
+void sensor_calc(uint8_t num)
+{
+	angle_calib[0] += phi; angle_calib[1] += theta; angle_calib[2] += psi; 
+	gyro_calib[0] += sp; gyro_calib[1] += sq; gyro_calib[2] += sr; 
+	acce_calib[0] += sax; acce_calib[1] += say; acce_calib[2] += saz;
+	calib_counter++;
+	if(calib_counter == num)
+	{
+		// printf("| SUM: %6d \n", gyro_calib[2]);
+		angle_calib[0] /= num; angle_calib[1] /= num; angle_calib[2] /= num;//phi theta psi 
+		gyro_calib[0] /= num; gyro_calib[1] /= num; gyro_calib[2] /= num;//sp sq sr
+		acce_calib[0] /= num; acce_calib[1] /= num; acce_calib[2] /= num;//sax say saz
+		// printf("| PSI_CALIB: %6d \n", gyro_calib[2]);
+		calib_done = true;
+		calib_counter = 0;
+
+		phi_calib = angle_calib[0]; theta_calib = angle_calib[1]; psi_calib = angle_calib[2];
+		sp_calib = gyro_calib[0]; sq_calib = gyro_calib[1]; sr_calib = gyro_calib[2];
+		sax_calib = acce_calib[0]; say_calib = acce_calib[1]; saz_calib = acce_calib[2];
+
+		angle_calib[0] = 0; angle_calib[1] = 0; angle_calib[2] = 0;
+		gyro_calib[0] = 0; gyro_calib[1] = 0; gyro_calib[2] = 0;
+		acce_calib[0] = 0; acce_calib[1] = 0; acce_calib[2] = 0;
+	}
+	else calib_done = false; // not calibrated yet
+	// 	return -1;
 }
 
+void sensor_calib()
+{
+	sensor_calcu(100); 
+	if (calib_done) 
+	{	
+		printf("\n CALIB DONE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+		printf("\n SR CALIB DONE, SR_CALIB: %6d\n", sr_calib);//sr
+	}
+
+	if(DMP)
+	{
+		dmp_set_gyro_bias(gyro_calib);
+		dmp_set_accel_bias(acce_calib);
+	}
+}
+
+void offset_remove()
+{
+	phi -= phi_calib; theta -= theta_calib; psi -= psi_calib;
+	sp -= sp_calib; sq -= sq_calib; sr -= sr_calib;
+	sax -= sax_calib; say -= say_calib; saz -= saz_calib;
+}
+
+
+#define yaw_speed_init 170
+
+void controller_init(CONTROLLER *controller)
+{
+	// prinf('Controller init begin... \n');
+	controller->set_point = 0;
+	controller->sensor_value = 0;
+	controller->err = 0;
+	controller->kp = 1;
+	controller->ki = 1;
+	controller->integral = 0;
+	controller->output = 0;
+	// prinf('Controller init end. \n');
+}
+
+int16_t controller_calc(CONTROLLER *controller, int16_t set_point, int16_t sensor_value)
+{
+	controller->set_point = set_point;
+	controller->err = controller->set_point - sensor_value;
+	controller->integral += controller->err;
+	controller->output = controller->kp * controller->err + controller->ki * controller->integral;
+	return controller->output;
+}
+
+void increase_p_value(CONTROLLER *controller)
+{
+	controller->kp += CONTROLLER_P_STEP_SIZE;
+	if(controller->kp > CONTROLLER__P_UPPER_LIMIT) controller->kp -= CONTROLLER_P_STEP_SIZE;
+}
+
+void decrease_p_value(CONTROLLER *controller)
+{
+	controller->kp -= CONTROLLER_P_STEP_SIZE;
+	if(controller->kp < CONTROLLER_P_LOWER_LIMIT) controller->kp += CONTROLLER_P_STEP_SIZE;
+}
+
+// void increase_p_value(CONTROL_T *Control) {
+// 	if (Control->P < YAW_P_UPPER_LIMIT) {
+// 		Control->P += YAW_P_STEP_SIZE;
+// 	}
+// }
+
+// void decrease_p_value(CONTROL_T *Control) {
+// 	if (Control->P > YAW_P_LOWER_LIMIT) {
+// 		Control->P -= YAW_P_STEP_SIZE;
+// 	}
+// }
 
 void update_motors(void)
 {					

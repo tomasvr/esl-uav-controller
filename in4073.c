@@ -66,7 +66,8 @@ MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m2_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m3_state = MOTOR_REMAIN;
 
-CONTROL_T Control;
+
+CONTROLLER yaw_control;
 
 uint8_t find_motor_state(uint8_t messg){
 	uint8_t m_ctrl_1 = messg & 0xf0; 		
@@ -516,6 +517,7 @@ int16_t sensor_calibration(int16_t sensor_ori, uint8_t num)//average
 }
 
 
+
 /*------------------------------------------------------------------
  * main -- everything you need is here :)
  *------------------------------------------------------------------
@@ -537,6 +539,8 @@ int main(void)
 	usb_comm_last_received = get_time_us();
 
 	motor_lift_level = 0;
+	controller_init(&yaw_control);
+
 
 	printf("    TIME   | AE0 AE1 AE2 AE3 |   PHI    THETA   PSI |     SP     SQ     SR |  BAT | TEMP | PRESSURE | MODE \n");
 	while (!demo_done)
@@ -599,7 +603,9 @@ int main(void)
 				printf("\n PSI CALIB DONE, PSI_CALIB: %6d\n", sr_calib);	
 				g_current_state = SAFE_ST;
 			}
+
 		}
+
 		if (g_current_state == YAWCONTROL_ST)
 		{
 
@@ -614,6 +620,14 @@ int main(void)
 				} else {
 					//printf("\n DO CALIBRATION BEFORE YAW CONTROL MODE! \n");
 				}
+			// if (counter % 200 == 0) {
+			// offset_remove();
+			// control_init(&Control);
+			// yaw_control();
+			// yaw_control_motor_output();
+			// speed_limit();
+			// printf("%4d | %4d | %4d | %4d | %4d | %2d | %2d | %2d | %2d\n ", Yaw_Target, Yaw_Measure, sr, Yaw_Err, Yaw_Output, ae[0], ae[1], ae[2], ae[3]);
+				// }
 		}
 		counter++;
 	}
