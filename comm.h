@@ -1,8 +1,7 @@
 /*
+ *	comm.h - header file for communication between PC and FCB
+ */
 
-	comm.h - header file for communication between PC and FCB
-
-*/
 #include "states.h"
 #include <inttypes.h>
 //#include <stdint.h>
@@ -11,7 +10,6 @@
 #define COMM_H__
 
 #define BASE_MESSAGE_PACKET_BITS 0b00000000000000000000000001010101 //
-
 
 // the states that our QR has
 // enum STATE {
@@ -26,17 +24,16 @@
 
 // the command types during communication
 typedef enum {
-		
-		CTRL_COMM, // this means keyboard command
-		MODE_SW_COMM,
-		JS_AXIS_COMM, // joystick commands
-		CHANGE_P_COMM,
-		BAT_INFO_COMM,
-		SYS_LOG_COMM,
-		ESC_COMM,
-		USB_CHECK_COMM,
-		NO_COMM
-	} COMM_TYPE;
+	CTRL_COMM, // this means keyboard command
+	MODE_SW_COMM,
+	JS_AXIS_COMM, // joystick commands
+	CHANGE_P_COMM,
+	BAT_INFO_COMM,
+	SYS_LOG_COMM,
+	ESC_COMM,
+	USB_CHECK_COMM,
+	NO_COMM
+} COMM_TYPE;
 
 typedef enum {
 		ROLL_AXIS,
