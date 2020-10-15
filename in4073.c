@@ -531,10 +531,9 @@ int main(void)
 
 			g_current_state = SAFE_ST;
 		}
-
 		if (g_current_state == YAWCONTROL_ST)
 		{
-			N_needed = yaw_control_calc(yaw_control, yaw_set_point, sq-sq_calib);
+			N_needed = yaw_control_calc(yaw_control, yaw_set_point, sr-sr_calib);
 			actuate(0, 0, 0, N_needed); // only N_needed in yay control mode
 		}
 		if (g_current_state == FULLCONTROL_ST)
