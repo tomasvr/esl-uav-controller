@@ -196,16 +196,12 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
 		case ROLL_AXIS:
 			if(js_total_value <= 32767){ // roll counterclockwise
 				percentage = (uint8_t) (100.f * js_total_value / 32767);
-				//ae[0] = (int16_t) UPPER_LIMIT * 50 / 100;
 				ae[1] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
-				//ae[2] = (int16_t) UPPER_LIMIT * 50 / 100;
 				ae[3] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
 			}
 			else{ // roll clockwise
 				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
-				//ae[0] = (int16_t) UPPER_LIMIT * 50 / 100;
 				ae[1] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
-				//ae[2] = (int16_t) UPPER_LIMIT * 50 / 100;
 				ae[3] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
 			}
 			break;
@@ -214,34 +210,26 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
 			if(js_total_value <= 32767){ // pitch down
 				percentage = (uint8_t) (100.f * js_total_value / 32767);
 				ae[0] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
-				//ae[1] = (int16_t) UPPER_LIMIT * 50 / 100;
 				ae[2] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
-				//ae[3] = (int16_t) UPPER_LIMIT * 50 / 100;
 			}
 			else{ // pitch up
 				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
 				ae[0] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
-				//ae[1] = (int16_t) UPPER_LIMIT * 50 / 100;
 				ae[2] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
-				//ae[3] = (int16_t) UPPER_LIMIT * 50 / 100;
 			}
 			break;
 
 		case YAW_AXIS: //TODO
-			// if(js_total_value <= 32767){ // yaw counterclockwise
-			// 	percentage = (uint8_t) (100.f * js_total_value / 32767);
-			// 	ae[0] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
-			// 	ae[1] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
-			// 	ae[2] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
-			// 	ae[3] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
-			// }
-			// else{ // yaw clockwise
-			// 	percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
-			// 	ae[0] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
-			// 	ae[1] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
-			// 	ae[2] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
-			// 	ae[3] = (int16_t) motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100;
-			// }
+			if(js_total_value <= 32767){ // yaw counterclockwise
+				percentage = (uint8_t) (100.f * js_total_value / 32767);
+				ae[0] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
+				ae[1] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
+			}
+			else{ // yaw clockwise
+				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+				ae[2] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;			ae[1] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
+				ae[3] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
+			}
 			break;
 
 		case LIFT_THROTTLE:
