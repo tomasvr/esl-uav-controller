@@ -118,19 +118,6 @@ void ctrl_action(){
 	g_current_m3_state = MOTOR_REMAIN;
 }
 
-
-bool DMP = true;
-bool calib_done = false;
-uint8_t calib_counter = 0;
-// int16_t sensor_calib = 0;
-int16_t sensor_sum = 0;
-int32_t angle_calib[3] = {0};
-int32_t gyro_calib[3] = {0};
-int32_t acce_calib[3] = {0};
-int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
-int16_t sp_calib = 0, sq_calib = 0, sr_calib = 0;
-int16_t sax_calib = 0, say_calib = 0, saz_calib = 0;
-
 void sensor_calc(uint8_t num)
 {
 	do
