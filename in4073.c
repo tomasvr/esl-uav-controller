@@ -604,6 +604,8 @@ int main(void)
 				g_current_state = SAFE_ST;
 			}
 
+			//sensor_caib();	
+			g_current_state = SAFE_ST;
 		}
 
 		if (g_current_state == YAWCONTROL_ST)
