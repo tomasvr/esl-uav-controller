@@ -50,6 +50,62 @@ void switch_led(int color) {
 	}
 }
 
+void ctrl_action(){
+	switch (g_current_m0_state){			//M0
+		case MOTOR_UP:
+			increase_motor_speed(ae, 0);
+			break;
+		case MOTOR_REMAIN:
+			break;
+		case MOTOR_DOWN:
+			decrease_motor_speed(ae, 0);
+			break;
+		default:
+			break;
+	}
+	switch (g_current_m1_state){			//M1
+		case MOTOR_UP:
+			increase_motor_speed(ae, 1);
+			break;
+		case MOTOR_REMAIN:
+			break;
+		case MOTOR_DOWN:
+			decrease_motor_speed(ae, 1);
+			break;
+		default:
+			break;
+	}
+	switch (g_current_m2_state){			//M2
+		case MOTOR_UP:
+			increase_motor_speed(ae, 2);
+			break;
+		case MOTOR_REMAIN:
+			break;
+		case MOTOR_DOWN:
+			decrease_motor_speed(ae, 2);
+			break;
+		default:
+			break;
+	}
+	switch (g_current_m3_state){			//M3
+		case MOTOR_UP:
+			increase_motor_speed(ae, 3);
+			break;
+		case MOTOR_REMAIN:
+			break;
+		case MOTOR_DOWN:
+			decrease_motor_speed(ae, 3);
+			break;
+		default:
+			break;
+	}
+	// reset motor intention
+	g_current_m0_state = MOTOR_REMAIN;
+	g_current_m1_state = MOTOR_REMAIN;
+	g_current_m2_state = MOTOR_REMAIN;
+	g_current_m3_state = MOTOR_REMAIN;
+}
+
 void speed_limit()
 {
 	for(uint8_t i = 0; i < 4; i++)

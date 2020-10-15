@@ -20,10 +20,6 @@
 #include "ml.h"
 #include "app_util_platform.h"
 #include <math.h>
-// js:
-// #include <stdlib.h> 
-// #include <unistd.h> 
-// #include <pthread.h> 
 
 // custom includes
 #include "logging.h"
@@ -39,18 +35,14 @@
 
 #define MOTOR_MAX_CHANGE 50
 #define MOTOR_UPPER_LIMIT 1000
-
-
 #define PANIC_MODE_MOTOR_SPEED 300
 
 bool demo_done;
-
 
 // Control
 uint16_t motor_lift_level;
 int16_t motor[4],ae[4];
 void run_filters_and_control();
-
 
 // Timers
 #define TIMER_PERIOD	50 //50ms=20Hz (MAX 23bit, 4.6h)

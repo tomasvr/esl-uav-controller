@@ -162,10 +162,8 @@ void enter_panic_mode(bool cable_detached){
 }
 
 void USB_comm_update_received() {
-	// printf("USB comm check has been received!\n");
 	current_time = get_time_us();
 	usb_comm_last_received = current_time;
-	//printf("FCB: USB_check received!\n");
 }
 
 void check_USB_connection_alive() {
@@ -293,6 +291,9 @@ void messg_decode(uint8_t messg){
 
 	if (FRAG_COUNT == 3){
 
+		/* Whenever you receive a message, update last received message time */
+		USB_comm_update_received();
+
 		uint8_t comm_type_bits = messg & 0xf0; //take left most 4 bits from current byte
 		uint8_t state_or_jsaxis_bits = messg & 0x0f; //take right most 4 bits from current byte // CAN ALSO BE NUMBER FOR JOYSTICK TYPE!
 
@@ -301,12 +302,6 @@ void messg_decode(uint8_t messg){
 		g_current_comm_type = retrieve_comm_type(comm_type_bits >> 4); //shift right to get bits at beginning of byte
 		//assert( == 1 && "QR: No such command found.");
 
-	 	if (g_current_comm_type == USB_CHECK_COMM) { // update usb_check received and check state sync
-	 		USB_comm_update_received();
-	 		// int result = check_mode_sync(state_or_jsaxis_bits, g_current_state); // Question: still needed?
-			// printf("check_mode_sync result: %d\n", result);
-			// assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?
-	 	}
 	 	else if (g_current_comm_type == JS_AXIS_COMM) {
 	 		joystick_axis = retrieve_js_axis(state_or_jsaxis_bits);
 	 	}	
@@ -345,11 +340,6 @@ void messg_decode(uint8_t messg){
 	 		result = find_motor_state(messg);
 	 		assert(result == 1 && "QR: Fail to find the motor state.");
 	 	}
-	 	// else if (g_current_comm_type == JS_AXIS_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
-	 	// 	int result;
-		// 	result = find_motor_state_js(messg, FRAG_COUNT);
-	 	// 	assert(result == 1 && "QR: Fail to find the motor state.");
-	 	// }
 	 	else if (g_current_comm_type == JS_AXIS_COMM) {
 	 		if (FRAG_COUNT == 2) {
  				jsvalue_right = messg;	
@@ -496,16 +486,14 @@ int main(void)
 			g_current_comm_type = NO_COMM;
 			enter_panic_mode(false);
 		}
-		// if (g_current_comm_type == CTRL_COMM){
-		// 	ctrl_action();
-		// 	// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
-		// }
+		if (g_current_comm_type == CTRL_COMM){
+			ctrl_action();
+		}
 		if (g_current_state == CALIBRATION_ST) 
 		{
 
 			//sensor_calib();
 			//offset_remove();	
-
 			g_current_state = SAFE_ST;
 		}
 
@@ -518,7 +506,6 @@ int main(void)
 		if (g_current_state == FULLCONTROL_ST)
 		{
 			// TODO: do full controller things
-
 		}
 
 		counter++;
