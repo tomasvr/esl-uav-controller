@@ -398,11 +398,11 @@ void messg_decode(uint8_t messg){
 			printf("CHANGE_P_COMM message: "PRINTF_BINARY_PATTERN_INT8"\n", PRINTF_BYTE_TO_BINARY_INT8(messg));
 	 		if (messg == 0x01) {
 	 			printf("FCB: P CONTROL UP\n");
-	 			increase_p_value(&Control);
+	 			increase_p_value(yaw_control);
 	 		}
 	 		if (messg == 0x00) {
 		 		printf("FCB: P CONTROL DOWN\n");
-		 		decrease_p_value(&Control);
+		 		decrease_p_value(yaw_control);
 	 		}
 	 	}
 	 	else {
@@ -428,32 +428,6 @@ void process_key(uint8_t c){
 		FRAG_COUNT--;
 		return;
 	}
-}
-
-uint8_t calibration_counter = 0;
-int16_t sensor_calib = 0, sensor_sum = 0;
-int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
-int16_t sr_calib = 0;
-int16_t calib_return;
-bool calibration_done = false;
-
-int16_t sensor_calibration(int16_t sensor_ori, uint8_t num)//average
-{
-	int16_t sensor_temp = 0;
-	sensor_temp = sensor_ori;
-	sensor_sum += sensor_temp;
-	calibration_counter++;
-	if(calibration_counter == num){
-		sensor_calib = sensor_sum / num;
-		sensor_sum = 0;
-		calibration_counter = 0;
-		calibration_done = true;
-		// printf("| Calib done: %6d \n", sensor_calib);
-		return sensor_calib;
-	}
-	else calibration_done = false;
-	// not calibrated yet
-	return -1;
 }
 
 /*------------------------------------------------------------------
