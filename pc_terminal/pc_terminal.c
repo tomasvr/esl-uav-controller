@@ -487,6 +487,7 @@ int main(int argc, char **argv)
 
 	/* send & receive
 	 */
+	int counter = 0;
 	while(true){
 	 
 		/*---------------------------------------------------
@@ -497,7 +498,7 @@ int main(int argc, char **argv)
 		/* Send USB connection message */
 		current_time = GetTimeStamp();
 		if((current_time - last_USB_check_time) >= USB_SEND_CHECK_INTERVAL) {
-			printf("PC: Time to send USB check message\n");
+			//printf("PC: Time to send USB check message\n");
 			send_USB_check_message();
 			last_USB_check_time = current_time;
 		}
@@ -512,8 +513,8 @@ int main(int argc, char **argv)
 				}		 
 			}
 			// distinguish the arrows with ESC
-			rs232_putchar(message_encode(c));
-			
+ 			rs232_putchar(message_encode(c));
+
 			if (g_current_state == PANIC_ST){
 				// c = rs232_getchar(); //delay until character received again
 				// term_putchar(c);
@@ -544,8 +545,10 @@ int main(int argc, char **argv)
 
 		while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event))  {
 			//printf("PC: JS event: type %d, time %d, number %d, value %d\n", js.type, js.time, js.number, js.value);
+				mon_delay_ms(10);
 				send_js_message(js.type, js.number, js.value);
 		}
+
 
 		if (errno != EAGAIN) {
 			perror("\nPC: jstest: error reading\n");
@@ -564,7 +567,7 @@ int main(int argc, char **argv)
 		// 	time2poll = false;
 		// }
 #endif
-		
+	counter++;	
 	}
 
 	term_exitio();
