@@ -526,8 +526,9 @@ int main(void)
 		}
 		if (g_current_state == CALIBRATION_ST) 
 		{
-			sensor_calib();
-			offset_remove();	
+			//sensor_calib();
+			//offset_remove();	
+
 			g_current_state = SAFE_ST;
 		}
 
