@@ -42,7 +42,6 @@
 
 
 #define PANIC_MODE_MOTOR_SPEED 300
-#define NUMBER_OF_JS_AXIS 4 // there are 4 axis (pitch, roll, yaw, throttle)
 
 bool demo_done;
 
@@ -51,9 +50,6 @@ bool demo_done;
 uint16_t motor_lift_level;
 int16_t motor[4],ae[4];
 void run_filters_and_control();
-
-// Used to check status of joystick axis before lift off
-uint16_t joystick_axis_stored_values[NUMBER_OF_JS_AXIS];
 
 
 // Timers

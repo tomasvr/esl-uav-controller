@@ -177,12 +177,21 @@ void check_USB_connection_alive() {
 	}
 }
 
+
 void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
-		joystick_axis_stored_values[joystick_axis] = js_total_value;
+	if (joystick_axis == LIFT_THROTTLE) { // Throttle axis needs seperate calculation to determine when it is all the way down
+		if(js_total_value <= 32767){
+			js_total_value = 32767 - js_total_value;
+		}
+		else {
+			js_total_value = 65536 - js_total_value + 32767;
+		}
+	}
+	joystick_axis_stored_values[joystick_axis] = js_total_value;
 }
 
 void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
-	// printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
+	printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
 	// example js_total_value = 32776
 	// TODO: implementation of js cmds handling 
 	uint8_t percentage = 0; // (percent%)

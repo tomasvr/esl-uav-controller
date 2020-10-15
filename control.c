@@ -275,7 +275,7 @@ void update_motors(void)
 {					
 	// if (g_current_state != SAFE_ST, PANIC_ST) //TODO
 		clip_motors();
-		printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);
+		//printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);
 		motor[0] = ae[0];
 		motor[1] = ae[1];
 		motor[2] = ae[2];
