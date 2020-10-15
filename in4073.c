@@ -541,7 +541,7 @@ int main(void)
 		}
 		if (g_current_state == CALIBRATION_ST) 
 		{
-			sensor_caib();	
+			//sensor_caib();	
 			g_current_state = SAFE_ST;
 		}
 

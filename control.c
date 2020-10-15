@@ -98,7 +98,8 @@ void ctrl_action(){
 bool DMP = true;
 bool calib_done = false;
 uint8_t calib_counter = 0;
-int16_t sensor_calib = 0, sensor_sum = 0;
+// int16_t sensor_calib = 0;
+int16_t sensor_sum = 0;
 int32_t angle_calib[3] = {0};
 int32_t gyro_calib[3] = {0};
 int32_t acce_calib[3] = {0};
