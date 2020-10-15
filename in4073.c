@@ -219,7 +219,7 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
 			}
 			break;
 
-		case YAW_AXIS: //TODO
+		case YAW_AXIS:
 			if(js_total_value <= 32767){ // yaw counterclockwise
 				percentage = (uint8_t) (100.f * js_total_value / 32767);
 				ae[0] = (int16_t) motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100;
