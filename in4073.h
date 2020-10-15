@@ -37,13 +37,20 @@
 #define BLUE		30
 #define INT_PIN		5
 
-#define PANIC_MODE_MOTOR_SPEED 400
+#define MOTOR_MAX_CHANGE 50
+#define MOTOR_UPPER_LIMIT 1000
+
+
+#define PANIC_MODE_MOTOR_SPEED 300
 
 bool demo_done;
 
+
 // Control
+uint16_t motor_lift_level;
 int16_t motor[4],ae[4];
 void run_filters_and_control();
+
 
 // Timers
 #define TIMER_PERIOD	50 //50ms=20Hz (MAX 23bit, 4.6h)
@@ -87,6 +94,7 @@ int16_t phi, theta, psi;
 int16_t sp, sq, sr;
 int16_t sax, say, saz;
 uint8_t sensor_fifo_count;
+int16_t sr_calib;
 void imu_init(bool dmp, uint16_t interrupt_frequency); // if dmp is true, the interrupt frequency is 100Hz - otherwise 32Hz-8kHz
 void get_dmp_data(void);
 void get_raw_sensor_data(void);

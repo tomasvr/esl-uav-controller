@@ -28,72 +28,20 @@ void switch_led(int color) {
 	}
 }
 
-void increase_motor_speed(int16_t *ae, uint8_t motor){
-	ae[motor] += STEP_SIZE;
-	if (ae[motor] > UPPER_LIMIT) ae[motor] = UPPER_LIMIT;
-	return;
+void speed_limit()
+{
+	for(uint8_t i = 0; i < 4; i++)
+	{
+	if(ae[i] > 350) ae[i] = 350;
+	if(ae[i] < 170) ae[i] = 170;
+	}
 }
 
-void decrease_motor_speed(int16_t *ae, uint8_t motor){
-	ae[motor] -= STEP_SIZE;
-	if (ae[motor] < 0) ae[motor] = 0;
-	return;
-}
-
-void ctrl_action(){
-	switch (g_current_m0_state){			//M0
-		case MOTOR_UP:
-			increase_motor_speed(ae, 0);
-			break;
-		case MOTOR_REMAIN:
-			break;
-		case MOTOR_DOWN:
-			decrease_motor_speed(ae, 0);
-			break;
-		default:
-			break;
+void clip_motors() {
+	for (int i = 0; i < 4; i++) {
+		if (ae[i] > 1000) 	ae[i] = 1000;
+		if (ae[i] < 0)		ae[i] = 0;		
 	}
-	switch (g_current_m1_state){			//M1
-		case MOTOR_UP:
-			increase_motor_speed(ae, 1);
-			break;
-		case MOTOR_REMAIN:
-			break;
-		case MOTOR_DOWN:
-			decrease_motor_speed(ae, 1);
-			break;
-		default:
-			break;
-	}
-	switch (g_current_m2_state){			//M2
-		case MOTOR_UP:
-			increase_motor_speed(ae, 2);
-			break;
-		case MOTOR_REMAIN:
-			break;
-		case MOTOR_DOWN:
-			decrease_motor_speed(ae, 2);
-			break;
-		default:
-			break;
-	}
-	switch (g_current_m3_state){			//M3
-		case MOTOR_UP:
-			increase_motor_speed(ae, 3);
-			break;
-		case MOTOR_REMAIN:
-			break;
-		case MOTOR_DOWN:
-			decrease_motor_speed(ae, 3);
-			break;
-		default:
-			break;
-	}
-	// reset motor intention
-	g_current_m0_state = MOTOR_REMAIN;
-	g_current_m1_state = MOTOR_REMAIN;
-	g_current_m2_state = MOTOR_REMAIN;
-	g_current_m3_state = MOTOR_REMAIN;
 }
 
 // calibraiton
@@ -268,6 +216,8 @@ void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_nee
 void update_motors(void)
 {					
 	// if (g_current_state != SAFE_ST, PANIC_ST) //TODO
+		clip_motors();
+		printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);
 		motor[0] = ae[0];
 		motor[1] = ae[1];
 		motor[2] = ae[2];
