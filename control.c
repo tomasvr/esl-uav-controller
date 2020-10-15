@@ -54,7 +54,7 @@ void speed_limit()
 {
 	for(uint8_t i = 0; i < 4; i++)
 	{
-	if(ae[i] > 350) ae[i] = 350;
+	if(ae[i] > 450) ae[i] = 450;
 	if(ae[i] < 170) ae[i] = 170;
 	}
 }
@@ -97,8 +97,6 @@ void sensor_calc(uint8_t num)
 		acce_calib[1] /= num; 
 		acce_calib[2] /= num;//sax say saz
 		// printf("| PSI_CALIB: %6d \n", gyro_calib[2]);
-		calib_done = true;
-		calib_counter = 0;
 
 		// store calibrated value
 		phi_calib = angle_calib[0]; 
@@ -110,6 +108,8 @@ void sensor_calc(uint8_t num)
 		sax_calib = acce_calib[0]; 
 		say_calib = acce_calib[1]; 
 		saz_calib = acce_calib[2];
+		calib_done = true;
+		calib_counter = 0;
 
 		// reset 
 		angle_calib[0] = 0; 
