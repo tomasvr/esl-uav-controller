@@ -413,71 +413,6 @@ void messg_decode(uint8_t messg){
 }
 
 /*------------------------------------------------------------------
- * keybord_ctrl_action -- allowing the keyboard to do all the actions
- *------------------------------------------------------------------
- */
-void keyboard_ctrl_action(){
-	switch (g_current_m0_state){			//M0
-		case MOTOR_UP:
-			ae[0] += 10;
-			break;
-		case MOTOR_REMAIN:
-			break;
-		case MOTOR_DOWN:
-			ae[0] -= 10;
-			if (ae[0] < 0) ae[0] = 0;
-			break;
-		default:
-			break;
-	}
-	switch (g_current_m1_state){			//M1
-		case MOTOR_UP:
-			ae[1] += 10;
-			break;
-		case MOTOR_REMAIN:
-			break;
-		case MOTOR_DOWN:
-			ae[1] -= 10;
-			if (ae[1] < 0) ae[1] = 0;
-			break;
-		default:
-			break;
-	}
-	switch (g_current_m2_state){			//M2
-		case MOTOR_UP:
-			ae[2] += 10;
-			break;
-		case MOTOR_REMAIN:
-			break;
-		case MOTOR_DOWN:
-			ae[2] -= 10;
-			if (ae[2] < 0) ae[2] = 0;
-			break;
-		default:
-			break;
-	}
-	switch (g_current_m3_state){			//M3
-		case MOTOR_UP:
-			ae[3] += 10;
-			break;
-		case MOTOR_REMAIN:
-			break;
-		case MOTOR_DOWN:
-			ae[3] -= 10;
-			if (ae[3] < 0) ae[3] = 0;
-			break;
-		default:
-			break;
-	}
-	// reset motor intention
-	g_current_m0_state = MOTOR_REMAIN;
-	g_current_m1_state = MOTOR_REMAIN;
-	g_current_m2_state = MOTOR_REMAIN;
-	g_current_m3_state = MOTOR_REMAIN;
-}
-
-
-/*------------------------------------------------------------------
  * process_key -- process command keys
  *------------------------------------------------------------------
  */
@@ -563,7 +498,6 @@ int main(void)
 		}
 		if (g_current_comm_type == CTRL_COMM){
 			keyboard_ctrl_action();
-			// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
 		}
 		if (g_current_state == CALIBRATION_ST) 
 		{
