@@ -63,9 +63,15 @@ MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m2_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m3_state = MOTOR_REMAIN;
 
+uint8_t jsvalue_left;
+uint8_t jsvalue_right;
+JOYSTICK_AXIS_t joystick_axis;
+uint16_t js_total_value;
 
 // controller object declaration
 CONTROLLER *yaw_control;
+// CONTROLLER *roll_control;
+// CONTROLLER *pitch_control;
 
 uint8_t find_motor_state(uint8_t messg){
 	uint8_t m_ctrl_1 = messg & 0xf0; 		
@@ -99,41 +105,41 @@ uint8_t find_motor_state(uint8_t messg){
 	return result;
 }
 
-MOTOR_CTRL find_motor_level(uint8_t value){
-	MOTOR_CTRL result = MOTOR_REMAIN;
-	if(value == 0) result = MOTOR_LEVEL_0;
-	else if(value == 0) result = MOTOR_LEVEL_0;
-	else if(value == 1) result = MOTOR_LEVEL_1;
-	else if(value == 2) result = MOTOR_LEVEL_2;
-	else if(value == 3) result = MOTOR_LEVEL_3;
-	else if(value == 4) result = MOTOR_LEVEL_4;
-	else if(value == 5) result = MOTOR_LEVEL_5;
-	else if(value == 6) result = MOTOR_LEVEL_6;
-	else if(value == 7) result = MOTOR_LEVEL_7;
-	else if(value == 8) result = MOTOR_LEVEL_8;
-	else if(value == 9) result = MOTOR_LEVEL_9;
-	else if(value == 10) result = MOTOR_LEVEL_10;
-	return result;
-}
+// MOTOR_CTRL find_motor_level(uint8_t value){
+// 	MOTOR_CTRL result = MOTOR_REMAIN;
+// 	if(value == 0) result = MOTOR_LEVEL_0;
+// 	else if(value == 0) result = MOTOR_LEVEL_0;
+// 	else if(value == 1) result = MOTOR_LEVEL_1;
+// 	else if(value == 2) result = MOTOR_LEVEL_2;
+// 	else if(value == 3) result = MOTOR_LEVEL_3;
+// 	else if(value == 4) result = MOTOR_LEVEL_4;
+// 	else if(value == 5) result = MOTOR_LEVEL_5;
+// 	else if(value == 6) result = MOTOR_LEVEL_6;
+// 	else if(value == 7) result = MOTOR_LEVEL_7;
+// 	else if(value == 8) result = MOTOR_LEVEL_8;
+// 	else if(value == 9) result = MOTOR_LEVEL_9;
+// 	else if(value == 10) result = MOTOR_LEVEL_10;
+// 	return result;
+// }
 
-uint8_t find_motor_state_js(uint8_t fragment, uint8_t FRAG_COUNT){
-	int result = 0;
-	uint8_t m_ctrl_1 = fragment & 0xf0; 		
-	uint8_t m_ctrl_2 = fragment & 0x0f;
-	MOTOR_CTRL state_1 = find_motor_level(m_ctrl_1>>4);
-	MOTOR_CTRL state_2 = find_motor_level(m_ctrl_2);
-	if(FRAG_COUNT == 2){ // MO & M1
-		g_current_m0_state = state_1;
-		g_current_m1_state = state_2;
-		result = 1;
-	}
-	else if(FRAG_COUNT == 1){ // M2 & M3
-		g_current_m2_state = state_1;
-		g_current_m3_state = state_2;
-		result = 1;
-	} 
-	return result; // return 1 if no errors and 0 otherwise
-}
+// uint8_t find_motor_state_js(uint8_t fragment, uint8_t FRAG_COUNT){
+// 	int result = 0;
+// 	uint8_t m_ctrl_1 = fragment & 0xf0; 		
+// 	uint8_t m_ctrl_2 = fragment & 0x0f;
+// 	MOTOR_CTRL state_1 = find_motor_level(m_ctrl_1>>4);
+// 	MOTOR_CTRL state_2 = find_motor_level(m_ctrl_2);
+// 	if(FRAG_COUNT == 2){ // MO & M1
+// 		g_current_m0_state = state_1;
+// 		g_current_m1_state = state_2;
+// 		result = 1;
+// 	}
+// 	else if(FRAG_COUNT == 1){ // M2 & M3
+// 		g_current_m2_state = state_1;
+// 		g_current_m3_state = state_2;
+// 		result = 1;
+// 	} 
+// 	return result; // return 1 if no errors and 0 otherwise
+// }
 
 void enter_panic_mode(bool cable_detached){
 	if (g_current_state == SAFE_ST) {
@@ -197,9 +203,8 @@ int16_t clip_value(int16_t value) {
 	return value;
 }
 
-void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {  // Quesiton: this function only called in mannual mode?
-	printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
-	// example js_total_value = 32776
+void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
+	// printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
 	uint8_t percentage = 0; // (percentage%)
 	switch(joystick_axis){
 
@@ -263,11 +268,6 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
 	// printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);		
 	return;
 }
-
-
-uint8_t jsvalue_left; //todo: fix this placement
-uint8_t jsvalue_right;
-JOYSTICK_AXIS_t joystick_axis;
 
 /*------------------------------------------------------------------
  * messg_decode -- decode messages
@@ -341,6 +341,7 @@ void messg_decode(uint8_t messg){
 		 */
 		 		
 	 	if (g_current_comm_type == CTRL_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
+	 		printf("Received key board cmd. \n");
 	 		int result;
 	 		result = find_motor_state(messg);
 	 		assert(result == 1 && "QR: Fail to find the motor state.");
@@ -356,17 +357,16 @@ void messg_decode(uint8_t messg){
  			}
 	 		else if (FRAG_COUNT == 1) {
 	 			jsvalue_left = messg;	
-	 			uint16_t js_total_value = (jsvalue_left << 8) | jsvalue_right;
+	 			js_total_value = (jsvalue_left << 8) | jsvalue_right;
 
 		 		if (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST) { // if in control mode, control drone
+		 			// TODO: only execute the following function in mannual mode
 		 			process_js_axis_cmd(joystick_axis, js_total_value);
 		 		}
 		 		else if (g_current_state != PANIC_ST) { // in any other state store values
 		 			store_js_axis_commands(joystick_axis, js_total_value);
 		 		}		
  			}	
-
-
 	 	}
 
 	 	/*--------------------------------------------------------------
@@ -487,10 +487,8 @@ int main(void)
 			get_dmp_data();
 			run_filters_and_control();
 		}
-		if (g_current_state == PANIC_ST)
-		{
-			enter_panic_mode(false); //enter panic mode for any reason other than cable
-		}
+
+		// execute cmds that need to be handled in all modes
 		if (g_current_comm_type == ESC_COMM){ // terminate program
 			demo_done = true;
 			g_current_comm_type = NO_COMM;
@@ -499,6 +497,16 @@ int main(void)
 		if (g_current_comm_type == CTRL_COMM){
 			keyboard_ctrl_action();
 		}
+
+		//execute cmds that only need to be handled in certain mode
+		if (g_current_state == PANIC_ST)
+		{
+			enter_panic_mode(false); //enter panic mode for any reason other than cable
+		}
+		// if(g_current_state == MANUAL_ST)
+		// {
+		// 	process_js_axis_cmd(joystick_axis, js_total_value);
+		// }
 		if (g_current_state == CALIBRATION_ST) 
 		{
 			sensor_calib();
@@ -513,7 +521,6 @@ int main(void)
 		if (g_current_state == FULLCONTROL_ST)
 		{
 			// TODO: do full controller things
-
 		}
 
 		counter++;
