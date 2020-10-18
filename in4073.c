@@ -260,7 +260,7 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
 			enter_panic_mode(false);
 			break;
 	}
-	printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);		
+	// printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);		
 	return;
 }
 
@@ -453,7 +453,7 @@ int main(void)
 	controller_init(yaw_control);
 
 
-	printf("    TIME   | AE0 AE1 AE2 AE3 |   PHI    THETA   PSI |     SP     SQ     SR |  BAT | TEMP | PRESSURE | MODE \n");
+	printf(" AE0 AE1 AE2 AE3  | MODE \n");
 	while (!demo_done)
 	{
 		if (rx_queue.count) process_key( dequeue(&rx_queue) );
@@ -473,11 +473,11 @@ int main(void)
 			read_baro();
 
 			// printf("%10ld | ", get_time_us());
-			//printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
+			printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
 			// printf("%6d %6d %6d | ", phi, theta, psi);
 			// printf("%6d %6d %6d | ", sp, sq, sr);
 			// printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
-			// printf("%4d \n", g_current_state);
+			printf("%4d \n", g_current_state);
 
 			clear_timer_flag();
 		}
