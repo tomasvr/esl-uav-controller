@@ -48,6 +48,10 @@ uint16_t motor_lift_level;
 int16_t motor[4],ae[4];
 void run_filters_and_control();
 
+/* Used to determine if 'a' or 'z' was pressed 
+ * to update motor_lift_level accordingly
+ */
+int16_t motor_control_counter;
 
 // Timers
 #define TIMER_PERIOD	50 //50ms=20Hz (MAX 23bit, 4.6h)
