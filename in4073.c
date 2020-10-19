@@ -450,9 +450,6 @@ int main(void)
 			// printf("%6d %6d %6d | ", sp, sq, sr);
 			// printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 			printf("%4d \n", g_current_state - 1);
-			for (int i = 0; i < NUMBER_OF_JS_AXIS; i++) {
-				printf("%d: %ld \n", i, joystick_axis_stored_values[i]);
-			}
 			clear_timer_flag();
 		}
 
