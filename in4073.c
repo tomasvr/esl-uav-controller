@@ -192,7 +192,7 @@ void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_val
 	joystick_axis_stored_values[joystick_axis] = js_total_value;
 }
 
-int16_t clip_motor_value(int16_t value) {
+int16_t clip_motor_value(int16_t value) { 
 	if (value > 1000) {
 		return 1000;
 	}
@@ -350,7 +350,6 @@ void messg_decode(uint8_t messg){
 	 		if (motor_control_counter == -4) {
 	 			motor_lift_level = clip_motor_value(motor_lift_level -= STEP_SIZE);
 	 		}
-	 		printf("mtr ctrl cntr: %d \n", motor_control_counter);
 	 		//assert(result == 1 && "FCB: Failed to find the motor state.");
 	 	}
 	 	// else if (g_current_comm_type == JS_AXIS_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
@@ -483,7 +482,7 @@ int main(void)
 			// printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 			printf("%4d \n", g_current_state - 1);
 			clear_timer_flag();
-			printf("%4d \n", motor_lift_level);
+			//printf("%4d \n", motor_lift_level);
 	}
 
 		if (check_sensor_int_flag()) 
