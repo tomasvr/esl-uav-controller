@@ -333,14 +333,12 @@ void messg_decode(uint8_t messg){
 	 		else if (FRAG_COUNT == 1) {
 	 			jsvalue_left = messg;	
 	 			js_total_value = (jsvalue_left << 8) | jsvalue_right;
-
+		 		store_js_axis_commands(joystick_axis, js_total_value); // in EVERY state(also in manual/control) store js values to check neutral position
 		 		if (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST) { // if in control mode, control drone
 		 			// TODO: only execute the following function in mannual mode
 		 			process_js_axis_cmd(joystick_axis, js_total_value);
 		 		}
-		 		else if (g_current_state != PANIC_ST) { // in any other state store values
-		 			store_js_axis_commands(joystick_axis, js_total_value);
-		 		}		
+	
  			}	
 	 	}
 
@@ -452,7 +450,9 @@ int main(void)
 			// printf("%6d %6d %6d | ", sp, sq, sr);
 			// printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 			printf("%4d \n", g_current_state - 1);
-
+			for (int i = 0; i < NUMBER_OF_JS_AXIS; i++) {
+				printf("%d: %ld \n", i, joystick_axis_stored_values[i]);
+			}
 			clear_timer_flag();
 		}
 
