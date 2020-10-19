@@ -60,7 +60,7 @@
 #define USB_SEND_CHECK_INTERVAL 1000000 // Control how often USB check messages are send
 #define USB_CHECK_MESSAGE 0 // Message ID for check USB type message (no need to change)
 
-//#define ENABLE_JOYSTICK
+#define ENABLE_JOYSTICK
 
 // current axis and button readings
 int	axis[6];
@@ -383,6 +383,7 @@ uint32_t message_encode(int c){
 
 void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 
+	printf("PC: Received JS: type %d, number %d, value %d\n", js_type, js_number, js_value);
 	uint32_t message = 0b00000000000000000000000001010101; // base message
 	if (js_type == 1) { //buttons
 		if (js_number == 0) message = append_comm_type(message, ESC_COMM);
@@ -391,7 +392,7 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 		STATE_t state_from_js_button = js_number; // The button number indicates which state (see states.h)
 		message = append_mode(message, state_from_js_button);
 	}
-	else if (js_type == 2) { //axis
+	else if ( (js_type == 2) || (js_type == 130)) { //axis
 		message = append_comm_type(message, JS_AXIS_COMM);
 		JOYSTICK_AXIS_t axis_number_from_js = js_number;
 		message = append_js_axis(message, axis_number_from_js);
@@ -401,7 +402,6 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 		printf("ERROR in send_js_message: UKNOWN IF BUTTON OR AXIS (js_type)\n");
 		return;
 	}
-	//printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value);
 	//print_packet(message, "JS packet:");
 	rs232_putchar(message);
 }
