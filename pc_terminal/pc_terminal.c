@@ -382,8 +382,6 @@ uint32_t message_encode(int c){
 }
 
 void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
-
-	printf("PC: Received JS: type %d, number %d, value %d\n", js_type, js_number, js_value);
 	uint32_t message = 0b00000000000000000000000001010101; // base message
 	if (js_type == 1) { //buttons
 		if (js_number == 0) message = append_comm_type(message, ESC_COMM);
@@ -396,13 +394,12 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 		message = append_comm_type(message, JS_AXIS_COMM);
 		JOYSTICK_AXIS_t axis_number_from_js = js_number;
 		message = append_js_axis(message, axis_number_from_js);
-		// Add Joystick axis value to message
 		message |= (js_value << 16);
 	} else {
 		printf("ERROR in send_js_message: UKNOWN IF BUTTON OR AXIS (js_type)\n");
 		return;
 	}
-	//print_packet(message, "JS packet:");
+	//printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value);
 	rs232_putchar(message);
 }
 
@@ -448,12 +445,10 @@ int main(int argc, char **argv)
 	rs232_open();
 	term_puts("TER: Type ^C to exit\n");
 
-
 	/* discard any incoming text
 	 */
 	while ((c = rs232_getchar_nb()) != -1)
 		fputc(c,stderr);
-
 
 	uint32_t current_time;
 	uint32_t last_USB_check_time = GetTimeStamp();
@@ -532,7 +527,6 @@ int main(int argc, char **argv)
 
 		while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event))  {
 			//printf("PC: JS event: type %d, time %d, number %d, value %d\n", js.type, js.time, js.number, js.value);
-				mon_delay_ms(10);
 				send_js_message(js.type, js.number, js.value);
 		}
 
