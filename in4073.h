@@ -41,7 +41,7 @@
 #define MOTOR_UPPER_LIMIT 1000
 
 
-#define PANIC_MODE_MOTOR_SPEED 300
+// #define PANIC_MODE_MOTOR_SPEED 300
 
 bool demo_done;
 

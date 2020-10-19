@@ -213,7 +213,8 @@ int16_t clip_value(int16_t value) {
 	return value;
 }
 
-void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
+void process_js_axis_cmd_manual_mode(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) 
+{
 	// printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
 	uint8_t percentage = 0; // (percentage%)
 	switch(joystick_axis){
@@ -279,15 +280,88 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
 	return;
 }
 
+void process_js_axis_cmd_yaw_control_mode(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
+{
+	// TODO: implement this function
+	// printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
+	uint8_t percentage = 0; // (percentage%)
+	switch(joystick_axis){
+
+		case ROLL_AXIS:
+			if(js_total_value <= 32767){ // roll counterclockwise
+				percentage = (uint8_t) (100.f * js_total_value / 32767);
+				ae[1] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+				ae[3] = (int16_t) clip_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
+			}
+			else{ // roll clockwise
+				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+				ae[1] = (int16_t) clip_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
+				ae[3] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+			}
+			break;
+
+		case PITCH_AXIS:
+			if(js_total_value <= 32767){ // pitch down
+				percentage = (uint8_t) (100.f * js_total_value / 32767);
+				ae[0] = (int16_t) clip_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
+				ae[2] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+			}
+			else{ // pitch up
+				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+				ae[0] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+				ae[2] = (int16_t) clip_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
+			}
+			break;
+
+		case YAW_AXIS:
+			if(js_total_value <= 32767){ // yaw counterclockwise
+				percentage = (uint8_t) (100.f * js_total_value / 32767);
+				// ae[0] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+				// ae[2] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+				
+				// TODO: in yaw control mode, yaw axis provides a setpoint to the yaw control loop		
+			}
+			else{ // yaw clockwise
+				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+				// ae[1] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+				// ae[3] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+
+				// TODO: in yaw control mode, yaw axis provides a setpoint to the yaw control loop
+			}
+			break;
+
+		case LIFT_THROTTLE:
+			if(js_total_value <= 32767){
+				percentage = (uint8_t) (100.f * (32767-js_total_value) / 65535);
+			}
+			else{
+				percentage = (uint8_t) (100.f * (65536-js_total_value+32767) / 65535);
+			}
+			motor_lift_level = MOTOR_UPPER_LIMIT * percentage / 100;
+			ae[0] = motor_lift_level;
+			ae[1] = motor_lift_level;
+			ae[2] = motor_lift_level;
+			ae[3] = motor_lift_level;
+			break;
+
+		default:
+			enter_panic_mode(false);
+			break;
+	}
+	// printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);		
+	return;
+}
+
+void process_js_axis_cmd_full_control_mode(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
+{
+	// TODO: implement this function
+}
+
 /*------------------------------------------------------------------
  * messg_decode -- decode messages
  *------------------------------------------------------------------
  */
 void messg_decode(uint8_t messg){
-	//printf("START messg_decode, g_current_comm_type: %d \n", g_current_comm_type);
-	
-	// printf("The %d byte is: \n", 4-FRAG_COUNT);			// print out each fragment QR receives
-	// printf("   		 "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
 	/*--------------------------------------------------------------
 	 * decode the first frag, two field in this byte: 
 	 * 		----------------------
@@ -300,7 +374,6 @@ void messg_decode(uint8_t messg){
 	
 	//printf("FCB: FRAG_COUNT: %d \n", FRAG_COUNT);
 	//printf("FCB: message byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
-
 	if (FRAG_COUNT == 3){
 
 		uint8_t comm_type_bits = messg & 0xf0; //take left most 4 bits from current byte
@@ -330,10 +403,10 @@ void messg_decode(uint8_t messg){
 
 	}
 
-	/*--------------------------------------------------------------
+	/*------------------------------------------------------------------------------
 	 * decode the second and the thrid frag, fields in these byte are depend on the  
 	 * command type received in the previous byte.
-	 *--------------------------------------------------------------
+	 *------------------------------------------------------------------------------
 	 */
 	else if (FRAG_COUNT == 2 || FRAG_COUNT == 1){
 		/*--------------------------------------------------------------
@@ -356,11 +429,6 @@ void messg_decode(uint8_t messg){
 	 		result = find_motor_state(messg);
 	 		assert(result == 1 && "QR: Fail to find the motor state.");
 	 	}
-	 	// else if (g_current_comm_type == JS_AXIS_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
-	 	// 	int result;
-		// 	result = find_motor_state_js(messg, FRAG_COUNT);
-	 	// 	assert(result == 1 && "QR: Fail to find the motor state.");
-	 	// }
 	 	else if (g_current_comm_type == JS_AXIS_COMM) {
 	 		if (FRAG_COUNT == 2) {
  				jsvalue_right = messg;	
@@ -368,10 +436,17 @@ void messg_decode(uint8_t messg){
 	 		else if (FRAG_COUNT == 1) {
 	 			jsvalue_left = messg;	
 	 			js_total_value = (jsvalue_left << 8) | jsvalue_right;
-
-		 		if (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST) { // if in control mode, control drone
-		 			// TODO: only execute the following function in mannual mode
-		 			process_js_axis_cmd(joystick_axis, js_total_value);
+	 			// process js axis cmd depending on different modes
+		 		if (g_current_state == MANUAL_ST) {
+		 			process_js_axis_cmd_manual_mode(joystick_axis, js_total_value);
+		 		}
+		 		else if(g_current_state == YAWCONTROL_ST)
+		 		{
+		 			process_js_axis_cmd_yaw_control_mode(joystick_axis, js_total_value);
+		 		}
+		 		else if(g_current_state == FULLCONTROL_ST)
+		 		{
+		 			process_js_axis_cmd_full_control_mode(joystick_axis, js_total_value);
 		 		}
 		 		else if (g_current_state != PANIC_ST) { // in any other state store values
 		 			store_js_axis_commands(joystick_axis, js_total_value);
