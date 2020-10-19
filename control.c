@@ -185,6 +185,7 @@ void decrease_p_value(CONTROLLER *controller)
 void increase_motor_speed(int16_t *ae, uint8_t motor){
 	ae[motor] += STEP_SIZE;
 	if (ae[motor] > UPPER_LIMIT) ae[motor] = UPPER_LIMIT;
+	printf("increase mator.\n");
 	return;
 }
 
@@ -258,7 +259,7 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 {
 	yaw_control->set_point = yaw_set_point;
 	yaw_control->err = yaw_control->set_point - sr;
-	yaw_control->integral += yaw_control->err;
+	// yaw_control->integral += yaw_control->err;
 	yaw_control->output = yaw_control->kp * yaw_control->err;
 	return yaw_control->output;
 }
