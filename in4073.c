@@ -73,34 +73,57 @@ CONTROLLER *yaw_control;
 // CONTROLLER *roll_control;
 // CONTROLLER *pitch_control;
 
-uint8_t find_motor_state(uint8_t messg){
+/* The return value indicates how many motors went up (+) or down (-) 
+ * which is used to adjust the motor_lift_level
+ */
+int8_t find_motor_state(uint8_t messg){
 	uint8_t m_ctrl_1 = messg & 0xf0; 		
 	uint8_t m_ctrl_2 = messg & 0x0f;
 	int result = 0;
 	// find motor state of motor 0 
 	if (m_ctrl_1>>6 == 0) {				// 0000 -> M0
-		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) g_current_m0_state = MOTOR_UP;
-		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) g_current_m0_state = MOTOR_DOWN;
+		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) {
+			g_current_m0_state = MOTOR_UP;
+			result += 1;
+		}
+		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) {
+			g_current_m0_state = MOTOR_DOWN;
+			result -= 1;
+		}
 		if (((m_ctrl_1 >> 5)&1) == 0) g_current_m0_state = MOTOR_REMAIN;
-		result = 1;
 	}
 	if (m_ctrl_1>>6 == 2) {				// 0010 -> M2
-		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) g_current_m2_state = MOTOR_UP;
-		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) g_current_m2_state = MOTOR_DOWN;
+		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) {
+			g_current_m2_state = MOTOR_UP;
+			result += 1;
+		}
+		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) {
+			g_current_m2_state = MOTOR_DOWN;
+			result -= 1;
+		}
 		if (((m_ctrl_1 >> 5)&1) == 0) g_current_m2_state = MOTOR_REMAIN;
-		result = 1;
 	}
 	if (m_ctrl_2>>2 == 1) {				// 0001 -> M1
-		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) g_current_m1_state = MOTOR_UP;
-		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) g_current_m1_state = MOTOR_DOWN;
+		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) {
+			g_current_m1_state = MOTOR_UP;
+			result += 1;
+		}
+		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) {
+			g_current_m1_state = MOTOR_DOWN;
+			result -= 1;
+		}
 		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m1_state = MOTOR_REMAIN;
-		result = 1;
 	}
 	if (m_ctrl_2>>2 == 3) {				// 0011 -> M3
-		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) g_current_m3_state = MOTOR_UP;
-		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) g_current_m3_state = MOTOR_DOWN;
+		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) {
+			g_current_m3_state = MOTOR_UP;
+			result += 1;
+		}
+		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) {
+			g_current_m3_state = MOTOR_DOWN;
+			result -= 1;
+		}
 		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m3_state = MOTOR_REMAIN;
-		result = 1;
 	} 
 	return result;
 }
@@ -133,6 +156,7 @@ void enter_panic_mode(bool cable_detached){
 		nrf_delay_ms(100);
 
 	}
+	motor_lift_level = 0; //reset motor_lift_level
 	g_current_state = SAFE_ST;
 	if (cable_detached) { //wait for reboot
 		while(1) {
@@ -168,7 +192,7 @@ void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_val
 	joystick_axis_stored_values[joystick_axis] = js_total_value;
 }
 
-int16_t clip_value(int16_t value) {
+int16_t clip_motor_value(int16_t value) { 
 	if (value > 1000) {
 		return 1000;
 	}
@@ -186,39 +210,39 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
 		case ROLL_AXIS:
 			if(js_total_value <= 32767){ // roll counterclockwise
 				percentage = (uint8_t) (100.f * js_total_value / 32767);
-				ae[1] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				ae[3] = (int16_t) clip_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
+				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+				ae[3] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			else{ // roll clockwise
 				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
-				ae[1] = (int16_t) clip_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
-				ae[3] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+				ae[1] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
+				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			break;
 
 		case PITCH_AXIS:
 			if(js_total_value <= 32767){ // pitch down
 				percentage = (uint8_t) (100.f * js_total_value / 32767);
-				ae[0] = (int16_t) clip_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
-				ae[2] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+				ae[0] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
+				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			else{ // pitch up
 				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
-				ae[0] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				ae[2] = (int16_t) clip_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
+				ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+				ae[2] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			break;
 
 		case YAW_AXIS:
 			if(js_total_value <= 32767){ // yaw counterclockwise
 				percentage = (uint8_t) (100.f * js_total_value / 32767);
-				ae[0] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				ae[2] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);		
+				ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);		
 			}
 			else{ // yaw clockwise
 				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
-				ae[1] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				ae[3] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			break;
 
@@ -270,6 +294,9 @@ void messg_decode(uint8_t messg){
 
 		/* If a new message is received, update last received message time */
 	 	USB_comm_update_received();
+ 
+ 		/* Used to determine if 'a' or 'z' was pressed */
+ 		motor_control_counter = 0;
 
 		uint8_t comm_type_bits = messg & 0xf0; 		 //take left most 4 bits from current byte
 		uint8_t state_or_jsaxis_bits = messg & 0x0f; //take right most 4 bits from current byte // CAN ALSO BE NUMBER FOR JOYSTICK TYPE!
@@ -293,7 +320,6 @@ void messg_decode(uint8_t messg){
 	 			printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", state_or_jsaxis_bits, g_current_state);
 	 		}
 	 	}
-
 	}
 
 	/*--------------------------------------------------------------
@@ -317,9 +343,14 @@ void messg_decode(uint8_t messg){
 		 */
 		 		
 	 	if (g_current_comm_type == CTRL_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
-	 		int result;
-	 		result = find_motor_state(messg);
-	 		assert(result == 1 && "FCB: Failed to find the motor state.");
+	 		motor_control_counter += find_motor_state(messg);
+	 		if (motor_control_counter == 4) {
+	 			motor_lift_level = clip_motor_value(motor_lift_level += STEP_SIZE);
+	 		}
+	 		if (motor_control_counter == -4) {
+	 			motor_lift_level = clip_motor_value(motor_lift_level -= STEP_SIZE);
+	 		}
+	 		//assert(result == 1 && "FCB: Failed to find the motor state.");
 	 	}
 	 	// else if (g_current_comm_type == JS_AXIS_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
 	 	// 	int result;
@@ -451,7 +482,8 @@ int main(void)
 			// printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 			printf("%4d \n", g_current_state - 1);
 			clear_timer_flag();
-		}
+			//printf("%4d \n", motor_lift_level);
+	}
 
 		if (check_sensor_int_flag()) 
 		{
