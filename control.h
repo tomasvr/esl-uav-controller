@@ -20,17 +20,6 @@ typedef enum {
 		MOTOR_UP,
 		MOTOR_REMAIN,
 		MOTOR_DOWN,
-		// MOTOR_LEVEL_0,
-		// MOTOR_LEVEL_1,
-		// MOTOR_LEVEL_2,
-		// MOTOR_LEVEL_3,
-		// MOTOR_LEVEL_4,
-		// MOTOR_LEVEL_5,
-		// MOTOR_LEVEL_6,
-		// MOTOR_LEVEL_7,
-		// MOTOR_LEVEL_8,
-		// MOTOR_LEVEL_9,
-		// MOTOR_LEVEL_10
 } MOTOR_CTRL;
 
 extern MOTOR_CTRL g_current_m0_state;
@@ -52,9 +41,8 @@ typedef struct // TODO: should use float?
 void increase_motor_speed(int16_t *ae, uint8_t motor);
 void decrease_motor_speed(int16_t *ae, uint8_t motor);
 void keyboard_ctrl_action();
-// void ctrl_action();
 
-// calibraiton
+// calibration
 extern bool DMP;
 extern bool calib_done;
 extern uint8_t calib_counter;

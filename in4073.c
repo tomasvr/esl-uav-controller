@@ -105,42 +105,6 @@ uint8_t find_motor_state(uint8_t messg){
 	return result;
 }
 
-// MOTOR_CTRL find_motor_level(uint8_t value){
-// 	MOTOR_CTRL result = MOTOR_REMAIN;
-// 	if(value == 0) result = MOTOR_LEVEL_0;
-// 	else if(value == 0) result = MOTOR_LEVEL_0;
-// 	else if(value == 1) result = MOTOR_LEVEL_1;
-// 	else if(value == 2) result = MOTOR_LEVEL_2;
-// 	else if(value == 3) result = MOTOR_LEVEL_3;
-// 	else if(value == 4) result = MOTOR_LEVEL_4;
-// 	else if(value == 5) result = MOTOR_LEVEL_5;
-// 	else if(value == 6) result = MOTOR_LEVEL_6;
-// 	else if(value == 7) result = MOTOR_LEVEL_7;
-// 	else if(value == 8) result = MOTOR_LEVEL_8;
-// 	else if(value == 9) result = MOTOR_LEVEL_9;
-// 	else if(value == 10) result = MOTOR_LEVEL_10;
-// 	return result;
-// }
-
-// uint8_t find_motor_state_js(uint8_t fragment, uint8_t FRAG_COUNT){
-// 	int result = 0;
-// 	uint8_t m_ctrl_1 = fragment & 0xf0; 		
-// 	uint8_t m_ctrl_2 = fragment & 0x0f;
-// 	MOTOR_CTRL state_1 = find_motor_level(m_ctrl_1>>4);
-// 	MOTOR_CTRL state_2 = find_motor_level(m_ctrl_2);
-// 	if(FRAG_COUNT == 2){ // MO & M1
-// 		g_current_m0_state = state_1;
-// 		g_current_m1_state = state_2;
-// 		result = 1;
-// 	}
-// 	else if(FRAG_COUNT == 1){ // M2 & M3
-// 		g_current_m2_state = state_1;
-// 		g_current_m3_state = state_2;
-// 		result = 1;
-// 	} 
-// 	return result; // return 1 if no errors and 0 otherwise
-// }
-
 int16_t find_min_ae()
 {
 	int16_t min = ae[0];
@@ -178,15 +142,13 @@ void enter_panic_mode(bool cable_detached){
 }
 
 void USB_comm_update_received() {
-	// printf("USB comm check has been received!\n");
 	current_time = get_time_us();
 	usb_comm_last_received = current_time;
-	//printf("FCB: USB_check received!\n");
 }
 
 void check_USB_connection_alive() {
 	current_time = get_time_us();
-	if (current_time - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: WHAT HAPPENS ON OVERFLOW! <--(Need fix when operation time > 70 mins)
+	if (current_time - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: check for overflow? <--(Need fix when operation time > 70 mins)
 		enter_panic_mode(true);
 	}
 }
@@ -303,7 +265,10 @@ void messg_decode(uint8_t messg){
 
 	if (FRAG_COUNT == 3){
 
-		uint8_t comm_type_bits = messg & 0xf0; //take left most 4 bits from current byte
+		/* If a new message is received, update last received message time */
+	 	USB_comm_update_received();
+
+		uint8_t comm_type_bits = messg & 0xf0; 		 //take left most 4 bits from current byte
 		uint8_t state_or_jsaxis_bits = messg & 0x0f; //take right most 4 bits from current byte // CAN ALSO BE NUMBER FOR JOYSTICK TYPE!
 
 		//printf("comm_type: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(comm_type));
@@ -311,13 +276,7 @@ void messg_decode(uint8_t messg){
 		g_current_comm_type = retrieve_comm_type(comm_type_bits >> 4); //shift right to get bits at beginning of byte
 		//assert( == 1 && "QR: No such command found.");
 
-	 	if (g_current_comm_type == USB_CHECK_COMM) { // update usb_check received and check state sync
-	 		USB_comm_update_received();
-	 		// int result = check_mode_sync(state_or_jsaxis_bits, g_current_state); // Question: still needed?
-			// printf("check_mode_sync result: %d\n", result);
-			// assert(result == 1 && "QR: The mode in QR is not sync with PC or the action is not allowed in current mode!"); // might have to enter the panic mode?
-	 	}
-	 	else if (g_current_comm_type == JS_AXIS_COMM) {
+	 	if (g_current_comm_type == JS_AXIS_COMM) {
 	 		joystick_axis = retrieve_js_axis(state_or_jsaxis_bits);
 	 	}	
 	 	else if (g_current_comm_type == MODE_SW_COMM){
@@ -326,6 +285,10 @@ void messg_decode(uint8_t messg){
 			g_current_state = mode_sw_action("FCB", g_current_state, g_dest_state, false);
 			printf("current_state: %d \n", g_current_state);
 			g_dest_state = NO_WHERE;
+	 	} else {
+	 		if (check_mode_sync(state_or_jsaxis_bits, g_current_state)) {
+	 			printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", state_or_jsaxis_bits, g_current_state);
+	 		}
 	 	}
 
 	}
@@ -351,10 +314,9 @@ void messg_decode(uint8_t messg){
 		 */
 		 		
 	 	if (g_current_comm_type == CTRL_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
-	 		printf("Received key board cmd. \n");
 	 		int result;
 	 		result = find_motor_state(messg);
-	 		assert(result == 1 && "QR: Fail to find the motor state.");
+	 		assert(result == 1 && "FCB: Failed to find the motor state.");
 	 	}
 	 	// else if (g_current_comm_type == JS_AXIS_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
 	 	// 	int result;
@@ -456,18 +418,17 @@ int main(void)
 
 	uint32_t counter = 0;
 	demo_done = false;
+
 	usb_comm_last_received = get_time_us();
-
+	
 	motor_lift_level = 0;
-
+	
 	controller_init(yaw_control);
-
 
 	printf(" AE0 AE1 AE2 AE3  | MODE \n");
 	while (!demo_done)
 	{
 		if (rx_queue.count) process_key( dequeue(&rx_queue) );
-		//execute();
 
 		// check if USB connection is still alive by checking last time received
 		if (counter % 100 == 0) check_USB_connection_alive(); // use counter so this doesn't happen too often
@@ -498,7 +459,7 @@ int main(void)
 			run_filters_and_control();
 		}
 
-		// execute cmds that need to be handled in all modes
+		// Execute commands that need to be handled in all modes
 		if (g_current_comm_type == ESC_COMM){ // terminate program
 			demo_done = true;
 			g_current_comm_type = NO_COMM;
@@ -508,7 +469,7 @@ int main(void)
 			keyboard_ctrl_action();
 		}
 
-		//execute cmds that only need to be handled in certain mode
+		// Execute commands  that only need to be handled in certain mode
 		if (g_current_state == PANIC_ST)
 		{
 			enter_panic_mode(false); //enter panic mode for any reason other than cable
@@ -532,10 +493,8 @@ int main(void)
 		{
 			// TODO: do full controller things
 		}
-
 		counter++;
 	}
-
 	printf("\n\t Goodbye \n\n");
 	nrf_delay_ms(100);
 	NVIC_SystemReset();

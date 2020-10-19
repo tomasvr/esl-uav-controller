@@ -185,7 +185,6 @@ void decrease_p_value(CONTROLLER *controller)
 void increase_motor_speed(int16_t *ae, uint8_t motor){
 	ae[motor] += STEP_SIZE;
 	if (ae[motor] > UPPER_LIMIT) ae[motor] = UPPER_LIMIT;
-	printf("increase mator.\n");
 	return;
 }
 
