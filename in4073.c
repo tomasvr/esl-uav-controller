@@ -260,7 +260,7 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
 			enter_panic_mode(false);
 			break;
 	}
-	printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);		
+	// printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);		
 	return;
 }
 
@@ -453,7 +453,7 @@ int main(void)
 	controller_init(yaw_control);
 
 
-	printf("    TIME   | AE0 AE1 AE2 AE3 |   PHI    THETA   PSI |     SP     SQ     SR |  BAT | TEMP | PRESSURE | MODE \n");
+	printf(" AE0 AE1 AE2 AE3  | MODE \n");
 	while (!demo_done)
 	{
 		if (rx_queue.count) process_key( dequeue(&rx_queue) );
@@ -467,17 +467,17 @@ int main(void)
 			if (counter % 20 == 0) 
 			{
 				nrf_gpio_pin_toggle(BLUE);
-				printf("FCB: current state: %4d \n", g_current_state);
+				//printf("FCB: current state: %4d \n", g_current_state);
  			}
 			adc_request_sample();
 			read_baro();
 
 			// printf("%10ld | ", get_time_us());
-			//printf("%3d %3d %3d %3d | ",ae[0],ae[1],ae[2],ae[3]);
+			printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
 			// printf("%6d %6d %6d | ", phi, theta, psi);
 			// printf("%6d %6d %6d | ", sp, sq, sr);
 			// printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
-			// printf("%4d \n", g_current_state);
+			printf("%4d \n", g_current_state - 1);
 
 			clear_timer_flag();
 		}
@@ -496,10 +496,9 @@ int main(void)
 			g_current_comm_type = NO_COMM;
 			enter_panic_mode(false);
 		}
-		// if (g_current_comm_type == CTRL_COMM){
-		// 	ctrl_action();
-		// 	// it looks like I have to reset the g_current_comm_type, but with this reset a bug appears
-		// }
+		if (g_current_comm_type == CTRL_COMM){
+			keyboard_ctrl_action();
+		}
 		if (g_current_state == CALIBRATION_ST) 
 		{
 			sensor_calib();

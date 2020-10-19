@@ -182,6 +182,78 @@ void decrease_p_value(CONTROLLER *controller)
 	if(controller->kp < CONTROLLER_P_LOWER_LIMIT) controller->kp += CONTROLLER_P_STEP_SIZE;
 }
 
+void increase_motor_speed(int16_t *ae, uint8_t motor){
+	ae[motor] += STEP_SIZE;
+	if (ae[motor] > UPPER_LIMIT) ae[motor] = UPPER_LIMIT;
+	return;
+}
+
+void decrease_motor_speed(int16_t *ae, uint8_t motor){
+	ae[motor] -= STEP_SIZE;
+	if (ae[motor] < 0) ae[motor] = 0;
+	return;
+}
+
+/*------------------------------------------------------------------
+ * keybord_ctrl_action -- allowing the keyboard to do all the actions
+ *------------------------------------------------------------------
+ */
+void keyboard_ctrl_action(){
+	switch (g_current_m0_state){			//M0
+		case MOTOR_UP:
+			increase_motor_speed(ae, 0);
+			break;
+		case MOTOR_REMAIN:
+			break;
+		case MOTOR_DOWN:
+			decrease_motor_speed(ae, 0);
+			break;
+		default:
+			break;
+	}
+	switch (g_current_m1_state){			//M1
+		case MOTOR_UP:
+			increase_motor_speed(ae, 1);
+			break;
+		case MOTOR_REMAIN:
+			break;
+		case MOTOR_DOWN:
+			decrease_motor_speed(ae, 1);
+			break;
+		default:
+			break;
+	}
+	switch (g_current_m2_state){			//M2
+		case MOTOR_UP:
+			increase_motor_speed(ae, 2);
+			break;
+		case MOTOR_REMAIN:
+			break;
+		case MOTOR_DOWN:
+			decrease_motor_speed(ae, 2);
+			break;
+		default:
+			break;
+	}
+	switch (g_current_m3_state){			//M3
+		case MOTOR_UP:
+			increase_motor_speed(ae, 3);
+			break;
+		case MOTOR_REMAIN:
+			break;
+		case MOTOR_DOWN:
+			decrease_motor_speed(ae, 3);
+			break;
+		default:
+			break;
+	}
+	// reset motor intention
+	g_current_m0_state = MOTOR_REMAIN;
+	g_current_m1_state = MOTOR_REMAIN;
+	g_current_m2_state = MOTOR_REMAIN;
+	g_current_m3_state = MOTOR_REMAIN;
+}
+
 int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr)
 {
 	yaw_control->set_point = yaw_set_point;
@@ -217,7 +289,7 @@ void update_motors(void)
 {					
 	// if (g_current_state != SAFE_ST, PANIC_ST) //TODO
 		clip_motors();
-		printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);
+		// printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);
 		motor[0] = ae[0];
 		motor[1] = ae[1];
 		motor[2] = ae[2];
@@ -240,4 +312,5 @@ void run_filters_and_control()
 	// ae[0] = xxx, ae[1] = yyy etc etc
 	update_motors();
 }
+
 
