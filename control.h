@@ -59,8 +59,8 @@ void sensor_calib(void);
 // void offset_remove(void);
 
 // controller
-#define b 1 
-#define d 1
+#define b_reciprocal 10000 // parameter used in actuate()
+#define d_reciprocal 20000 // parameter used in actuate()
 extern int16_t yaw_set_point;
 extern int16_t roll_set_point;
 extern int16_t pitch_set_point;

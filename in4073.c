@@ -42,6 +42,8 @@
 #include "in4073.h"
 #include <assert.h>
 
+#include <inttypes.h> // for testing
+
 #define USB_COMM_INTERVAL_THRESHOLD 2000000 // in us (1000000 = 1 second)    
 
 uint32_t usb_comm_last_received;
@@ -249,6 +251,7 @@ void process_js_axis_cmd_yaw_control_mode(JOYSTICK_AXIS_t joystick_axis, uint16_
 {
 	// TODO: implement this function
 	// printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
+	printf('Enter process_js_axis_cmd_yaw_control_mode(). \n');
 	uint8_t percentage = 0; // (percentage%)
 	switch(joystick_axis){
 
@@ -281,17 +284,15 @@ void process_js_axis_cmd_yaw_control_mode(JOYSTICK_AXIS_t joystick_axis, uint16_
 		case YAW_AXIS:
 			if(js_total_value <= 32767){ // yaw counterclockwise
 				percentage = (uint8_t) (100.f * js_total_value / 32767);
-				// ae[0] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				// ae[2] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				
-				// TODO: in yaw control mode, yaw axis provides a setpoint to the yaw control loop		
+				yaw_set_point = -percentage; // yaw axis provides a setpoint to the yaw control loop
+				// printf('yaw_set_point = %hd', yaw_set_point);
+				printf('yaw_set_point = %3d', yaw_set_point);
 			}
 			else{ // yaw clockwise
 				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
-				// ae[1] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				// ae[3] = (int16_t) clip_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-
-				// TODO: in yaw control mode, yaw axis provides a setpoint to the yaw control loop
+				yaw_set_point = percentage; // yaw axis provides a setpoint to the yaw control loop
+				// printf('yaw_set_point = %hd', yaw_set_point);
+				printf('yaw_set_point = %3d', yaw_set_point);
 			}
 			break;
 
@@ -562,7 +563,7 @@ int main(void)
 		if (g_current_state == YAWCONTROL_ST)
 		{
 			N_needed = yaw_control_calc(yaw_control, yaw_set_point, sr-sr_calib);
-			actuate(0, 0, 0, N_needed); // only N_needed in yay control mode
+			actuate(0, 0, 0, N_needed); // only N_needed in yaw control mode
 		}
 		if (g_current_state == FULLCONTROL_ST)
 		{

@@ -258,8 +258,8 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 {
 	yaw_control->set_point = yaw_set_point;
 	yaw_control->err = yaw_control->set_point - sr;
-	// yaw_control->integral += yaw_control->err;
-	yaw_control->output = yaw_control->kp * yaw_control->err;
+	yaw_control->integral += yaw_control->err;
+	yaw_control->output = yaw_control->kp * yaw_control->integral;
 	return yaw_control->output;
 }
 
@@ -274,10 +274,10 @@ double sqrt(double square)
 }
 
 void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed){
-	double sqr_0 = -1/(4*b)*Z_needed - 1/(4*d)*N_needed + 1/(2*b)*M_needed;
-	double sqr_1 = -1/(2*b)*L_needed - 1/(4*b)*Z_needed + 1/(4*d)*N_needed;
-	double sqr_2 = -1/(4*b)*Z_needed - 1/(4*d)*N_needed + 1/(2*b)*M_needed;
-	double sqr_3 = 1/(2*b)*L_needed - 1/(4*b)*Z_needed + 1/(4*d)*N_needed;
+	double sqr_0 = -1/4*b_reciprocal*Z_needed - 1/4*d_reciprocal*N_needed + 1/2*b_reciprocal*M_needed;
+	double sqr_1 = -1/2*b_reciprocal*L_needed - 1/4*b_reciprocal*Z_needed + 1/4*d_reciprocal*N_needed;
+	double sqr_2 = -1/4*b_reciprocal*Z_needed - 1/4*d_reciprocal*N_needed + 1/2*b_reciprocal*M_needed;
+	double sqr_3 = 1/2*b_reciprocal*L_needed - 1/4*b_reciprocal*Z_needed + 1/4*d_reciprocal*N_needed;
 	ae[0] = (int16_t) sqrt(sqr_0);
 	ae[1] = (int16_t) sqrt(sqr_1);
 	ae[2] = (int16_t) sqrt(sqr_2);
