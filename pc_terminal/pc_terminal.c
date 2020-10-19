@@ -84,7 +84,7 @@ STATE_t g_dest_state = NO_WHERE;
  */
 struct termios 	savetty;
 
-void	term_initio()
+void term_initio()
 {
 	struct termios tty;
 
@@ -98,17 +98,17 @@ void	term_initio()
 	tcsetattr(0, TCSADRAIN, &tty);
 }
 
-void	term_exitio()
+void term_exitio()
 {
 	tcsetattr(0, TCSADRAIN, &savetty);
 }
 
-void	term_puts(char *s)
+void term_puts(char *s)
 {
 	fprintf(stderr,"%s",s);
 }
 
-void	term_putchar(char c)
+void term_putchar(char c)
 {
 	putc(c,stderr);
 }
@@ -126,9 +126,7 @@ int	term_getchar_nb()
 int	term_getchar()
 {
         int    c;
-
-        while ((c = term_getchar_nb()) == -1)
-                ;
+        while ((c = term_getchar_nb()) == -1);
         return c;
 }
 
@@ -154,7 +152,7 @@ void rs232_open(void){
   	int 		result;
   	struct termios	tty;
 
-       	fd_RS232 = open("/dev/ttyUSB2", O_RDWR | O_NOCTTY);  // Hardcode your serial port here, or request it as an argument at runtime
+       	fd_RS232 = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY);  // Hardcode your serial port here, or request it as an argument at runtime
 
 	assert(fd_RS232>=0);
 
@@ -283,8 +281,7 @@ uint32_t message_encode(int c){
 			message = append_mode(message, g_current_state); // append current state to check at FCB side
 			break;
 		case 'a':
-			// keyboard 'a' pressed, drone lift up
-			printf("a pressed\n");
+			// printf("a pressed\n");
 			message = 0b10111111001101110000000101010101; // keyboard 'a' pressed, drone lift up, this command has a default mode -> MANUAL_ST
 			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state); 
 			break;
@@ -328,6 +325,27 @@ uint32_t message_encode(int c){
 			break;
 		case 'j':
 			message = 0b00000000000000000111000001010101; // keyboard 'j' pressed, decrease P yaw control
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			break;
+
+		case 'i':
+			// TODO: fill in the encoded message
+			// message = 0b00000000000000010111000001010101; // keyboard 'i' pressed, increase P1 roll/pitch control
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			break;
+		case 'k':
+			// TODO: fill in the encoded message
+			// message = 0b00000000000000000111000001010101; // keyboard 'j' pressed, decrease P1 roll/pitch control
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			break;
+		case 'o':
+			// TODO: fill in the encoded message
+			// message = 0b00000000000000010111000001010101; // keyboard 'o' pressed, increase P2 roll/pitch control
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			break;
+		case 'l':
+			// TODO: fill in the encoded message
+			// message = 0b00000000000000000111000001010101; // keyboard 'l' pressed, decrease P2 roll/pitch control
 			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
 			break;
 

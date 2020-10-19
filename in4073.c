@@ -141,12 +141,22 @@ uint8_t find_motor_state(uint8_t messg){
 // 	return result; // return 1 if no errors and 0 otherwise
 // }
 
+int16_t find_min_ae()
+{
+	int16_t min = ae[0];
+	if(ae[1] < min) min = ae[1];
+	if(ae[2] < min) min = ae[2];
+	if(ae[3] < min) min = ae[3];
+	return min;
+}
+
 void enter_panic_mode(bool cable_detached){
 	if (g_current_state == SAFE_ST) {
 		return; // if in safe mode then you do not need to go to panic mode
 	}
 	printf("FCB: QR: Entered PANIC MODE.");
-	int motor_speed = PANIC_MODE_MOTOR_SPEED;
+	// int16_t motor_speed = PANIC_MODE_MOTOR_SPEED; // this will introduce speed burst when trying to enter panic mode in low speed
+	int16_t motor_speed = find_min_ae(); // this fix speed burst, but take too long when in high speed?
 	while (motor_speed >= 0) {
 		ae[0] = motor_speed;
 		ae[1] = motor_speed;

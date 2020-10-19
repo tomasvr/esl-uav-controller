@@ -49,6 +49,11 @@ typedef struct // TODO: should use float?
 
 } CONTROLLER;
 
+void increase_motor_speed(int16_t *ae, uint8_t motor);
+void decrease_motor_speed(int16_t *ae, uint8_t motor);
+void keyboard_ctrl_action();
+// void ctrl_action();
+
 // calibraiton
 extern bool DMP;
 extern bool calib_done;
@@ -65,9 +70,6 @@ void sensor_calc(uint8_t);
 void sensor_calib(void);
 // void offset_remove(void);
 
-void ctrl_action();
-
-
 // controller
 #define b 1 
 #define d 1
@@ -83,9 +85,5 @@ void increase_p_value(CONTROLLER *controller);
 void decrease_p_value(CONTROLLER *controller);
 int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr);
 void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed);
-
-void increase_motor_speed(int16_t *ae, uint8_t motor);
-void decrease_motor_speed(int16_t *ae, uint8_t motor);
-void keyboard_ctrl_action();
 
 #endif // CONTROL_H__
