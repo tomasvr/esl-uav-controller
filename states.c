@@ -9,7 +9,7 @@
 
 int js_axis_values_zeroed() {
 	int all_values_are_zero = 1;
-	for (int i; i < NUMBER_OF_JS_AXIS; i++) {
+	for (int i = 0; i < NUMBER_OF_JS_AXIS; i++) {
 		if(joystick_axis_stored_values[i] > 0) {
 			all_values_are_zero = 0;
 		}
