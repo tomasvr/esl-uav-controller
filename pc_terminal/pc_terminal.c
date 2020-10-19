@@ -60,7 +60,7 @@
 #define USB_SEND_CHECK_INTERVAL 1000000 // Control how often USB check messages are send
 #define USB_CHECK_MESSAGE 0 // Message ID for check USB type message (no need to change)
 
-#define ENABLE_JOYSTICK
+//#define ENABLE_JOYSTICK
 
 // current axis and button readings
 int	axis[6];
@@ -238,37 +238,7 @@ int rs232_putchar(int c){ // change char to uint32_t
 	return result;
 }
 
-// STATE_t g_current_state = SAFE_ST;
-// STATE_t g_dest_state = NO_WHERE;
 bool ESC = false;
-
-// uint32_t append_mode(uint32_t message){
-
-// 	switch(g_current_state){
-// 		case 0:
-// 			message |= 0x00000000; // selected bits should be masked to 0 before '|='?
-// 			break;
-// 		case 1:
-// 			message |= 0x00000800;
-// 			break;
-// 		case 2:
-// 			message |= 0x00000100;
-// 			break;
-// 		case 3:
-// 			message |= 0x00000200;
-// 			break;
-// 		case 4:
-// 			message |= 0x00000300;
-// 			break;
-// 		case 5:
-// 			message |= 0x00000400;
-// 			break;
-// 		default:
-// 			break;
-// 	}
-// 	//printf("TER: The packet to send is: "PRINTF_BINARY_PATTERN_INT32 "\n",PRINTF_BYTE_TO_BINARY_INT32(message)); // 0000 0000 1000 0000 0001 0010 0101 0101
-// 	return message;
-// }
 
 uint32_t message_encode(int c){
 	uint32_t message = BASE_MESSAGE_PACKET_BITS; // 0b00000000000000000000000001010101

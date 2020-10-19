@@ -287,7 +287,7 @@ void messg_decode(uint8_t messg){
 			g_dest_state = NO_WHERE;
 	 	} else {
 	 		if (check_mode_sync(state_or_jsaxis_bits, g_current_state)) {
-	 			printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d ", state_or_jsaxis_bits, g_current_state);
+	 			printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", state_or_jsaxis_bits, g_current_state);
 	 		}
 	 	}
 
@@ -314,10 +314,9 @@ void messg_decode(uint8_t messg){
 		 */
 		 		
 	 	if (g_current_comm_type == CTRL_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
-	 		printf("Received key board cmd. \n");
 	 		int result;
 	 		result = find_motor_state(messg);
-	 		assert(result == 1 && "QR: Fail to find the motor state.");
+	 		assert(result == 1 && "FCB: Failed to find the motor state.");
 	 	}
 	 	// else if (g_current_comm_type == JS_AXIS_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
 	 	// 	int result;
