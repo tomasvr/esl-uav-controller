@@ -47,7 +47,7 @@
 uint32_t usb_comm_last_received;
 uint32_t current_time;
 
-// each packet includes 4 fragments
+// each packet includes 3 fragments
 uint8_t FRAG_COUNT = 0;
 
 // State variables initalization
@@ -66,10 +66,8 @@ MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m2_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m3_state = MOTOR_REMAIN;
 
-uint8_t jsvalue_left;
-uint8_t jsvalue_right;
 JOYSTICK_AXIS_t joystick_axis;
-uint16_t js_total_value;
+uint8_t js_total_value;
 
 // controller object declaration
 CONTROLLER *yaw_control;
@@ -119,13 +117,13 @@ void check_USB_connection_alive() {
 	}
 }
 
-void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
+void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint8_t js_total_value) {
 	if (joystick_axis == LIFT_THROTTLE) { // Throttle axis needs seperate calculation to determine when it is all the way down
-		if(js_total_value <= 32767){
-			js_total_value = 32767 - js_total_value;
+		if(js_total_value <= JS_AXIS_MID_VALUE){
+			js_total_value = JS_AXIS_MID_VALUE - js_total_value;
 		}
 		else {
-			js_total_value = 65536 - js_total_value + 32767;
+			js_total_value = JS_AXIS_MAX_VALUE - js_total_value + JS_AXIS_MID_VALUE;
 		}
 	}
 	joystick_axis_stored_values[joystick_axis] = js_total_value;
@@ -141,59 +139,62 @@ int16_t clip_motor_value(int16_t value) {
 	return value;
 }
 
-void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
-	// printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
+
+
+void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint8_t js_total_value) {
+	//printf("FCB: JS AXIS RECEIVED - axis: %d value: %d \n", joystick_axis, js_total_value);
 	uint8_t percentage = 0; // (percentage%)
 	switch(joystick_axis){
 
 		case ROLL_AXIS:
-			if(js_total_value <= 32767){ // roll counterclockwise
-				percentage = (uint8_t) (100.f * js_total_value / 32767);
+			if(js_total_value <= JS_AXIS_MID_VALUE){ // roll counterclockwise
+				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
 				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 				ae[3] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			else{ // roll clockwise
-				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
 				ae[1] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
 				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			break;
 
 		case PITCH_AXIS:
-			if(js_total_value <= 32767){ // pitch down
-				percentage = (uint8_t) (100.f * js_total_value / 32767);
+			if(js_total_value <= JS_AXIS_MID_VALUE){ // pitch down
+				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
 				ae[0] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
 				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			else{ // pitch up
-				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
 				ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 				ae[2] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			break;
 
 		case YAW_AXIS:
-			if(js_total_value <= 32767){ // yaw counterclockwise
+			if(js_total_value <= JS_AXIS_MID_VALUE){ // yaw counterclockwise
 
-				percentage = (uint8_t) (100.f * js_total_value / 32767);
+				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
 				ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);		
 			}
 			else{ // yaw clockwise
-				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
 				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			break;
 
 		case LIFT_THROTTLE:
-			if(js_total_value <= 32767){
-				percentage = (uint8_t) (100.f * (32767-js_total_value) / 65535);
+			if(js_total_value <= JS_AXIS_MID_VALUE){
+				percentage = (uint8_t) (100.f * (JS_AXIS_MID_VALUE-js_total_value) / JS_AXIS_DIVIDE_VALUE);
 			}
 			else{
-				percentage = (uint8_t) (100.f * (65536-js_total_value+32767) / 65535);
+				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value+JS_AXIS_MID_VALUE) / JS_AXIS_DIVIDE_VALUE);
 			}
 			motor_lift_level = MOTOR_UPPER_LIMIT * percentage / 100;
+			//printf("FCB: percentage: %f lift_level: %d \n", percentage, motor_lift_level);
 			ae[0] = motor_lift_level;
 			ae[1] = motor_lift_level;
 			ae[2] = motor_lift_level;
@@ -238,7 +239,7 @@ void messg_decode(uint8_t message_byte){
 				case CTRL_COMM:
 					;	// C requires this semicolon here
 					uint8_t motor_states = retrieve_keyboard_motor_control(message_byte); 
-					printf("FCB: motor states: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(motor_states));
+					//printf("FCB: motor states: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(motor_states));
 					g_current_m0_state = (motor_states >> 6) & 3; //extract last two bytes with & 3 operator 
 					g_current_m1_state = (motor_states >> 4) & 3;
 					g_current_m2_state = (motor_states >> 2) & 3;
@@ -259,15 +260,13 @@ void messg_decode(uint8_t message_byte){
 					break;
 				case MODE_SW_COMM:
 			 		g_dest_state = retrieve_mode(message_byte);
-			 		printf("Comm type: %d, State: %d \n", g_current_comm_type, g_dest_state);
+			 		//printf("Comm type: %d, State: %d \n", g_current_comm_type, g_dest_state);
 					g_current_state = mode_sw_action("FCB", g_current_state, g_dest_state, false);
-					printf("current_state: %d \n", g_current_state);
 					g_dest_state = NO_WHERE;					
 					break;
 				case JS_AXIS_COMM:
 	 				//joystick_axis = retrieve_js_axis(message_byte);
-
-	 				process_js_axis_cmd(message_byte, js_axis_type);
+	 				process_js_axis_cmd(js_axis_type, message_byte);
 					break;
 				case CHANGE_P_COMM:
 			 		if (message_byte == 0x01) {
@@ -317,7 +316,8 @@ void process_key(uint8_t c){
 		messg_decode(c);
 		FRAG_COUNT--;
 	} else {
-		printf("process key called but FRAG_COUNT < 0, FRAG_COUNT: \n", FRAG_COUNT);
+		// TODO: remove 4th byte in packet
+		//printf("process key called but FRAG_COUNT < 0, FRAG_COUNT: \n", FRAG_COUNT);
 	}
 }
 

@@ -58,7 +58,7 @@ uint32_t retrieve_keyboard_motor_control (uint8_t message){ //TODO: change messa
 }
 
 JOYSTICK_AXIS_t retrieve_js_axis_type(uint8_t message){ //TODO: change to pointers for better performancee
- 	JOYSTICK_AXIS_t joystick_type = message;
+ 	JOYSTICK_AXIS_t joystick_type = (message >> 6);
 	return joystick_type;
 }
 

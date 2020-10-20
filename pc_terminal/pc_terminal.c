@@ -401,7 +401,7 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 		message = append_js_axis_type(message, axis_number_from_js);
 		uint8_t js_value_smaller = (js_value >> 8);
 		message |= (js_value_smaller << 16);
-		printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value_smaller);
+		//printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value_smaller);
 	} else {
 		printf("ERROR in send_js_message: UKNOWN IF BUTTON OR AXIS (js_type)\n");
 		return;
@@ -413,7 +413,6 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 void send_USB_check_message() {
 	rs232_putchar(message_encode(USB_CHECK_MESSAGE));
 }
-
 
 unsigned int mon_time_ms(void){
     unsigned int    ms;
