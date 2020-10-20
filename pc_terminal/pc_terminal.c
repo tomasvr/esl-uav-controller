@@ -55,7 +55,7 @@
 
 #define JS_DEV	"/dev/input/js0"
 // #define THRESHOLD_READ 2767
-#define POLL_DELAY 100000 // 1000000us = 1000ms = 1s
+#define POLL_DELAY 20000 // 1000000us = 1000ms = 1s // 20000 = 20ms
 
 #define USB_SEND_CHECK_INTERVAL 1000000 // Control how often USB check messages are send
 #define USB_CHECK_MESSAGE 0 // Message ID for check USB type message (no need to change)
@@ -479,8 +479,8 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 	fcntl(fd, F_SETFL, O_NONBLOCK);// non-blocking mode
-	//uint32_t last_poll_time = GetTimeStamp();
-	time2poll = true;
+
+	uint32_t last_js_send_time = GetTimeStamp();
 #endif
 
 	/* send & receive
@@ -531,38 +531,18 @@ int main(int argc, char **argv)
 		// mon_delay_ms(30);
 
 #ifdef ENABLE_JOYSTICK
-
-		// //t = mon_time_ms();
-		// if (read(fd, &js, sizeof(struct js_event)) != sizeof(struct js_event)) {
-		// 	perror("\njstest: error reading");
-		// 	exit (1);
-		// } else {
-		// 	printf("Event: type %d, time %d, number %d, value %d\n",
-		// 	js.type, js.time, js.number, js.value);
-		// }
-
-		while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event))  {
-			//printf("PC: JS event: type %d, time %d, number %d, value %d\n", js.type, js.time, js.number, js.value);
-				send_js_message(js.type, js.number, js.value);
-		}
-
-
-		if (errno != EAGAIN) {
-			perror("\nPC: jstest: error reading\n");
-			exit (1);
-		}
-
-		// // js: poll to encode and send js cmds
-		// current_time = GetTimeStamp();
-		// if((current_time-last_poll_time) >= POLL_DELAY){
-		// 	time2poll = true;
-		// 	last_poll_time = current_time;
-		// } 
-		// if(time2poll){
-		// 	message_encode_send_js(axis, button);
-		// 	// printf("Poll \n");
-		// 	time2poll = false;
-		// }
+		current_time = GetTimeStamp();
+		if( (current_time - last_js_send_time) >= POLL_DELAY) {
+			while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) {
+				//printf("PC: JS event: type %d, time %d, number %d, value %d\n", js.type, js.time, js.number, js.value);
+					send_js_message(js.type, js.number, js.value);
+			}
+			if (errno != EAGAIN) {
+				perror("\nPC: jstest: error reading\n");
+				exit (1);
+			}			
+			last_js_send_time = current_time;
+		} 
 #endif
 	counter++;	
 	}
