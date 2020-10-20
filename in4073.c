@@ -244,16 +244,17 @@ void messg_decode(uint8_t message_byte){
 					g_current_m1_state = (motor_states >> 4) & 3;
 					g_current_m2_state = (motor_states >> 2) & 3;
 					g_current_m3_state = (motor_states)		 & 3;
-					/* If 'a' or 'z' was pressed, adjust motor_lift_level */
-					if (0b11111111 == motor_states) {
-						motor_lift_level += STEP_SIZE;
-					}
-					else if (0b00000000 == motor_states) {
-						motor_lift_level -= STEP_SIZE;
-					}
+
 					/* only change motors if in appropriate mode */ //todo: move this logic to a central place
 					if (g_current_state == 	MANUAL_ST || g_current_state == YAWCONTROL_ST || g_current_state == FULLCONTROL_ST) {
 						keyboard_ctrl_action();
+						/* If 'a' or 'z' was pressed, adjust motor_lift_level */
+						if (0b11111111 == motor_states) {
+							motor_lift_level += STEP_SIZE;
+						}
+						else if (0b00000000 == motor_states) {
+							motor_lift_level -= STEP_SIZE;
+						}
 					} else {
 						printf("Cannot control keyboard motor in current mode: %d \n", g_current_state);						
 					}
@@ -267,7 +268,9 @@ void messg_decode(uint8_t message_byte){
 				case JS_AXIS_COMM:
 	 				//joystick_axis = retrieve_js_axis(message_byte);
 					store_js_axis_commands(js_axis_type, message_byte);
-	 				process_js_axis_cmd(js_axis_type, message_byte);
+					if (g_current_state == 	MANUAL_ST || g_current_state == YAWCONTROL_ST || g_current_state == FULLCONTROL_ST) {
+						process_js_axis_cmd(js_axis_type, message_byte);
+					}	 				
 					break;
 				case CHANGE_P_COMM:
 			 		if (message_byte == 0x01) {
@@ -386,9 +389,9 @@ int main(void)
 			g_current_comm_type = UNKNOWN_COMM;
 			enter_panic_mode(false);
 		}
-		if (g_current_comm_type == CTRL_COMM){
-			keyboard_ctrl_action();
-		}
+		// if (g_current_comm_type == CTRL_COMM){
+		// 	keyboard_ctrl_action();
+		// }
 
 		// Execute commands  that only need to be handled in certain mode
 		if (g_current_state == PANIC_ST)
