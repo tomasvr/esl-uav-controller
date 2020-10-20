@@ -18,8 +18,8 @@
 #define BIT_LOCATION_MOTOR_STATES	16
 
 
-int check_mode_sync (uint8_t state, STATE_t g_current_state){
-	if (state == g_current_state) {
+int check_mode_sync (uint8_t pc_state, STATE_t fcb_state){
+	if (pc_state == fcb_state) {
 		return 0;
 	}
 	return 1;

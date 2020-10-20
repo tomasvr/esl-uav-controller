@@ -51,7 +51,7 @@ uint32_t current_time;
 uint8_t FRAG_COUNT = 0;
 
 // State variables initalization
-STATE_t g_current_state = SAFE_ST;
+STATE_t fcb_state = SAFE_ST;
 STATE_t g_dest_state = NO_WHERE;
 
 // Communication variables initalization
@@ -75,7 +75,7 @@ CONTROLLER *yaw_control;
 // CONTROLLER *pitch_control;
 
 void enter_panic_mode(bool cable_detached){
-	if (g_current_state == SAFE_ST) {
+	if (fcb_state == SAFE_ST) {
 		return; // if in safe mode then you do not need to go to panic mode
 	}
 	printf("FCB: QR: Entered PANIC MODE.");
@@ -94,7 +94,7 @@ void enter_panic_mode(bool cable_detached){
 
 	}
 	motor_lift_level = 0; //reset motor_lift_level
-	g_current_state = SAFE_ST;
+	fcb_state = SAFE_ST;
 	if (cable_detached) { //wait for reboot
 		while(1) {
 			motor[0] = 0;
@@ -246,7 +246,7 @@ void messg_decode(uint8_t message_byte){
 					g_current_m3_state = (motor_states)		 & 3;
 
 					/* only change motors if in appropriate mode */ //todo: move this logic to a central place
-					if (g_current_state == 	MANUAL_ST || g_current_state == YAWCONTROL_ST || g_current_state == FULLCONTROL_ST) {
+					if (fcb_state == 	MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
 						keyboard_ctrl_action();
 						/* If 'a' or 'z' was pressed, adjust motor_lift_level */
 						if (0b11111111 == motor_states) {
@@ -256,19 +256,19 @@ void messg_decode(uint8_t message_byte){
 							motor_lift_level -= STEP_SIZE;
 						}
 					} else {
-						printf("Cannot control keyboard motor in current mode: %d \n", g_current_state);						
+						printf("Cannot control keyboard motor in current mode: %d \n", fcb_state);						
 					}
 					break;
 				case MODE_SW_COMM:
 			 		g_dest_state = retrieve_mode(message_byte);
 			 		//printf("Comm type: %d, State: %d \n", g_current_comm_type, g_dest_state);
-					g_current_state = mode_sw_action("FCB", g_current_state, g_dest_state, false);
+					fcb_state = mode_sw_action("FCB", fcb_state, g_dest_state, false);
 					g_dest_state = NO_WHERE;					
 					break;
 				case JS_AXIS_COMM:
 	 				//joystick_axis = retrieve_js_axis(message_byte);
 					store_js_axis_commands(js_axis_type, message_byte);
-					if (g_current_state == 	MANUAL_ST || g_current_state == YAWCONTROL_ST || g_current_state == FULLCONTROL_ST) {
+					if (fcb_state == 	MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
 						process_js_axis_cmd(js_axis_type, message_byte);
 					}	 				
 					break;
@@ -289,8 +289,8 @@ void messg_decode(uint8_t message_byte){
 				case ESC_COMM:
 					break;
 				case USB_CHECK_COMM:
-			 		if (check_mode_sync(message_byte, g_current_state)) {
-		 				printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", message_byte, g_current_state);
+			 		if (check_mode_sync(message_byte, fcb_state)) {
+		 				printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", message_byte, fcb_state);
 		 			}						
 		 			break;
 				default:
@@ -312,7 +312,7 @@ void messg_decode(uint8_t message_byte){
  *------------------------------------------------------------------
  */
 void process_key(uint8_t c){	
-	if (c == 0x55 && FRAG_COUNT == 0 && g_current_state != PANIC_ST) { // '0x55': 0b01010101(start byte)
+	if (c == 0x55 && FRAG_COUNT == 0 && fcb_state != PANIC_ST) { // '0x55': 0b01010101(start byte)
 		FRAG_COUNT = 2;
 		return;
 	}
@@ -354,15 +354,13 @@ int main(void)
 	{
 		if (rx_queue.count) process_key( dequeue(&rx_queue) );
 
-		// check if USB connection is still alive by checking last time received
-		if (counter % 100 == 0) check_USB_connection_alive(); // use counter so this doesn't happen too often
+		if (counter % 100 == 0) check_USB_connection_alive();
 
 		if (check_timer_flag()) 
 		{
 			if (counter % 20 == 0) 
 			{
 				nrf_gpio_pin_toggle(BLUE);
-				//printf("FCB: current state: %4d \n", g_current_state);
  			}
 			adc_request_sample();
 			read_baro();
@@ -372,10 +370,10 @@ int main(void)
 			// printf("%6d %6d %6d | ", phi, theta, psi);
 			// printf("%6d %6d %6d | ", sp, sq, sr);
 			// printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
-			printf("%4d \n", g_current_state - 1);
+			printf("%4d \n", fcb_state - 1);
 			clear_timer_flag();
 			//printf("%4d \n", motor_lift_level);
-	}
+		}
 
 		if (check_sensor_int_flag()) 
 		{
@@ -394,26 +392,26 @@ int main(void)
 		// }
 
 		// Execute commands  that only need to be handled in certain mode
-		if (g_current_state == PANIC_ST)
+		if (fcb_state == PANIC_ST)
 		{
 			enter_panic_mode(false); //enter panic mode for any reason other than cable
 		}
-		// if(g_current_state == MANUAL_ST)
+		// if(fcb_state == MANUAL_ST)
 		// {
 		// 	process_js_axis_cmd(joystick_axis, js_total_value);
 		// }
-		if (g_current_state == CALIBRATION_ST) 
+		if (fcb_state == CALIBRATION_ST) 
 		{
 			sensor_calib();
 			//offset_remove();
-			g_current_state = SAFE_ST;
+			fcb_state = SAFE_ST;
 		}
-		if (g_current_state == YAWCONTROL_ST)
+		if (fcb_state == YAWCONTROL_ST)
 		{
 			N_needed = yaw_control_calc(yaw_control, yaw_set_point, sr-sr_calib);
 			actuate(0, 0, 0, N_needed); // only N_needed in yay control mode
 		}
-		if (g_current_state == FULLCONTROL_ST)
+		if (fcb_state == FULLCONTROL_ST)
 		{
 			// TODO: do full controller things
 		}
