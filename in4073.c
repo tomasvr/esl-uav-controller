@@ -237,16 +237,43 @@ void process_js_axis_cmd_manual_mode(JOYSTICK_AXIS_t joystick_axis, uint16_t js_
 			break;
 
 		case YAW_AXIS:
-			if(js_total_value <= 32767){ // yaw counterclockwise
-				percentage = (uint8_t) (100.f * js_total_value / 32767);
-				ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);		
-			}
-			else{ // yaw clockwise
-				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
-				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-			}
+
+			// if (g_current_state == MANUAL_ST) {
+				if(js_total_value <= 32767){ // yaw counterclockwise
+					percentage = (uint8_t) (100.f * js_total_value / 32767);
+					ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+					ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);		
+				}
+				else{ // yaw clockwise
+					percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+					ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+					ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+				}
+			// }
+			// else if(g_current_state == YAWCONTROL_ST){
+			// 	if(js_total_value <= 32767){ // yaw counterclockwise
+			// 		percentage = (uint8_t) (100.f * js_total_value / 32767);
+			// 		yaw_set_point = -percentage; // yaw axis provides a setpoint to the yaw control loop
+			// 		// printf('yaw_set_point = %3d', yaw_set_point);
+			// 	}
+			// 	else{ // yaw clockwise
+			// 		percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+			// 		yaw_set_point = percentage; // yaw axis provides a setpoint to the yaw control loop
+			// 		// printf('yaw_set_point = %3d', yaw_set_point);
+			// 	}
+
+			// 	// if(js_total_value <= 32767){ // yaw counterclockwise
+			// 	// 	percentage = (uint8_t) (100.f * js_total_value / 32767);
+			// 	// 	ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+			// 	// 	ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);		
+			// 	// }
+			// 	// else{ // yaw clockwise
+			// 	// 	percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+			// 	// 	ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+			// 	// 	ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+			// 	// }
+
+			// }
 			break;
 
 		case LIFT_THROTTLE:
@@ -306,18 +333,16 @@ void process_js_axis_cmd_yaw_control_mode(JOYSTICK_AXIS_t joystick_axis, uint16_
 			break;
 
 		case YAW_AXIS:
-			if(js_total_value <= 32767){ // yaw counterclockwise
-				percentage = (uint8_t) (100.f * js_total_value / 32767);
-				yaw_set_point = -percentage; // yaw axis provides a setpoint to the yaw control loop
-				// printf('yaw_set_point = %hd', yaw_set_point);
-				printf('yaw_set_point = %3d', yaw_set_point);
-			}
-			else{ // yaw clockwise
-				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
-				yaw_set_point = percentage; // yaw axis provides a setpoint to the yaw control loop
-				// printf('yaw_set_point = %hd', yaw_set_point);
-				printf('yaw_set_point = %3d', yaw_set_point);
-			}
+			// if(js_total_value <= 32767){ // yaw counterclockwise
+			// 	percentage = (uint8_t) (100.f * js_total_value / 32767);
+			// 	// yaw_set_point = -percentage; // yaw axis provides a setpoint to the yaw control loop
+			// 	// printf('yaw_set_point = %3d', yaw_set_point);
+			// }
+			// else{ // yaw clockwise
+			// 	percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+			// 	// yaw_set_point = percentage; // yaw axis provides a setpoint to the yaw control loop
+			// 	// printf('yaw_set_point = %3d', yaw_set_point);
+			// }
 			break;
 
 		case LIFT_THROTTLE:
@@ -364,8 +389,8 @@ void messg_decode(uint8_t messg){
 	
 	//printf("FCB: FRAG_COUNT: %d \n", FRAG_COUNT);
 	//printf("FCB: message byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
-	if (FRAG_COUNT == 3){
-
+	if (FRAG_COUNT == 3)
+	{
 		/* If a new message is received, update last received message time */
 	 	USB_comm_update_received();
  
@@ -380,17 +405,22 @@ void messg_decode(uint8_t messg){
 		g_current_comm_type = retrieve_comm_type(comm_type_bits >> 4); //shift right to get bits at beginning of byte
 		//assert( == 1 && "QR: No such command found.");
 
-	 	if (g_current_comm_type == JS_AXIS_COMM) {
+	 	if (g_current_comm_type == JS_AXIS_COMM) 
+	 	{
 	 		joystick_axis = retrieve_js_axis(state_or_jsaxis_bits);
 	 	}	
-	 	else if (g_current_comm_type == MODE_SW_COMM){
+	 	else if (g_current_comm_type == MODE_SW_COMM)
+	 	{
 	 		g_dest_state = retrieve_mode(state_or_jsaxis_bits);
 	 		printf("Comm type: %d, State: %d \n", g_current_comm_type, g_dest_state);
 			g_current_state = mode_sw_action("FCB", g_current_state, g_dest_state, false);
 			printf("current_state: %d \n", g_current_state);
 			g_dest_state = NO_WHERE;
-	 	} else {
-	 		if (check_mode_sync(state_or_jsaxis_bits, g_current_state)) {
+	 	} 
+	 	else 
+	 	{
+	 		if (check_mode_sync(state_or_jsaxis_bits, g_current_state)) 
+	 		{
 	 			printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", state_or_jsaxis_bits, g_current_state);
 	 		}
 	 	}
@@ -435,11 +465,13 @@ void messg_decode(uint8_t messg){
 	 			js_total_value = (jsvalue_left << 8) | jsvalue_right;
 	 			// process js axis cmd depending on different modes
 		 		if (g_current_state == MANUAL_ST) {
-		 			process_js_axis_cmd_manual_mode(joystick_axis, js_total_value);
+		 			// process_js_axis_cmd_manual_mode(joystick_axis, js_total_value);
 		 		}
 		 		else if(g_current_state == YAWCONTROL_ST)
 		 		{
-		 			process_js_axis_cmd_yaw_control_mode(joystick_axis, js_total_value);
+		 			// printf("Before calling process_js_axis_cmd_yaw_control_mode(). \n");
+		 			// process_js_axis_cmd_yaw_control_mode(joystick_axis, js_total_value);
+		 			// process_js_axis_cmd_manual_mode(joystick_axis, js_total_value);
 		 		}
 		 		else if(g_current_state == FULLCONTROL_ST)
 		 		{
@@ -595,6 +627,7 @@ int main(void)
 		if (g_current_state == YAWCONTROL_ST)
 		{
 			// printf("Before the yaw conrol loop. \n");
+			printf('yaw_set_point = %3d', yaw_set_point);
 			N_needed = yaw_control_calc(yaw_control, yaw_set_point, sr-sr_calib);
 			actuate(0, 0, 0, N_needed); // only N_needed in yaw control mode
 			// printf("After the yaw conrol loop. \n");
