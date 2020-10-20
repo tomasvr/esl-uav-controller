@@ -533,7 +533,7 @@ int main(int argc, char **argv)
 #ifdef ENABLE_JOYSTICK
 		current_time = GetTimeStamp();
 		if( (current_time - last_js_send_time) >= POLL_DELAY) {
-			while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) {
+			while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) { //might have to make this an 'if' statement instead
 				//printf("PC: JS event: type %d, time %d, number %d, value %d\n", js.type, js.time, js.number, js.value);
 					send_js_message(js.type, js.number, js.value);
 			}
