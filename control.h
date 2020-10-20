@@ -20,6 +20,7 @@ typedef enum {
 		MOTOR_REMAIN,
 		MOTOR_UP,
 		MOTOR_DOWN,
+		MOTOR_UNKNOWN
 } MOTOR_CTRL;
 
 extern MOTOR_CTRL g_current_m0_state;

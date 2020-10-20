@@ -256,7 +256,6 @@ uint32_t message_encode(int c){
 			message = append_comm_type(message, CTRL_COMM);
 			message = append_keyboard_motor_control(message, 0b01010101); // 0b01-01-01-01 = 0bM0-M1-M2-M3,  00 = REMAIN, 01 = UP, 10 = DOWN
 			break;
-
 		case 'z':
 			// keyboard 'z' pressed, drone lift down, this command has a default mode -> MANUAL_ST
 			message = append_comm_type(message, CTRL_COMM);
@@ -358,7 +357,6 @@ uint32_t message_encode(int c){
 			//message = 0b00000000000100000001000001010101; 
 			message = append_comm_type(message, MODE_SW_COMM);
 			message = append_mode(message, MANUAL_ST); 
-			print_packet(message, "PC: Example change to manual mode: ");
 			g_current_state = mode_sw_action("TERM", g_current_state, MANUAL_ST, ESC);
 			g_dest_state = NO_WHERE;
 			break;
@@ -384,6 +382,7 @@ uint32_t message_encode(int c){
 			printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
 			//exit(-1);
 	}
+	print_packet(message, "PC: Send message: ");
 	return message;
 }
 

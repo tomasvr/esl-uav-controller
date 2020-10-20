@@ -73,70 +73,6 @@ CONTROLLER *yaw_control;
 // CONTROLLER *roll_control;
 // CONTROLLER *pitch_control;
 
-/* The return value indicates how many motors went up (+) or down (-) 
- * which is used to adjust the motor_lift_level
- */
-// int8_t find_motor_state(uint8_t messg){
-// 	uint8_t m_ctrl_1 = messg & 0xf0; 		
-// 	uint8_t m_ctrl_2 = messg & 0x0f;
-// 	int result = 0;
-// 	// find motor state of motor 0 
-// 	if (m_ctrl_1>>6 == 0) {				// 0000 -> M0
-// 		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) {
-// 			g_current_m0_state = MOTOR_UP;
-// 			result += 1;
-// 		}
-// 		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) {
-// 			g_current_m0_state = MOTOR_DOWN;
-// 			result -= 1;
-// 		}
-// 		if (((m_ctrl_1 >> 5)&1) == 0) g_current_m0_state = MOTOR_REMAIN;
-// 	}
-// 	if (m_ctrl_1>>6 == 2) {				// 0010 -> M2
-// 		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) {
-// 			g_current_m2_state = MOTOR_UP;
-// 			result += 1;
-// 		}
-// 		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) {
-// 			g_current_m2_state = MOTOR_DOWN;
-// 			result -= 1;
-// 		}
-// 		if (((m_ctrl_1 >> 5)&1) == 0) g_current_m2_state = MOTOR_REMAIN;
-// 	}
-// 	if (m_ctrl_2>>2 == 1) {				// 0001 -> M1
-// 		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) {
-// 			g_current_m1_state = MOTOR_UP;
-// 			result += 1;
-// 		}
-// 		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) {
-// 			g_current_m1_state = MOTOR_DOWN;
-// 			result -= 1;
-// 		}
-// 		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m1_state = MOTOR_REMAIN;
-// 	}
-// 	if (m_ctrl_2>>2 == 3) {				// 0011 -> M3
-// 		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) {
-// 			g_current_m3_state = MOTOR_UP;
-// 			result += 1;
-// 		}
-// 		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) {
-// 			g_current_m3_state = MOTOR_DOWN;
-// 			result -= 1;
-// 		}
-// 		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m3_state = MOTOR_REMAIN;
-// 	} 
-// 	return result;
-// }
-
-// int16_t find_min_ae()
-// {
-// 	int16_t min = ae[0];
-// 	if(ae[1] < min) min = ae[1];
-// 	if(ae[2] < min) min = ae[2];
-// 	if(ae[3] < min) min = ae[3];
-// 	return min;
-// }
-
 void enter_panic_mode(bool cable_detached){
 	if (g_current_state == SAFE_ST) {
 		return; // if in safe mode then you do not need to go to panic mode
@@ -269,37 +205,6 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
 	return;
 }
 
-
-
-
-void handle_frag1(uint8_t messg) {
-	switch (g_current_comm_type) {
-		case CTRL_COMM:
-			if (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST) {
-		 		motor_control_counter += find_motor_state(messg);
-		 		if (motor_control_counter == 4) {
-		 			motor_lift_level = clip_motor_value(motor_lift_level += STEP_SIZE);
-		 		}
-		 		if (motor_control_counter == -4) {
-		 			motor_lift_level = clip_motor_value(motor_lift_level -= STEP_SIZE);
-		 		}					
-	 		}
-			break;
-		case JS_AXIS_COMM:
- 			jsvalue_left = messg;	
- 			js_total_value = (jsvalue_left << 8) | jsvalue_right;
-	 		store_js_axis_commands(joystick_axis, js_total_value); // in EVERY state(also in manual/control) store js values to check neutral position
-	 		if (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST) { // if in control mode, control drone
-	 			// TODO: only execute the following function in mannual mode
-	 			process_js_axis_cmd(joystick_axis, js_total_value);
-	 		} 
-			break;
-		default:
-			printf("Frag 1 no comm_type specific action\n");
-			break;
-	}
-}
-
 /*------------------------------------------------------------------
  * messg_decode -- decode messages
  *------------------------------------------------------------------
@@ -331,16 +236,26 @@ void messg_decode(uint8_t message_byte){
 					;	// C requires this semicolon here
 					uint8_t motor_states = retrieve_keyboard_motor_control(message_byte); 
 					// maybe move to comm.c
-					g_current_m0_state = (motor_states & 11000000) >> 6;
-					g_current_m1_state = (motor_states & 00110000) >> 4;
-					g_current_m2_state = (motor_states & 00001100) >> 2;
-					g_current_m3_state = (motor_states & 00000011);
+					printf("FCB: motor states: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(motor_states));
+					g_current_m0_state = (motor_states >> 6) & 3; //extract last two bytes with and 
+					g_current_m1_state = (motor_states >> 4) & 3;
+					g_current_m2_state = (motor_states >> 2) & 3;
+					g_current_m3_state = (motor_states)		 & 3;
 					/* If 'a' or 'z' was pressed, adjust motor_lift_level */
+					// printf("FCB: motor 0: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(g_current_m0_state));
+					// printf("FCB: motor 1: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(g_current_m1_state));
+					// printf("FCB: motor 2: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(g_current_m2_state));
+					// printf("FCB: motor 3: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(g_current_m3_state));
 					if (0b11111111 == motor_states) {
 						motor_lift_level += STEP_SIZE;
 					}
 					else if (0b00000000 == motor_states) {
 						motor_lift_level -= STEP_SIZE;
+					}
+					if (g_current_state == 	MANUAL_ST || g_current_state == YAWCONTROL_ST || g_current_state == FULLCONTROL_ST) {
+						keyboard_ctrl_action();
+					} else {
+						printf("Cannot control keyboard motor in current mode: %d \n", g_current_state);						
 					}
 					break;
 				case MODE_SW_COMM:
