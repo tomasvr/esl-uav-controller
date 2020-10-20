@@ -14,7 +14,7 @@
 
 #define BIT_LOCATION_COMM_TYPE 		8 //TODO: use these defines instead of number in append and retrieve functions below
 #define BIT_LOCATION_MODE			16 // (depending where we want to put it) //TODO: CHANGE THIS TO 12?
-#define BIT_LOCATION_JS_AXIS		16
+#define BIT_LOCATION_JS_AXIS		14
 #define BIT_LOCATION_MOTOR_STATES	16
 
 
@@ -27,13 +27,12 @@ int check_mode_sync (uint8_t state, STATE_t g_current_state){
 
 /* Append functions (PC side) */
 
-uint32_t append_keyboard_motor_control (uint32_t message, uint8_t motor_states){ //TODO: change message to pointer for better performancee
+uint32_t append_keyboard_motor_control (uint32_t message, uint8_t motor_states){
 	message |= motor_states << BIT_LOCATION_MOTOR_STATES;
 	return message;
 }
 
-
-uint32_t append_js_axis (uint32_t message, JOYSTICK_AXIS_t joystick_type){ //TODO: change message to pointer for better performancee
+uint32_t append_js_axis_type (uint32_t message, JOYSTICK_AXIS_t joystick_type){ 
 	uint32_t joystick_type_uint32 = joystick_type;
 	message |= joystick_type_uint32 << BIT_LOCATION_JS_AXIS;
 	return message;
@@ -58,13 +57,13 @@ uint32_t retrieve_keyboard_motor_control (uint8_t message){ //TODO: change messa
 	return message;
 }
 
-JOYSTICK_AXIS_t retrieve_js_axis(uint8_t message){ //TODO: change to pointers for better performancee
+JOYSTICK_AXIS_t retrieve_js_axis_type(uint8_t message){ //TODO: change to pointers for better performancee
  	JOYSTICK_AXIS_t joystick_type = message;
 	return joystick_type;
 }
 
 COMM_TYPE retrieve_comm_type(uint8_t message){ //TODO: change to pointers for better performancee
-	COMM_TYPE comm_type = message;
+	COMM_TYPE comm_type = (message & 0b00111111); // the two most left bits are reserved for axis_type
 	return comm_type;
 }
 

@@ -398,13 +398,14 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	else if ( (js_type == 2) || (js_type == 130)) { //axis (130 occurs at startup)
 		message = append_comm_type(message, JS_AXIS_COMM);
 		JOYSTICK_AXIS_t axis_number_from_js = js_number;
-		message = append_js_axis(message, axis_number_from_js);
-		message |= (js_value << 16);
+		message = append_js_axis_type(message, axis_number_from_js);
+		uint8_t js_value_smaller = (js_value >> 8);
+		message |= (js_value_smaller << 16);
+		printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value_smaller);
 	} else {
 		printf("ERROR in send_js_message: UKNOWN IF BUTTON OR AXIS (js_type)\n");
 		return;
 	}
-	//printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value);
 	rs232_putchar(message);
 }
 

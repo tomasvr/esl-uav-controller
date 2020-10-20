@@ -57,6 +57,9 @@ STATE_t g_dest_state = NO_WHERE;
 // Communication variables initalization
 COMM_TYPE g_current_comm_type = UNKNOWN_COMM;
 
+// Keep track of current js_axis_type
+JOYSTICK_AXIS_t js_axis_type;
+
 // Motor variables initalization
 MOTOR_CTRL g_current_m0_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
@@ -216,18 +219,18 @@ void messg_decode(uint8_t message_byte){
 	//printf("FCB: message byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(message_byte));
 
 	/* First byte is 	start byte 				 */
-	/* Second byte is 	comm_type byte 	(case 2) */ 
+	/* Second byte is 	comm_type byte 	(case 2) */ // ONLY FOR JS_AXIS_TYPE ARE THE LEFT MOST 2 BYTES FOR AXIS TYPE
 	/* Third byte is 	data 			(case 1) */
 
 	switch(FRAG_COUNT) {
 		case 2: // Comm Type
 			/* If a new message is received, update last received message time */
 		 	USB_comm_update_received();
-	 		/* Used to determine if 'a' or 'z' was pressed */
-	 		motor_control_counter = 0;
-
-			//printf("comm_type: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(comm_type));
+			//printf("message_byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(message_byte));
 			g_current_comm_type = retrieve_comm_type(message_byte); //shift right to get bits at beginning of byte
+			if (g_current_comm_type == JS_AXIS_COMM) {
+				js_axis_type = retrieve_js_axis_type(message_byte); 
+			}
 			break;
 
 		case 1: // Data
@@ -235,23 +238,19 @@ void messg_decode(uint8_t message_byte){
 				case CTRL_COMM:
 					;	// C requires this semicolon here
 					uint8_t motor_states = retrieve_keyboard_motor_control(message_byte); 
-					// maybe move to comm.c
 					printf("FCB: motor states: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(motor_states));
-					g_current_m0_state = (motor_states >> 6) & 3; //extract last two bytes with and 
+					g_current_m0_state = (motor_states >> 6) & 3; //extract last two bytes with & 3 operator 
 					g_current_m1_state = (motor_states >> 4) & 3;
 					g_current_m2_state = (motor_states >> 2) & 3;
 					g_current_m3_state = (motor_states)		 & 3;
 					/* If 'a' or 'z' was pressed, adjust motor_lift_level */
-					// printf("FCB: motor 0: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(g_current_m0_state));
-					// printf("FCB: motor 1: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(g_current_m1_state));
-					// printf("FCB: motor 2: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(g_current_m2_state));
-					// printf("FCB: motor 3: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(g_current_m3_state));
 					if (0b11111111 == motor_states) {
 						motor_lift_level += STEP_SIZE;
 					}
 					else if (0b00000000 == motor_states) {
 						motor_lift_level -= STEP_SIZE;
 					}
+					/* only change motors if in appropriate mode */ //todo: move this logic to a central place
 					if (g_current_state == 	MANUAL_ST || g_current_state == YAWCONTROL_ST || g_current_state == FULLCONTROL_ST) {
 						keyboard_ctrl_action();
 					} else {
@@ -266,7 +265,9 @@ void messg_decode(uint8_t message_byte){
 					g_dest_state = NO_WHERE;					
 					break;
 				case JS_AXIS_COMM:
-	 				joystick_axis = retrieve_js_axis(message_byte);
+	 				//joystick_axis = retrieve_js_axis(message_byte);
+
+	 				process_js_axis_cmd(message_byte, js_axis_type);
 					break;
 				case CHANGE_P_COMM:
 			 		if (message_byte == 0x01) {
@@ -295,7 +296,6 @@ void messg_decode(uint8_t message_byte){
 			}	
 			/* Reset all message variables to prepare for next message */
 			g_current_comm_type = UNKNOWN_COMM;
-			joystick_axis = -1; 				
 	 	break;
 
 		default:
