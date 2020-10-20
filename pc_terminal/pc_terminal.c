@@ -60,6 +60,8 @@
 #define USB_SEND_CHECK_INTERVAL 1000000 // Control how often USB check messages are send
 #define USB_CHECK_MESSAGE 0 // Message ID for check USB type message (no need to change)
 
+#define PACKET_LENGTH 3 //in bytes
+
 #define ENABLE_JOYSTICK
 
 // current axis and button readings
@@ -220,7 +222,6 @@ int	rs232_getchar_nb(){
 
 int rs232_getchar(){
 	int 	c;
-
 	while ((c = rs232_getchar_nb()) == -1)
 		;
 	return c;
@@ -229,12 +230,10 @@ int rs232_getchar(){
 
 int rs232_putchar(int c){ // change char to uint32_t
 	int result;
-
 	do {
-		result = (int) write(fd_RS232, &c, 4);
+		result = (int) write(fd_RS232, &c, PACKET_LENGTH);
 	} while (result == 0);
-
-	assert(result == 4);
+	assert(result == PACKET_LENGTH);
 	return result;
 }
 

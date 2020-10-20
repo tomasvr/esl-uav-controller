@@ -317,7 +317,7 @@ void process_key(uint8_t c){
 		FRAG_COUNT--;
 	} else {
 		// TODO: remove 4th byte in packet
-		//printf("process key called but FRAG_COUNT < 0, FRAG_COUNT: \n", FRAG_COUNT);
+		printf("process key called but FRAG_COUNT < 0, FRAG_COUNT: \n", FRAG_COUNT);
 	}
 }
 
