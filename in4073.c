@@ -47,7 +47,7 @@
 uint32_t usb_comm_last_received;
 uint32_t current_time;
 
-// each packet includes 4 fragments
+// each packet includes 3 fragments
 uint8_t FRAG_COUNT = 0;
 
 // State variables initalization
@@ -55,7 +55,10 @@ STATE_t g_current_state = SAFE_ST;
 STATE_t g_dest_state = NO_WHERE;
 
 // Communication variables initalization
-COMM_TYPE g_current_comm_type = NO_COMM;
+COMM_TYPE g_current_comm_type = UNKNOWN_COMM;
+
+// Keep track of current js_axis_type
+JOYSTICK_AXIS_t js_axis_type;
 
 // Motor variables initalization
 MOTOR_CTRL g_current_m0_state = MOTOR_REMAIN;
@@ -63,79 +66,13 @@ MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m2_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m3_state = MOTOR_REMAIN;
 
-uint8_t jsvalue_left;
-uint8_t jsvalue_right;
 JOYSTICK_AXIS_t joystick_axis;
-uint16_t js_total_value;
+uint8_t js_total_value;
 
 // controller object declaration
 CONTROLLER *yaw_control;
 // CONTROLLER *roll_control;
 // CONTROLLER *pitch_control;
-
-/* The return value indicates how many motors went up (+) or down (-) 
- * which is used to adjust the motor_lift_level
- */
-int8_t find_motor_state(uint8_t messg){
-	uint8_t m_ctrl_1 = messg & 0xf0; 		
-	uint8_t m_ctrl_2 = messg & 0x0f;
-	int result = 0;
-	// find motor state of motor 0 
-	if (m_ctrl_1>>6 == 0) {				// 0000 -> M0
-		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) {
-			g_current_m0_state = MOTOR_UP;
-			result += 1;
-		}
-		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) {
-			g_current_m0_state = MOTOR_DOWN;
-			result -= 1;
-		}
-		if (((m_ctrl_1 >> 5)&1) == 0) g_current_m0_state = MOTOR_REMAIN;
-	}
-	if (m_ctrl_1>>6 == 2) {				// 0010 -> M2
-		if ((m_ctrl_1 >> 5)&1 && (m_ctrl_1 >> 4)&1) {
-			g_current_m2_state = MOTOR_UP;
-			result += 1;
-		}
-		if (((m_ctrl_1 >> 5)&1) == 1 && ((m_ctrl_1 >> 4)&1) == 0) {
-			g_current_m2_state = MOTOR_DOWN;
-			result -= 1;
-		}
-		if (((m_ctrl_1 >> 5)&1) == 0) g_current_m2_state = MOTOR_REMAIN;
-	}
-	if (m_ctrl_2>>2 == 1) {				// 0001 -> M1
-		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) {
-			g_current_m1_state = MOTOR_UP;
-			result += 1;
-		}
-		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) {
-			g_current_m1_state = MOTOR_DOWN;
-			result -= 1;
-		}
-		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m1_state = MOTOR_REMAIN;
-	}
-	if (m_ctrl_2>>2 == 3) {				// 0011 -> M3
-		if ((m_ctrl_2 >> 1)&1 && (m_ctrl_2>>0)&1) {
-			g_current_m3_state = MOTOR_UP;
-			result += 1;
-		}
-		if (((m_ctrl_2 >> 1)&1) == 1 && ((m_ctrl_2 >> 0)&1) == 0) {
-			g_current_m3_state = MOTOR_DOWN;
-			result -= 1;
-		}
-		if (((m_ctrl_2 >> 1)&1) == 0) g_current_m3_state = MOTOR_REMAIN;
-	} 
-	return result;
-}
-
-// int16_t find_min_ae()
-// {
-// 	int16_t min = ae[0];
-// 	if(ae[1] < min) min = ae[1];
-// 	if(ae[2] < min) min = ae[2];
-// 	if(ae[3] < min) min = ae[3];
-// 	return min;
-// }
 
 void enter_panic_mode(bool cable_detached){
 	if (g_current_state == SAFE_ST) {
@@ -180,13 +117,13 @@ void check_USB_connection_alive() {
 	}
 }
 
-void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
+void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint8_t js_total_value) {
 	if (joystick_axis == LIFT_THROTTLE) { // Throttle axis needs seperate calculation to determine when it is all the way down
-		if(js_total_value <= 32767){
-			js_total_value = 32767 - js_total_value;
+		if(js_total_value <= JS_AXIS_MID_VALUE){
+			js_total_value = JS_AXIS_MID_VALUE - js_total_value;
 		}
 		else {
-			js_total_value = 65536 - js_total_value + 32767;
+			js_total_value = JS_AXIS_MAX_VALUE - js_total_value + JS_AXIS_MID_VALUE;
 		}
 	}
 	joystick_axis_stored_values[joystick_axis] = js_total_value;
@@ -202,58 +139,62 @@ int16_t clip_motor_value(int16_t value) {
 	return value;
 }
 
-void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value) {
-	// printf("FCB: JS AXIS RECEIVED - axis: %d value: %ld \n", joystick_axis, js_total_value);
+
+
+void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint8_t js_total_value) {
+	//printf("FCB: JS AXIS RECEIVED - axis: %d value: %d \n", joystick_axis, js_total_value);
 	uint8_t percentage = 0; // (percentage%)
 	switch(joystick_axis){
 
 		case ROLL_AXIS:
-			if(js_total_value <= 32767){ // roll counterclockwise
-				percentage = (uint8_t) (100.f * js_total_value / 32767);
+			if(js_total_value <= JS_AXIS_MID_VALUE){ // roll counterclockwise
+				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
 				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 				ae[3] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			else{ // roll clockwise
-				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
 				ae[1] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
 				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			break;
 
 		case PITCH_AXIS:
-			if(js_total_value <= 32767){ // pitch down
-				percentage = (uint8_t) (100.f * js_total_value / 32767);
+			if(js_total_value <= JS_AXIS_MID_VALUE){ // pitch down
+				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
 				ae[0] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
 				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			else{ // pitch up
-				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
 				ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 				ae[2] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			break;
 
 		case YAW_AXIS:
-			if(js_total_value <= 32767){ // yaw counterclockwise
-				percentage = (uint8_t) (100.f * js_total_value / 32767);
+			if(js_total_value <= JS_AXIS_MID_VALUE){ // yaw counterclockwise
+
+				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
 				ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);		
 			}
 			else{ // yaw clockwise
-				percentage = (uint8_t) (100.f * (65536-js_total_value) / 32767);
+				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
 				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			break;
 
 		case LIFT_THROTTLE:
-			if(js_total_value <= 32767){
-				percentage = (uint8_t) (100.f * (32767-js_total_value) / 65535);
+			if(js_total_value <= JS_AXIS_MID_VALUE){
+				percentage = (uint8_t) (100.f * (JS_AXIS_MID_VALUE-js_total_value) / JS_AXIS_DIVIDE_VALUE);
 			}
 			else{
-				percentage = (uint8_t) (100.f * (65536-js_total_value+32767) / 65535);
+				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value+JS_AXIS_MID_VALUE) / JS_AXIS_DIVIDE_VALUE);
 			}
 			motor_lift_level = MOTOR_UPPER_LIMIT * percentage / 100;
+			//printf("FCB: percentage: %f lift_level: %d \n", percentage, motor_lift_level);
 			ae[0] = motor_lift_level;
 			ae[1] = motor_lift_level;
 			ae[2] = motor_lift_level;
@@ -272,147 +213,97 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint16_t js_total_value)
  * messg_decode -- decode messages
  *------------------------------------------------------------------
  */
-void messg_decode(uint8_t messg){
-	//printf("START messg_decode, g_current_comm_type: %d \n", g_current_comm_type);
-	
-	// printf("The %d byte is: \n", 4-FRAG_COUNT);			// print out each fragment QR receives
-	// printf("   		 "PRINTF_BINARY_PATTERN_INT8 "\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
-	/*--------------------------------------------------------------
-	 * decode the first frag, two field in this byte: 
-	 * 		----------------------
-	 * 		| C C C C || M M M M |                  
-	 * 		----------------------
-	 * first 4 bits -> command type { CTRL_COMM , MODE_SW_COMM , BAT_INFO , SYS_LOG , NO_COMM }
-	 * last 4 bits 	-> mode/state { SAFE_ST , PANIC_ST , MANUAL_ST , CALIBRATION_ST , YAWCONTROL_ST , FULLCONTROL_ST }
-	 *--------------------------------------------------------------
-	 */
-	
+void messg_decode(uint8_t message_byte){
+
+
 	//printf("FCB: FRAG_COUNT: %d \n", FRAG_COUNT);
-	//printf("FCB: message byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(messg));
+	//printf("FCB: message byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(message_byte));
 
-	if (FRAG_COUNT == 3){
+	/* First byte is 	start byte 				 */
+	/* Second byte is 	comm_type byte 	(case 2) */ // ONLY FOR JS_AXIS_TYPE ARE THE LEFT MOST 2 BYTES FOR AXIS TYPE
+	/* Third byte is 	data 			(case 1) */
 
-		/* If a new message is received, update last received message time */
-	 	USB_comm_update_received();
- 
- 		/* Used to determine if 'a' or 'z' was pressed */
- 		motor_control_counter = 0;
+	switch(FRAG_COUNT) {
+		case 2: // Comm Type
+			/* If a new message is received, update last received message time */
+		 	USB_comm_update_received();
+			//printf("message_byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(message_byte));
+			g_current_comm_type = retrieve_comm_type(message_byte); //shift right to get bits at beginning of byte
+			if (g_current_comm_type == JS_AXIS_COMM) {
+				js_axis_type = retrieve_js_axis_type(message_byte); 
+			}
+			break;
 
-		uint8_t comm_type_bits = messg & 0xf0; 		 //take left most 4 bits from current byte
-		uint8_t state_or_jsaxis_bits = messg & 0x0f; //take right most 4 bits from current byte // CAN ALSO BE NUMBER FOR JOYSTICK TYPE!
+		case 1: // Data
+			switch(g_current_comm_type) {
+				case CTRL_COMM:
+					;	// C requires this semicolon here
+					uint8_t motor_states = retrieve_keyboard_motor_control(message_byte); 
+					//printf("FCB: motor states: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(motor_states));
+					g_current_m0_state = (motor_states >> 6) & 3; //extract last two bytes with & 3 operator 
+					g_current_m1_state = (motor_states >> 4) & 3;
+					g_current_m2_state = (motor_states >> 2) & 3;
+					g_current_m3_state = (motor_states)		 & 3;
 
-		//printf("comm_type: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(comm_type));
+					/* only change motors if in appropriate mode */ //todo: move this logic to a central place
+					if (g_current_state == 	MANUAL_ST || g_current_state == YAWCONTROL_ST || g_current_state == FULLCONTROL_ST) {
+						keyboard_ctrl_action();
+						/* If 'a' or 'z' was pressed, adjust motor_lift_level */
+						if (0b11111111 == motor_states) {
+							motor_lift_level += STEP_SIZE;
+						}
+						else if (0b00000000 == motor_states) {
+							motor_lift_level -= STEP_SIZE;
+						}
+					} else {
+						printf("Cannot control keyboard motor in current mode: %d \n", g_current_state);						
+					}
+					break;
+				case MODE_SW_COMM:
+			 		g_dest_state = retrieve_mode(message_byte);
+			 		//printf("Comm type: %d, State: %d \n", g_current_comm_type, g_dest_state);
+					g_current_state = mode_sw_action("FCB", g_current_state, g_dest_state, false);
+					g_dest_state = NO_WHERE;					
+					break;
+				case JS_AXIS_COMM:
+	 				//joystick_axis = retrieve_js_axis(message_byte);
+					store_js_axis_commands(js_axis_type, message_byte);
+					if (g_current_state == 	MANUAL_ST || g_current_state == YAWCONTROL_ST || g_current_state == FULLCONTROL_ST) {
+						process_js_axis_cmd(js_axis_type, message_byte);
+					}	 				
+					break;
+				case CHANGE_P_COMM:
+			 		if (message_byte == 0x01) {
+			 			printf("FCB: P CONTROL UP\n");
+			 			increase_p_value(yaw_control);
+			 		}
+			 		if (message_byte == 0x00) {
+				 		printf("FCB: P CONTROL DOWN\n");
+				 		decrease_p_value(yaw_control);
+			 		}						
+				 	break;
+				case BAT_INFO_COMM:
+					break;
+				case SYS_LOG_COMM:
+					break;
+				case ESC_COMM:
+					break;
+				case USB_CHECK_COMM:
+			 		if (check_mode_sync(message_byte, g_current_state)) {
+		 				printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", message_byte, g_current_state);
+		 			}						
+		 			break;
+				default:
+		    		printf("ERROR (messg_decode): UNKNOWN COMM TYPE: %d \n", g_current_comm_type);
+					break;			
+			}	
+			/* Reset all message variables to prepare for next message */
+			g_current_comm_type = UNKNOWN_COMM;
+	 	break;
 
-		g_current_comm_type = retrieve_comm_type(comm_type_bits >> 4); //shift right to get bits at beginning of byte
-		//assert( == 1 && "QR: No such command found.");
-
-	 	if (g_current_comm_type == JS_AXIS_COMM) {
-	 		joystick_axis = retrieve_js_axis(state_or_jsaxis_bits);
-	 	}	
-	 	else if (g_current_comm_type == MODE_SW_COMM){
-	 		g_dest_state = retrieve_mode(state_or_jsaxis_bits);
-	 		printf("Comm type: %d, State: %d \n", g_current_comm_type, g_dest_state);
-			g_current_state = mode_sw_action("FCB", g_current_state, g_dest_state, false);
-			printf("current_state: %d \n", g_current_state);
-			g_dest_state = NO_WHERE;
-	 	} else {
-	 		if (check_mode_sync(state_or_jsaxis_bits, g_current_state)) {
-	 			printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", state_or_jsaxis_bits, g_current_state);
-	 		}
-	 	}
-	}
-
-	/*--------------------------------------------------------------
-	 * decode the second and the thrid frag, fields in these byte are depend on the  
-	 * command type received in the previous byte.
-	 *--------------------------------------------------------------
-	 */
-	else if (FRAG_COUNT == 2 || FRAG_COUNT == 1){
-		/*--------------------------------------------------------------
-		 * if the command is CTRL_TYPE, two field in this byte: 
-		 * 		  ----------------------		 ----------------------
-		 * FRAG_2 | 0 0 0 0 || 1 1 1 1 |  FRAG_1 | 2 2 2 2 || 3 3 3 3 |                
-		 * 		  ----------------------         ----------------------
-		 * FRAG_2:
-		 * first 4 bits -> motor 0 state { M0_UP, M0_REMAIN , M0_DOWN }
-		 * last 4 bits 	-> motor 1 state { M1_UP, M1_REMAIN , M1_DOWN }
-		 * FRAG_1:
-		 * first 4 bits -> motor 2 state { M2_UP, M2_REMAIN , M2_DOWN }
-		 * last 4 bits 	-> motor 3 state { M3_UP, M3_REMAIN , M3_DOWN }
-		 *--------------------------------------------------------------
-		 */
-		 		
-	 	if (g_current_comm_type == CTRL_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
-	 		motor_control_counter += find_motor_state(messg);
-	 		if (motor_control_counter == 4) {
-	 			motor_lift_level = clip_motor_value(motor_lift_level += STEP_SIZE);
-	 		}
-	 		if (motor_control_counter == -4) {
-	 			motor_lift_level = clip_motor_value(motor_lift_level -= STEP_SIZE);
-	 		}
-	 		//assert(result == 1 && "FCB: Failed to find the motor state.");
-	 	}
-	 	// else if (g_current_comm_type == JS_AXIS_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
-	 	// 	int result;
-		// 	result = find_motor_state_js(messg, FRAG_COUNT);
-	 	// 	assert(result == 1 && "QR: Fail to find the motor state.");
-	 	// }
-	 	else if (g_current_comm_type == JS_AXIS_COMM) {
-	 		if (FRAG_COUNT == 2) {
- 				jsvalue_right = messg;	
- 			}
-	 		else if (FRAG_COUNT == 1) {
-	 			jsvalue_left = messg;	
-	 			js_total_value = (jsvalue_left << 8) | jsvalue_right;
-		 		store_js_axis_commands(joystick_axis, js_total_value); // in EVERY state(also in manual/control) store js values to check neutral position
-		 		if (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST) { // if in control mode, control drone
-		 			// TODO: only execute the following function in mannual mode
-		 			process_js_axis_cmd(joystick_axis, js_total_value);
-		 		}
-	
- 			}	
-	 	}
-
-	 	/*--------------------------------------------------------------
-		 * if the command is MODE_SW_TYPE, two field in this byte: 
-		 * 		  ----------------------		 ----------------------
-		 * FRAG_2 |DEST_STATE||  all 0 |  FRAG_1 |  all 0  ||  all 0  |                
-		 * 		  ----------------------         ----------------------
-		 * FRAG_2:
-		 * first 4 bits -> the destination state { SAFE_ST , PANIC_ST , MANUAL_ST , CALIBRATION_ST , YAWCONTROL_ST , FULLCONTROL_ST }
-		 * last 4 bits 	-> default 0
-		 * FRAG_1:
-		 * first 4 bits -> default 0
-		 * last 4 bits 	-> default 0
-		 *--------------------------------------------------------------
-		 */
-	 	// else if (g_current_comm_type == MODE_SW_COMM && FRAG_COUNT == 2){ // this now happens in FRAG 3
-	 	// 	g_dest_state = retrieve_mode(messg);
-	 	// }
-	 	// 
-
-	 	/* USB_comm_check message or mode SW message, so we don't care about the contents of frag 2 and 1 */
-	 	else if (g_current_comm_type == USB_CHECK_COMM || g_current_comm_type == MODE_SW_COMM) {
-	 		//do nothing
- 			//printf("FCB: USB_CHECK do nothing \n");
-	 	}
-	 	else if (g_current_comm_type == CHANGE_P_COMM && FRAG_COUNT == 2) {
-			printf("CHANGE_P_COMM message: "PRINTF_BINARY_PATTERN_INT8"\n", PRINTF_BYTE_TO_BINARY_INT8(messg));
-	 		if (messg == 0x01) {
-	 			printf("FCB: P CONTROL UP\n");
-	 			increase_p_value(yaw_control);
-	 		}
-	 		if (messg == 0x00) {
-		 		printf("FCB: P CONTROL DOWN\n");
-		 		decrease_p_value(yaw_control);
-	 		}
-	 	}
-	 	else {
-	      	printf("FCB: ERROR - UNKNOWN COMM TYPE \n");
-	 	}
-	}
-	else {
-      	printf("ERROR (messg_decode): UNKNOWN FRAG COUNT \n");
+		default:
+		    printf("ERROR (messg_decode): UNKNOWN FRAG COUNT: %d \n", FRAG_COUNT);
+		    break;
 	}
 }
 
@@ -422,13 +313,14 @@ void messg_decode(uint8_t messg){
  */
 void process_key(uint8_t c){	
 	if (c == 0x55 && FRAG_COUNT == 0 && g_current_state != PANIC_ST) { // '0x55': 0b01010101(start byte)
-		FRAG_COUNT = 3;
+		FRAG_COUNT = 2;
 		return;
 	}
-	while (FRAG_COUNT > 0){
+	if (FRAG_COUNT > 0){
 		messg_decode(c);
 		FRAG_COUNT--;
-		return;
+	} else {
+		printf("process key called but FRAG_COUNT < 0, FRAG_COUNT: \n", FRAG_COUNT);
 	}
 }
 
@@ -494,12 +386,12 @@ int main(void)
 		// Execute commands that need to be handled in all modes
 		if (g_current_comm_type == ESC_COMM){ // terminate program
 			demo_done = true;
-			g_current_comm_type = NO_COMM;
+			g_current_comm_type = UNKNOWN_COMM;
 			enter_panic_mode(false);
 		}
-		if (g_current_comm_type == CTRL_COMM){
-			keyboard_ctrl_action();
-		}
+		// if (g_current_comm_type == CTRL_COMM){
+		// 	keyboard_ctrl_action();
+		// }
 
 		// Execute commands  that only need to be handled in certain mode
 		if (g_current_state == PANIC_ST)

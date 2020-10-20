@@ -17,7 +17,7 @@
 #define NUMBER_OF_JS_AXIS 4 // there are 4 axis (pitch, roll, yaw, throttle)
 
 // Used to check status of joystick axis before lift off
-uint16_t joystick_axis_stored_values[NUMBER_OF_JS_AXIS];
+uint8_t joystick_axis_stored_values[NUMBER_OF_JS_AXIS];
 
 typedef enum {
 	NO_WHERE,

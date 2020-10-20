@@ -60,6 +60,8 @@
 #define USB_SEND_CHECK_INTERVAL 1000000 // Control how often USB check messages are send
 #define USB_CHECK_MESSAGE 0 // Message ID for check USB type message (no need to change)
 
+#define PACKET_LENGTH 3 //in bytes
+
 #define ENABLE_JOYSTICK
 
 // current axis and button readings
@@ -220,7 +222,6 @@ int	rs232_getchar_nb(){
 
 int rs232_getchar(){
 	int 	c;
-
 	while ((c = rs232_getchar_nb()) == -1)
 		;
 	return c;
@@ -229,12 +230,10 @@ int rs232_getchar(){
 
 int rs232_putchar(int c){ // change char to uint32_t
 	int result;
-
 	do {
-		result = (int) write(fd_RS232, &c, 4);
+		result = (int) write(fd_RS232, &c, PACKET_LENGTH);
 	} while (result == 0);
-
-	assert(result == 4);
+	assert(result == PACKET_LENGTH);
 	return result;
 }
 
@@ -252,50 +251,55 @@ uint32_t message_encode(int c){
 			break;
 		case 'a':
 			// printf("a pressed\n");
-			message = 0b10111111001101110000000101010101; // keyboard 'a' pressed, drone lift up, this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state); 
+			// keyboard 'a' pressed, drone lift up, this command has a default mode -> MANUAL_ST
+			message = append_comm_type(message, CTRL_COMM);
+			message = append_keyboard_motor_control(message, 0b01010101); // 0b01-01-01-01 = 0bM0-M1-M2-M3,  00 = REMAIN, 01 = UP, 10 = DOWN
 			break;
-
 		case 'z':
-			message = 0b10101110001001100000000101010101; // keyboard 'z' pressed, drone lift down, this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			// keyboard 'z' pressed, drone lift down, this command has a default mode -> MANUAL_ST
+			message = append_comm_type(message, CTRL_COMM);
+			message = append_keyboard_motor_control(message, 0b10101010);
 			break;
-
 		case 'A':
-			message = 0b10111100001001000000000101010101; // keyboard '↑' pressed, drone pitch down, this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			// keyboard '↑' pressed, drone pitch down, this command has a default mode -> MANUAL_ST
+			message = append_comm_type(message, CTRL_COMM);
+			message = append_keyboard_motor_control(message, 0b10000100);
 			break;
-
 		case 'B':
-			message = 0b10101100001101000000000101010101; // keyboard '↓' pressed, drone pitch up, this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			// keyboard '↓' pressed, drone pitch up, this command has a default mode -> MANUAL_ST
+			message = append_comm_type(message, CTRL_COMM);
+			message = append_keyboard_motor_control(message, 0b01001000);
 			break;
-
 		case 'C':
-			message = 0b10001111000001100000000101010101; // keyboard '->' pressed, drone roll down, this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			// keyboard '->' pressed, drone roll down, this command has a default mode -> MANUAL_ST
+			message = append_comm_type(message, CTRL_COMM);
+			message = append_keyboard_motor_control(message, 0b00100001);		
 			break;
 
 		case 'D':
-			message = 0b10001110000001110000000101010101; // keyboard '<-' pressed, drone roll up, this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			// keyboard '<-' pressed, drone roll up, this command has a default mode -> MANUAL_ST
+			message = append_comm_type(message, CTRL_COMM);
+			message = append_keyboard_motor_control(message, 0b00010010);		
 			break;
 
 		case 'q':
-			message = 0b10101111001001110000000101010101; // keyboard 'q' pressed, drone yaw down(left), this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			// keyboard 'q' pressed, drone yaw down(left), this command has a default mode -> MANUAL_ST
+			message = append_comm_type(message, CTRL_COMM);
+			message = append_keyboard_motor_control(message, 0b10001000);		
 			break;
 		case 'w':
-			message = 0b10111110001101100000000101010101; // keyboard 'w' pressed, drone yaw up(right), this command has a default mode -> MANUAL_ST
-			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			// keyboard 'w' pressed, drone yaw up(right), this command has a default mode -> MANUAL_ST
+			message = append_comm_type(message, CTRL_COMM);
+			message = append_keyboard_motor_control(message, 0b00100010);		
 			break;
+
 		case 'u':
 			message = 0b00000000000000010111000001010101; // keyboard 'u' pressed, increase P yaw control
-			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			// TODO
 			break;
 		case 'j':
 			message = 0b00000000000000000111000001010101; // keyboard 'j' pressed, decrease P yaw control
-			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			// TODO
 			break;
 
 		case 'i':
@@ -352,7 +356,6 @@ uint32_t message_encode(int c){
 			//message = 0b00000000000100000001000001010101; 
 			message = append_comm_type(message, MODE_SW_COMM);
 			message = append_mode(message, MANUAL_ST); 
-			print_packet(message, "PC: Example change to manual mode: ");
 			g_current_state = mode_sw_action("TERM", g_current_state, MANUAL_ST, ESC);
 			g_dest_state = NO_WHERE;
 			break;
@@ -378,6 +381,7 @@ uint32_t message_encode(int c){
 			printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
 			//exit(-1);
 	}
+	//print_packet(message, "PC: Send message: ");
 	return message;
 }
 
@@ -393,13 +397,14 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	else if ( (js_type == 2) || (js_type == 130)) { //axis (130 occurs at startup)
 		message = append_comm_type(message, JS_AXIS_COMM);
 		JOYSTICK_AXIS_t axis_number_from_js = js_number;
-		message = append_js_axis(message, axis_number_from_js);
-		message |= (js_value << 16);
+		message = append_js_axis_type(message, axis_number_from_js);
+		uint8_t js_value_smaller = (js_value >> 8);
+		message |= (js_value_smaller << 16);
+		//printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value_smaller);
 	} else {
 		printf("ERROR in send_js_message: UKNOWN IF BUTTON OR AXIS (js_type)\n");
 		return;
 	}
-	//printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value);
 	rs232_putchar(message);
 }
 
@@ -407,7 +412,6 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 void send_USB_check_message() {
 	rs232_putchar(message_encode(USB_CHECK_MESSAGE));
 }
-
 
 unsigned int mon_time_ms(void){
     unsigned int    ms;
