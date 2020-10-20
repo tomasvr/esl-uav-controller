@@ -24,6 +24,7 @@
 
 // the command types during communication
 typedef enum {
+	UNKNOWN_COMM,
 	CTRL_COMM, // this means keyboard command
 	MODE_SW_COMM,
 	JS_AXIS_COMM, // joystick commands
@@ -32,7 +33,6 @@ typedef enum {
 	SYS_LOG_COMM,
 	ESC_COMM,
 	USB_CHECK_COMM,
-	NO_COMM
 } COMM_TYPE;
 
 typedef enum {

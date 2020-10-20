@@ -17,8 +17,8 @@
 
 // the states that a motor has
 typedef enum {
-		MOTOR_UP,
 		MOTOR_REMAIN,
+		MOTOR_UP,
 		MOTOR_DOWN,
 } MOTOR_CTRL;
 
