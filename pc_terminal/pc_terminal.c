@@ -322,12 +322,30 @@ uint32_t message_encode(int c){
 			message = 0b10111110001101100000000101010101; // keyboard 'w' pressed, drone yaw up(right), this command has a default mode -> MANUAL_ST
 			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
 			break;
-		case 'u':
-			message = 0b00000000000000010111000001010101; // keyboard 'u' pressed, increase P yaw control
+		case 'u':	
+			message = 0b00000000000000110000001101010101; // keyboard 'u' pressed, increase P yaw control
+			printf("u pressed 0b0000000000000011 0000001101010101\n");
 			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
 			break;
 		case 'j':
-			message = 0b00000000000000000111000001010101; // keyboard 'j' pressed, decrease P yaw control
+			message = 0b00000000000000010000001101010101; // keyboard 'j' pressed, decrease P yaw control
+			printf("j pressed 0b0000000000000001 0000001101010101\n");
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			break;
+		case 'i':
+			message = 0b00000000000000110000010001010101;//keyboard 'i' pressed, increase P1 roll/pitch control
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			break;
+		case 'k':
+			message = 0b00000000000000010000010001010101;//keyboard 'k' pressed, decrease P1 roll/pitch control
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			break;
+		case 'o':
+			message = 0b00000000000000110000010001010101;//keyboard 'o' pressed, increase P2 roll/pitch control
+			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			break;
+		case 'l':
+			message = 0b00000000000000010000010001010101;//keyboard 'l' pressed, decrease P2 roll/pitch control
 			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
 			break;
 

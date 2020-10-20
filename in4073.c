@@ -63,6 +63,25 @@ MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m2_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m3_state = MOTOR_REMAIN;
 
+TRIM_CTRL YAW_KP_STATE;
+
+uint8_t find_yaw_kp_state(uint32_t messg){
+	printf("raw message: "PRINTF_BINARY_PATTERN_INT8"\n", PRINTF_BYTE_TO_BINARY_INT8(messg));
+	int result = 0;
+	uint8_t kp_ctrl = (messg & 0x0f);
+	if(kp_ctrl == 3) {
+		YAW_KP_STATE = YAW_KP_UP; //0001
+		printf("YAW_KP_UP: "PRINTF_BINARY_PATTERN_INT8"\n", PRINTF_BYTE_TO_BINARY_INT8(messg));
+		result = 1;
+	}
+	else if(kp_ctrl == 1){
+		YAW_KP_STATE = YAW_KP_DOWN; //0000
+		printf("YAW_KP_DOWN: "PRINTF_BINARY_PATTERN_INT8"\n", PRINTF_BYTE_TO_BINARY_INT8(messg));
+		result = 1;
+	} 
+	return result;
+}
+
 
 // controller object declaration
 CONTROLLER *yaw_control;
@@ -171,6 +190,13 @@ void USB_comm_update_received() {
 void check_USB_connection_alive() {
 	current_time = get_time_us();
 	if (current_time - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: WHAT HAPPENS ON OVERFLOW! <--(Need fix when operation time > 70 mins)
+		enter_panic_mode(true);
+	}
+}
+
+void check_battery_volt(){
+	if(bat_volt < 1050){
+		// printf("Low battery voltage\n");
 		enter_panic_mode(true);
 	}
 }
@@ -342,8 +368,16 @@ void messg_decode(uint8_t messg){
 		 		
 	 	if (g_current_comm_type == CTRL_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
 	 		int result;
+	 		printf("manual message: "PRINTF_BINARY_PATTERN_INT8"\n", PRINTF_BYTE_TO_BINARY_INT8(messg));
 	 		result = find_motor_state(messg);
 	 		assert(result == 1 && "QR: Fail to find the motor state.");
+	 		if(g_current_state == YAWCONTROL_ST){
+	 			if(FRAG_COUNT == 2){
+	 				printf("yaw message: "PRINTF_BINARY_PATTERN_INT8"\n", PRINTF_BYTE_TO_BINARY_INT8(messg));
+	 				find_yaw_kp_state(messg);
+	 			}
+	 		}
+
 	 	}
 	 	// else if (g_current_comm_type == JS_AXIS_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
 	 	// 	int result;
@@ -392,17 +426,17 @@ void messg_decode(uint8_t messg){
 	 		//do nothing
  			//printf("FCB: USB_CHECK do nothing \n");
 	 	}
-	 	else if (g_current_comm_type == CHANGE_P_COMM && FRAG_COUNT == 2) {
-			printf("CHANGE_P_COMM message: "PRINTF_BINARY_PATTERN_INT8"\n", PRINTF_BYTE_TO_BINARY_INT8(messg));
-	 		if (messg == 0x01) {
-	 			printf("FCB: P CONTROL UP\n");
-	 			increase_p_value(yaw_control);
-	 		}
-	 		if (messg == 0x00) {
-		 		printf("FCB: P CONTROL DOWN\n");
-		 		decrease_p_value(yaw_control);
-	 		}
-	 	}
+	 	// else if (g_current_comm_type == CHANGE_P_COMM && FRAG_COUNT == 2) {
+			// printf("CHANGE_P_COMM message: "PRINTF_BINARY_PATTERN_INT8"\n", PRINTF_BYTE_TO_BINARY_INT8(messg));
+	 	// 	if (messg == 0x01) {
+	 	// 		printf("FCB: P CONTROL UP\n");
+	 	// 		increase_p_value(yaw_control);
+	 	// 	}
+	 	// 	if (messg == 0x00) {
+		 // 		printf("FCB: P CONTROL DOWN\n");
+		 // 		decrease_p_value(yaw_control);
+	 	// 	}
+	 	// }
 	 	else {
 	      	printf("FCB: ERROR - UNKNOWN COMM TYPE \n");
 	 	}
@@ -462,6 +496,9 @@ int main(void)
 		// check if USB connection is still alive by checking last time received
 		if (counter % 100 == 0) check_USB_connection_alive(); // use counter so this doesn't happen too often
 
+		//check battery voltege
+		if (counter % 1200 == 0) check_battery_volt();//enable panic mode when connect to drone, print for test
+
 		if (check_timer_flag()) 
 		{
 			if (counter % 20 == 0) 
@@ -476,7 +513,7 @@ int main(void)
 			printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
 			// printf("%6d %6d %6d | ", phi, theta, psi);
 			// printf("%6d %6d %6d | ", sp, sq, sr);
-			// printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
+			printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 			printf("%4d \n", g_current_state - 1);
 
 			clear_timer_flag();
@@ -498,17 +535,21 @@ int main(void)
 		}
 		if (g_current_comm_type == CTRL_COMM){
 			keyboard_ctrl_action();
+			if(g_current_state == YAWCONTROL_ST){
+			keyboard_yaw_ctrl_kp();
+			}
 		}
 		if (g_current_state == CALIBRATION_ST) 
 		{
 			sensor_calib();
-			offset_remove();	
+			//offset_remove();	
 			g_current_state = SAFE_ST;
 		}
 		if (g_current_state == YAWCONTROL_ST)
 		{
 			N_needed = yaw_control_calc(yaw_control, yaw_set_point, sr-sr_calib);
 			actuate(0, 0, 0, N_needed); // only N_needed in yay control mode
+			//keyboard_yaw_ctrl_kp();
 		}
 		if (g_current_state == FULLCONTROL_ST)
 		{

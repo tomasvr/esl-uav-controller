@@ -45,6 +45,8 @@
 
 bool demo_done;
 
+// controller object declaration
+extern CONTROLLER *yaw_control;
 
 // Control
 uint16_t motor_lift_level;

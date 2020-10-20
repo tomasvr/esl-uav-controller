@@ -122,7 +122,7 @@ void sensor_calib()
 	sensor_calc(100); 
 	if (calib_done) 
 	{	
-		printf("\n CALIB DONE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+		printf("\n CALIB DONE\n");
 		printf("\n SR CALIB DONE, SR_CALIB: %6d\n", sr_calib);//sr
 	}
 	if(DMP)
@@ -180,6 +180,23 @@ void decrease_p_value(CONTROLLER *controller)
 {
 	controller->kp -= CONTROLLER_P_STEP_SIZE;
 	if(controller->kp < CONTROLLER_P_LOWER_LIMIT) controller->kp += CONTROLLER_P_STEP_SIZE;
+}
+
+void keyboard_yaw_ctrl_kp()
+{
+	switch(YAW_KP_STATE){
+		case YAW_KP_UP: 
+			increase_p_value(yaw_control);
+			printf("kp increase\n");
+			break;
+		case YAW_KP_DOWN: 
+			decrease_p_value(yaw_control);
+			printf("kp decrease\n");
+			break;
+		default:
+			controller_init(yaw_control);
+			break;
+	}
 }
 
 void increase_motor_speed(int16_t *ae, uint8_t motor){

@@ -36,6 +36,15 @@ extern MOTOR_CTRL g_current_m1_state;
 extern MOTOR_CTRL g_current_m2_state;
 extern MOTOR_CTRL g_current_m3_state;
 
+typedef enum {
+		YAW_KP_UP,
+		YAW_KP_DOWN,
+} TRIM_CTRL;
+
+extern TRIM_CTRL YAW_KP_STATE;
+
+void keyboard_yaw_ctrl_kp(void);
+
 typedef struct // TODO: should use float?
 {
 	int16_t set_point;
