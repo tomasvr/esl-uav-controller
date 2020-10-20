@@ -266,6 +266,7 @@ void messg_decode(uint8_t message_byte){
 					break;
 				case JS_AXIS_COMM:
 	 				//joystick_axis = retrieve_js_axis(message_byte);
+					store_js_axis_commands(js_axis_type, message_byte);
 	 				process_js_axis_cmd(js_axis_type, message_byte);
 					break;
 				case CHANGE_P_COMM:
@@ -316,7 +317,6 @@ void process_key(uint8_t c){
 		messg_decode(c);
 		FRAG_COUNT--;
 	} else {
-		// TODO: remove 4th byte in packet
 		printf("process key called but FRAG_COUNT < 0, FRAG_COUNT: \n", FRAG_COUNT);
 	}
 }
