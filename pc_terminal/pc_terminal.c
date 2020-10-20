@@ -64,6 +64,16 @@
 
 #define ENABLE_JOYSTICK
 
+/* Used for keyboard control */
+#define LIFT_UP 	0b01010101
+#define LIFT_DOWN 	0b10101010    
+#define PITCH_DOWN 	0b10000100
+#define PITCH_UP 	0b01001000
+#define ROLL_RIGHT 	0b00100001
+#define ROLL_LEFT 	0b00010010
+#define YAW_LEFT 	0b10001000
+#define YAW_RIGHT 	0b00100010
+
 // current axis and button readings
 int	axis[6];
 int	button[12];
@@ -71,7 +81,6 @@ bool time2poll;
 
 STATE_t g_current_state = SAFE_ST;
 STATE_t g_dest_state = NO_WHERE;
-
 
 #include <stdio.h>
 #include <termios.h>
@@ -239,6 +248,9 @@ int rs232_putchar(int c){ // change char to uint32_t
 
 bool ESC = false;
 
+
+
+
 uint32_t message_encode(int c){
 	uint32_t message = BASE_MESSAGE_PACKET_BITS; // 0b00000000000000000000000001010101
 	switch(c){
@@ -253,44 +265,44 @@ uint32_t message_encode(int c){
 			// printf("a pressed\n");
 			// keyboard 'a' pressed, drone lift up, this command has a default mode -> MANUAL_ST
 			message = append_comm_type(message, CTRL_COMM);
-			message = append_keyboard_motor_control(message, 0b01010101); // 0b01-01-01-01 = 0bM0-M1-M2-M3,  00 = REMAIN, 01 = UP, 10 = DOWN
+			message = append_keyboard_motor_control(message, LIFT_UP); // 0b01-01-01-01 = 0bM0-M1-M2-M3,  00 = REMAIN, 01 = UP, 10 = DOWN
 			break;
 		case 'z':
 			// keyboard 'z' pressed, drone lift down, this command has a default mode -> MANUAL_ST
 			message = append_comm_type(message, CTRL_COMM);
-			message = append_keyboard_motor_control(message, 0b10101010);
+			message = append_keyboard_motor_control(message, LIFT_DOWN);
 			break;
 		case 'A':
 			// keyboard '↑' pressed, drone pitch down, this command has a default mode -> MANUAL_ST
 			message = append_comm_type(message, CTRL_COMM);
-			message = append_keyboard_motor_control(message, 0b10000100);
+			message = append_keyboard_motor_control(message, PITCH_DOWN);
 			break;
 		case 'B':
 			// keyboard '↓' pressed, drone pitch up, this command has a default mode -> MANUAL_ST
 			message = append_comm_type(message, CTRL_COMM);
-			message = append_keyboard_motor_control(message, 0b01001000);
+			message = append_keyboard_motor_control(message, PITCH_UP);
 			break;
 		case 'C':
 			// keyboard '->' pressed, drone roll down, this command has a default mode -> MANUAL_ST
 			message = append_comm_type(message, CTRL_COMM);
-			message = append_keyboard_motor_control(message, 0b00100001);		
+			message = append_keyboard_motor_control(message, ROLL_RIGHT);		
 			break;
 
 		case 'D':
 			// keyboard '<-' pressed, drone roll up, this command has a default mode -> MANUAL_ST
 			message = append_comm_type(message, CTRL_COMM);
-			message = append_keyboard_motor_control(message, 0b00010010);		
+			message = append_keyboard_motor_control(message, ROLL_LEFT);		
 			break;
 
 		case 'q':
 			// keyboard 'q' pressed, drone yaw down(left), this command has a default mode -> MANUAL_ST
 			message = append_comm_type(message, CTRL_COMM);
-			message = append_keyboard_motor_control(message, 0b10001000);		
+			message = append_keyboard_motor_control(message, YAW_LEFT);		
 			break;
 		case 'w':
 			// keyboard 'w' pressed, drone yaw up(right), this command has a default mode -> MANUAL_ST
 			message = append_comm_type(message, CTRL_COMM);
-			message = append_keyboard_motor_control(message, 0b00100010);		
+			message = append_keyboard_motor_control(message, YAW_RIGHT);		
 			break;
 
 		case 'u':
