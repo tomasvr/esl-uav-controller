@@ -263,10 +263,12 @@ void keyboard_ctrl_action(){
 
 int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr)
 {
+	// printf('yaw_set_point = %d', yaw_set_point);
 	yaw_control->set_point = yaw_set_point;
 	yaw_control->err = yaw_control->set_point - sr;
 	yaw_control->integral += yaw_control->err;
-	yaw_control->output = yaw_control->kp * yaw_control->integral;
+	yaw_control->output = yaw_control->kp * yaw_control->err;
+	// yaw_control->output = yaw_control->kp * yaw_control->integral; // with a integrator
 	return yaw_control->output;
 }
 
