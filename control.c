@@ -170,7 +170,7 @@ void controller_init(CONTROLLER *controller)
 	controller->set_point = 0;
 	controller->sensor_value = 0;
 	controller->err = 0;
-	controller->kp = 1;
+	controller->kp = 25;
 	controller->ki = 1;
 	controller->integral = 0;
 	controller->output = 0;
@@ -283,19 +283,46 @@ double sqrt(double square)
     return root;
 }
 
-void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed){
-	int sqr_0 = -1/(4*b)*Z_needed - N_needed/(4*d) + 1/(2*b)*M_needed;
-	// double sqr_1 = -1/(2*b)*L_needed - 1/(4*b)*Z_needed + 1/(4*d)*N_needed;
-	// double sqr_2 = -1/(4*b)*Z_needed - 1/(4*d)*N_needed + 1/(2*b)*M_needed;
-	// double sqr_3 = 1/(2*b)*L_needed - 1/(4*b)*Z_needed + 1/(4*d)*N_needed;
+void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed)
+{
+	int sqr_0 = Z_needed/(4*b) - N_needed/(4*d) + M_needed/(2*b);
+	int sqr_1 = -L_needed/(2*b) + Z_needed/(4*b) + N_needed/(4*d);
+	int sqr_2 = -Z_needed/(4*b) - N_needed/(4*d) + M_needed/(2*b);
+	int sqr_3 = L_needed/(2*b) + Z_needed/(4*b) + N_needed/(4*d);
 	// int sqr_0 = -N_needed/4;
-	printf("sqr_0 is: %d \n", sqr_0 );
-	int res = sqrt(sqr_0);
-	printf("ae0 is: %d \n", res );
+	// printf("sqr_0 is: %d \n", sqr_0 );
+	// bool isNegative = false;
+
+	// TODO: sqr_* should be positive, check(&fix) this
+	if(sqr_0 < 0)
+	{
+		sqr_0 = -sqr_0;
+	}
+	if(sqr_1 < 0)
+	{
+		sqr_1 = -sqr_1;
+	}
+	if(sqr_2 < 0)
+	{
+		sqr_2 = -sqr_2;
+	}
+	if(sqr_3 < 0)
+	{
+		sqr_3 = -sqr_3;
+	}
+
+	int res_0 = sqrt(sqr_0);
+	int res_1 = sqrt(sqr_1);
+	int res_2 = sqrt(sqr_2);
+	int res_3 = sqrt(sqr_3);
+	// printf("ae0 is: %d, isNegative: %B \n", res, isNegative);
 	// printf("sqr1 is: %d \n", sqr_1 );
 	// printf("sqr2 is: %d \n", sqr_2 );
 	// printf("sqr3 is: %d \n", sqr_3 );
-	// ae[0] = (int16_t) sqrt(sqr_0);
+	ae[0] = res_0;
+	ae[1] = res_1;
+	ae[2] = res_2;
+	ae[3] = res_3;
 	// ae[1] = (int16_t) sqrt(sqr_1);
 	// ae[2] = (int16_t) sqrt(sqr_2);
 	// ae[3] = (int16_t) sqrt(sqr_3);
@@ -344,7 +371,7 @@ void run_filters_and_control()
 			// N_needed = yaw_control_calc(yaw_control_pointer, yaw_set_point, sr-sr_calib);
 			// yaw_control_calc(yaw_control_pointer, 10, 0);
 			// printf('N = %d \n', yaw_control_calc(yaw_control_pointer, 10, 0));
-			actuate(0, 0, 0, yaw_control_calc(yaw_control_pointer, 10, 0)); // only N_needed in yaw control mode
+			actuate(100, 0, 0, yaw_control_calc(yaw_control_pointer, 60, 0)); // only N_needed in yaw control mode
 			
 			break;
 		case FULLCONTROL_ST:
