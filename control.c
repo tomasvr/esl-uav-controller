@@ -316,7 +316,29 @@ void run_filters_and_control()
 	// fancy stuff here
 	// control loops and/or filters
 	switch(fcb_state) {
-
+		case SAFE_ST:
+			zero_motors();
+			break;
+		case PANIC_ST:
+			//todo
+			break;
+		case MANUAL_ST:
+			//todo
+			break;
+		case CALIBRATION_ST:
+			zero_motors();
+			break;
+		case YAWCONTROL_ST:
+			//todo
+			break;
+		case FULLCONTROL_ST:
+			//todo
+			break;
+		case UNKNOWN_ST:	
+			zero_motors();
+		default:
+			printf("ERROR run_filters_and_control - unknown fcb_state: %d", fcb_state);
+			break;
 	}
 	// ae[0] = xxx, ae[1] = yyy etc etc
 	update_motors();

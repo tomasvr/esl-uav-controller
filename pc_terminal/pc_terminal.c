@@ -80,7 +80,7 @@ int	button[12];
 bool time2poll;
 
 STATE_t pc_state = SAFE_ST;
-STATE_t g_dest_state = NO_WHERE;
+STATE_t g_dest_state = UNKNOWN_ST;
 
 #include <stdio.h>
 #include <termios.h>
@@ -246,10 +246,16 @@ int rs232_putchar(int c){ // change char to uint32_t
 	return result;
 }
 
-bool ESC = false;
 
 
 
+uint32_t handle_mode_switch(uint32_t message, STATE_t to_state) {
+	message = append_comm_type(message, MODE_SW_COMM);
+	message = append_mode(message, to_state); 
+	pc_state = mode_sw_action("TERM", pc_state, to_state);
+	g_dest_state = UNKNOWN_ST;
+	return message;
+}
 
 uint32_t message_encode(int c){
 	uint32_t message = BASE_MESSAGE_PACKET_BITS; // 0b00000000000000000000000001010101
@@ -335,63 +341,24 @@ uint32_t message_encode(int c){
 			if (pc_state != SAFE_ST) message = append_mode(message, pc_state);
 			break;
 
-
-		// ESC
-		case 27: // keyboard 'ESC' pressed, drone switches to PANIC_ST
-			//message = 0b 00000000 00000000 11110000 01010101;
-			message = append_comm_type(message, ESC_COMM);
-			message = append_mode(message, pc_state); 
-			ESC = true;
-			pc_state = mode_sw_action("TERM", pc_state, g_dest_state, ESC);
+		case 27: // keyboard 'ESC' pressed, SWITCH TO PANIC MODE
+		case 48: // keyboard '0' pressed, SWITCH TO PANIC MODE
+			message = handle_mode_switch(message, SAFE_ST);
 			break;
-
-		// KEYBOARD 0 (SAFE_ST)
-		case 48: // keyboard '0' pressed, dorne switches to SAFE_ST
-			//message = 0b00000000000000000001000001010101; //000000000-00000000-00010000-01010101 (empty - CTRL_COMM - MODE_SW_COMM - startbit)
-			message = append_comm_type(message, MODE_SW_COMM);
-			message = append_mode(message, SAFE_ST); 
-			pc_state = mode_sw_action("TERM", pc_state, SAFE_ST, ESC);
-			g_dest_state = NO_WHERE;
+		case 49: // KEYBOARD 1 (switch to PANIC_ST)
+			message = handle_mode_switch(message, PANIC_ST);
 			break;
-
-		// KEYBOARD 1 (PANIC_ST)
-		case 49: // keyboard '1' pressed, dorne switches to PANIC_ST
-			//message = 0b00000000100000000001000001010101;
-			message = append_comm_type(message, MODE_SW_COMM);
-			message = append_mode(message, PANIC_ST); 
-			pc_state = mode_sw_action("TERM", pc_state, PANIC_ST, ESC);
-			g_dest_state = NO_WHERE;
+		case 50:  // KEYBOARD 2 (switch to MANUAL_ST)
+			message = handle_mode_switch(message, MANUAL_ST);
 			break;
-
-		// KEYBOARD 2 (MANUAL_ST)
-		case 50: // keyboard '2' pressed dorne switches to MANUAL_ST
-			//message = 0b00000000000100000001000001010101; 
-			message = append_comm_type(message, MODE_SW_COMM);
-			message = append_mode(message, MANUAL_ST); 
-			pc_state = mode_sw_action("TERM", pc_state, MANUAL_ST, ESC);
-			g_dest_state = NO_WHERE;
+		case 51: // KEYBOARD 3 (switch to CALIBRATION_ST)
+			message = handle_mode_switch(message, CALIBRATION_ST);
 			break;
-
-		// KEYBOARD 3 (CALIBRATION_ST)
-		case 51:
-			//message = 0b00000000001000000001000001010101; 
-			message = append_comm_type(message, MODE_SW_COMM);
-			message = append_mode(message, CALIBRATION_ST); 
-			pc_state = mode_sw_action("TERM", pc_state, CALIBRATION_ST, ESC);
-			g_dest_state = NO_WHERE;
-			break;
-
-		// KEYBOARD 4 (YAWCONTROL_ST)
-		case 52: // keyboard '4' switches drone to yaw control mode
-			//message = 0b00000000001100000001000001010101;
-			message = append_comm_type(message, MODE_SW_COMM);
-			message = append_mode(message, YAWCONTROL_ST); 
-			pc_state = mode_sw_action("TERM", pc_state, YAWCONTROL_ST, ESC);
-			g_dest_state = NO_WHERE;
+		case 52: // KEYBOARD 4 (switch to YAWCONTROL_ST)
+			message = handle_mode_switch(message, YAWCONTROL_ST);
 			break;
 		default:
 			printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
-			//exit(-1);
 	}
 	//print_packet(message, "PC: Send message: ");
 	return message;
@@ -401,10 +368,8 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	uint32_t message = 0b00000000000000000000000001010101; // base message
 	if (js_type == 1) { //buttons
 		if (js_number == 0) message = append_comm_type(message, ESC_COMM);
-		else message = append_comm_type(message, MODE_SW_COMM);
-		
-		STATE_t state_from_js_button = js_number; // The button number indicates which state (see states.h)
-		message = append_mode(message, state_from_js_button);
+		STATE_t to_state = js_number; // The button number indicates which state (see states.h)
+		message = handle_mode_switch(message, to_state);
 	}
 	else if ( (js_type == 2) || (js_type == 130)) { //axis (130 occurs at startup)
 		message = append_comm_type(message, JS_AXIS_COMM);

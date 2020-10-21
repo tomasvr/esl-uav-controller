@@ -20,7 +20,7 @@
 uint8_t joystick_axis_stored_values[NUMBER_OF_JS_AXIS];
 
 typedef enum {
-	NO_WHERE,
+	UNKNOWN_ST,
 	SAFE_ST, 
 	PANIC_ST,
 	MANUAL_ST,
@@ -39,6 +39,6 @@ typedef enum {
  *
  * @return     The new state that the caller should switch to
  */
-STATE_t mode_sw_action(char caller[], STATE_t g_current_state, STATE_t g_dest_state, bool ESC);
+STATE_t mode_sw_action(char caller[], STATE_t g_current_state, STATE_t g_dest_state);
 
 #endif

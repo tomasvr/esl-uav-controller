@@ -52,7 +52,7 @@ uint8_t FRAG_COUNT = 0;
 
 // State variables initalization
 STATE_t fcb_state = SAFE_ST;
-STATE_t g_dest_state = NO_WHERE;
+STATE_t fcb_dest_state = UNKNOWN_ST;
 
 // Communication variables initalization
 COMM_TYPE g_current_comm_type = UNKNOWN_COMM;
@@ -260,10 +260,10 @@ void messg_decode(uint8_t message_byte){
 					}
 					break;
 				case MODE_SW_COMM:
-			 		g_dest_state = retrieve_mode(message_byte);
-			 		//printf("Comm type: %d, State: %d \n", g_current_comm_type, g_dest_state);
-					fcb_state = mode_sw_action("FCB", fcb_state, g_dest_state, false);
-					g_dest_state = NO_WHERE;					
+			 		fcb_dest_state = retrieve_mode(message_byte);
+			 		//printf("Comm type: %d, State: %d \n", g_current_comm_type, fcb_dest_state);
+					fcb_state = mode_sw_action("FCB", fcb_state, fcb_dest_state);
+					fcb_dest_state = UNKNOWN_ST;					
 					break;
 				case JS_AXIS_COMM:
 	 				//joystick_axis = retrieve_js_axis(message_byte);
