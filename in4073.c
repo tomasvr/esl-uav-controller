@@ -70,9 +70,10 @@ JOYSTICK_AXIS_t joystick_axis;
 uint8_t js_total_value;
 
 // controller object declaration
-CONTROLLER *yaw_control;
-// CONTROLLER *roll_control;
-// CONTROLLER *pitch_control;
+CONTROLLER yaw_control;
+CONTROLLER *yaw_control_ptr = &yaw_control;
+// CONTROLLER roll_control;
+// CONTROLLER pitch_control;
 
 void enter_panic_mode(bool cable_detached){
 	if (fcb_state == SAFE_ST) {
@@ -275,11 +276,11 @@ void messg_decode(uint8_t message_byte){
 				case CHANGE_P_COMM:
 			 		if (message_byte == 0x01) {
 			 			printf("FCB: P CONTROL UP\n");
-			 			increase_p_value(yaw_control);
+			 			increase_p_value(yaw_control_ptr);
 			 		}
 			 		if (message_byte == 0x00) {
 				 		printf("FCB: P CONTROL DOWN\n");
-				 		decrease_p_value(yaw_control);
+				 		decrease_p_value(yaw_control_ptr);
 			 		}						
 				 	break;
 				case BAT_INFO_COMM:
@@ -347,7 +348,9 @@ int main(void)
 	
 	motor_lift_level = 0;
 	
-	controller_init(yaw_control);
+	controller_init(yaw_control_ptr);
+	// printf("Before prinf the output \n");
+	printf('output = %ld \n', yaw_control_ptr->output);
 
 	printf(" AE0 AE1 AE2 AE3  | MODE \n");
 	while (!demo_done)
@@ -408,7 +411,9 @@ int main(void)
 		}
 		if (fcb_state == YAWCONTROL_ST)
 		{
-			N_needed = yaw_control_calc(yaw_control, yaw_set_point, sr-sr_calib);
+			// N_needed = yaw_control_calc(yaw_control, yaw_set_point, sr-sr_calib);
+			yaw_control_ptr->kp = 10;
+			N_needed = yaw_control_calc(yaw_control_ptr, 10, 0);
 			actuate(0, 0, 0, N_needed); // only N_needed in yay control mode
 		}
 		if (fcb_state == FULLCONTROL_ST)

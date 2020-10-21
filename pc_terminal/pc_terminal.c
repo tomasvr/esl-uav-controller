@@ -62,7 +62,7 @@
 
 #define PACKET_LENGTH 3 //in bytes
 
-#define ENABLE_JOYSTICK
+// #define ENABLE_JOYSTICK
 
 /* Used for keyboard control */
 #define LIFT_UP 	0b01010101
@@ -163,7 +163,7 @@ void rs232_open(void){
   	int 		result;
   	struct termios	tty;
 
-       	fd_RS232 = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY);  // Hardcode your serial port here, or request it as an argument at runtime
+       	fd_RS232 = open("/dev/ttyUSB3", O_RDWR | O_NOCTTY);  // Hardcode your serial port here, or request it as an argument at runtime
 
 	assert(fd_RS232>=0);
 

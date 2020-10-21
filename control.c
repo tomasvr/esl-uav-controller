@@ -173,7 +173,7 @@ void controller_init(CONTROLLER *controller)
 	controller->kp = 1;
 	controller->ki = 1;
 	controller->integral = 0;
-	controller->output = 0;
+	controller->output = 4;
 	// prinf('Controller init end. \n');
 }
 
@@ -266,7 +266,9 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 	yaw_control->set_point = yaw_set_point;
 	yaw_control->err = yaw_control->set_point - sr;
 	// yaw_control->integral += yaw_control->err;
-	yaw_control->output = yaw_control->kp * yaw_control->err;
+	yaw_control->output = yaw_control->kp * yaw_control->err; // control loop without a integrator
+	// yaw_control->output = yaw_control->kp * yaw_control->integral; // control loop with a integrator
+	// printf('output = %d \n', &(yaw_control->output) );
 	return yaw_control->output;
 }
 
@@ -281,10 +283,17 @@ double sqrt(double square)
 }
 
 void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed){
+	
+	// printf("N_needed =  %d \n", N_needed);
+
 	double sqr_0 = -1/(4*b)*Z_needed - 1/(4*d)*N_needed + 1/(2*b)*M_needed;
 	double sqr_1 = -1/(2*b)*L_needed - 1/(4*b)*Z_needed + 1/(4*d)*N_needed;
 	double sqr_2 = -1/(4*b)*Z_needed - 1/(4*d)*N_needed + 1/(2*b)*M_needed;
 	double sqr_3 = 1/(2*b)*L_needed - 1/(4*b)*Z_needed + 1/(4*d)*N_needed;
+
+
+	// printf("sqr_0:%d, sqr_1:%d, sqr_2:%d, sqr_3:%d \n", sqr_0, sqr_1, sqr_2, sqr_3);
+
 	ae[0] = (int16_t) sqrt(sqr_0);
 	ae[1] = (int16_t) sqrt(sqr_1);
 	ae[2] = (int16_t) sqrt(sqr_2);

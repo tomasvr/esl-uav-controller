@@ -60,8 +60,8 @@ void sensor_calib(void);
 // void offset_remove(void);
 
 // controller
-#define b 1 
-#define d 1
+#define b 1 // parameter used in control loop calculation
+#define d 1 // parameter used in control loop calculation
 extern int16_t yaw_set_point;
 extern int16_t roll_set_point;
 extern int16_t pitch_set_point;
