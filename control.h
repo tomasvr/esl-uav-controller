@@ -15,20 +15,10 @@
 
 // the states that a motor has
 typedef enum {
-		MOTOR_UP,
 		MOTOR_REMAIN,
+		MOTOR_UP,
 		MOTOR_DOWN,
-		MOTOR_LEVEL_0,
-		MOTOR_LEVEL_1,
-		MOTOR_LEVEL_2,
-		MOTOR_LEVEL_3,
-		MOTOR_LEVEL_4,
-		MOTOR_LEVEL_5,
-		MOTOR_LEVEL_6,
-		MOTOR_LEVEL_7,
-		MOTOR_LEVEL_8,
-		MOTOR_LEVEL_9,
-		MOTOR_LEVEL_10
+		MOTOR_UNKNOWN
 } MOTOR_CTRL;
 
 extern MOTOR_CTRL g_current_m0_state;
@@ -56,7 +46,11 @@ typedef struct // TODO: should use float?
 
 } CONTROLLER;
 
-// calibraiton
+void increase_motor_speed(int16_t *ae, uint8_t motor);
+void decrease_motor_speed(int16_t *ae, uint8_t motor);
+void keyboard_ctrl_action();
+
+// calibration
 extern bool DMP;
 extern bool calib_done;
 extern uint8_t calib_counter;
@@ -71,9 +65,6 @@ extern int16_t sax_calib, say_calib, saz_calib;
 void sensor_calc(uint8_t);
 void sensor_calib(void);
 // void offset_remove(void);
-
-void ctrl_action();
-
 
 // controller
 #define b 1 
@@ -90,10 +81,6 @@ void increase_p_value(CONTROLLER *controller);
 void decrease_p_value(CONTROLLER *controller);
 int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr);
 void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed);
-
-void increase_motor_speed(int16_t *ae, uint8_t motor);
-void decrease_motor_speed(int16_t *ae, uint8_t motor);
-void keyboard_ctrl_action();
 
 #endif // CONTROL_H__
 

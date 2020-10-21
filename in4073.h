@@ -40,19 +40,16 @@
 #define MOTOR_MAX_CHANGE 50
 #define MOTOR_UPPER_LIMIT 1000
 
-
-#define PANIC_MODE_MOTOR_SPEED 300
+#define JS_AXIS_MID_VALUE 		127		// used to be 32767
+#define JS_AXIS_MAX_VALUE 		255		// used to be 65536
+#define JS_AXIS_DIVIDE_VALUE 	254 	// used to be 65535
 
 bool demo_done;
-
-// controller object declaration
-extern CONTROLLER *yaw_control;
-
+STATE_t fcb_state;
 // Control
 uint16_t motor_lift_level;
-int16_t motor[4],ae[4];
+int16_t motor[4],ae[4]; // should this be uint16_t or int16_t? why do we want negative values for motor
 void run_filters_and_control();
-
 
 // Timers
 #define TIMER_PERIOD	50 //50ms=20Hz (MAX 23bit, 4.6h)

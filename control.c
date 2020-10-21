@@ -44,6 +44,13 @@ void clip_motors() {
 	}
 }
 
+void zero_motors() {
+	ae[0] = 0;
+	ae[1] = 0;
+	ae[2] = 0;
+	ae[3] = 0;	
+}
+
 // calibraiton
 bool DMP = true;
 bool calib_done = false;
@@ -275,7 +282,7 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 {
 	yaw_control->set_point = yaw_set_point;
 	yaw_control->err = yaw_control->set_point - sr;
-	yaw_control->integral += yaw_control->err;
+	// yaw_control->integral += yaw_control->err;
 	yaw_control->output = yaw_control->kp * yaw_control->err;
 	return yaw_control->output;
 }
@@ -304,7 +311,7 @@ void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_nee
 
 void update_motors(void)
 {					
-	// if (g_current_state != SAFE_ST, PANIC_ST) //TODO
+	// if (fcb_state != SAFE_ST, PANIC_ST) //TODO
 		clip_motors();
 		// printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);
 		motor[0] = ae[0];
@@ -325,7 +332,31 @@ void run_filters_and_control()
 {
 	// fancy stuff here
 	// control loops and/or filters
-
+	switch(fcb_state) {
+		case SAFE_ST:
+			zero_motors();
+			break;
+		case PANIC_ST:
+			//todo
+			break;
+		case MANUAL_ST:
+			//todo
+			break;
+		case CALIBRATION_ST:
+			zero_motors();
+			break;
+		case YAWCONTROL_ST:
+			//todo
+			break;
+		case FULLCONTROL_ST:
+			//todo
+			break;
+		case UNKNOWN_ST:	
+			zero_motors();
+		default:
+			printf("ERROR run_filters_and_control - unknown fcb_state: %d", fcb_state);
+			break;
+	}
 	// ae[0] = xxx, ae[1] = yyy etc etc
 	update_motors();
 }
