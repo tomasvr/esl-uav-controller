@@ -385,7 +385,7 @@ int main(void)
 
 		if (counter % 100 == 0) check_USB_connection_alive();
 
-		check_battery_volt();//enable panic mode when connect to drone
+		//check_battery_volt();//enable panic mode when connect to drone
 
 		if (check_timer_flag()) 
 		{
@@ -393,9 +393,9 @@ int main(void)
 			if (counter % 20 == 0) 
 			{
 				nrf_gpio_pin_toggle(BLUE);
-				// printf("p yaw param: %4d \n", yaw_control_pointer->kp);
-				// printf("p yaw output: %4d \n", yaw_control_pointer->output);
-				// printf("p yaw error: %4d \n", yaw_control_pointer->err);	
+				printf("p yaw param: %4d \n", yaw_control_pointer->kp);
+				printf("p yaw output: %4d \n", yaw_control_pointer->output);
+				printf("p yaw error: %4d \n", yaw_control_pointer->err);	
  			}
 			adc_request_sample();
 			read_baro();
@@ -404,7 +404,7 @@ int main(void)
 			// printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
 			// printf("%6d %6d %6d | ", phi, theta, psi);
 			// printf("%6d %6d %6d | ", sp, sq, sr);
-			printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
+			//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 			printf("%4d \n", fcb_state - 1);
 			clear_timer_flag();
 			//printf("%4d \n", motor_lift_level);
