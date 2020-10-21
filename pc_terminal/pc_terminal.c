@@ -342,6 +342,8 @@ uint32_t message_encode(int c){
 			break;
 
 		case 27: // keyboard 'ESC' pressed, SWITCH TO PANIC MODE
+			message = append_comm_type(message, ESC_COMM);
+
 		case 48: // keyboard '0' pressed, SWITCH TO PANIC MODE
 			message = handle_mode_switch(message, SAFE_ST);
 			break;
