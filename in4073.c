@@ -120,14 +120,6 @@ void check_USB_connection_alive() {
 }
 
 void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint8_t js_total_value) {
-	if (joystick_axis == LIFT_THROTTLE) { // Throttle axis needs seperate calculation to determine when it is all the way down
-		if(js_total_value <= JS_AXIS_MID_VALUE){
-			js_total_value = JS_AXIS_MID_VALUE - js_total_value;
-		}
-		else {
-			js_total_value = JS_AXIS_MAX_VALUE - js_total_value + JS_AXIS_MID_VALUE;
-		}
-	}
 	joystick_axis_stored_values[joystick_axis] = js_total_value;
 }
 
@@ -211,6 +203,17 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint8_t js_total_value) 
 	return;
 }
 
+/* Translate thorttle to range: 0-255 */
+int8_t translate_throttle(int8_t throttle) {
+	if(throttle <= JS_AXIS_MID_VALUE){
+		throttle = JS_AXIS_MID_VALUE - throttle;
+	}
+	else {
+		throttle = JS_AXIS_MAX_VALUE - throttle + JS_AXIS_MID_VALUE;
+	}
+	return throttle;
+}
+
 /*------------------------------------------------------------------
  * messg_decode -- decode messages
  *------------------------------------------------------------------
@@ -272,10 +275,22 @@ void messg_decode(uint8_t message_byte){
 					break;
 				case JS_AXIS_COMM:
 	 				//joystick_axis = retrieve_js_axis(message_byte);
+					switch (js_axis_type) {
+						case ROLL_AXIS:
+							roll = message_byte;
+							break;
+						case PITCH_AXIS:
+							pitch = message_byte;
+							break;
+						case YAW_AXIS:
+							yaw = message_byte;
+							break;
+						case LIFT_THROTTLE:
+							message_byte = translate_throttle(message_byte);
+							lift = message_byte;
+							break;					
+					}	
 					store_js_axis_commands(js_axis_type, message_byte);
-					if (fcb_state == 	MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
-						process_js_axis_cmd(js_axis_type, message_byte);
-					}	 				
 					break;
 				case CHANGE_P_COMM:
 					switch(message_byte) {

@@ -348,9 +348,19 @@ void update_motors(void)
 #endif
 }
 
+void calculate_motor_values(int16_t pitch, int16_t roll, int16_t yaw, int16_t lift) {
+	ae[0] = (lift << 2) + pitch - yaw;
+	ae[1] = (lift << 2) - roll + yaw;
+	ae[2] = (lift << 2) - pitch - yaw;
+	ae[3] = (lift << 2) + roll + yaw;
+}
+
 void run_filters_and_control()
 {
-	
+	// printf("roll: %d\n", roll);
+	// printf("pitch: %d\n", pitch);
+	// printf("yaw: %d\n", yaw);
+	// printf("lift: %d\n", lift);
 	// fancy stuff here
 	// control loops and/or filters
 	switch(fcb_state) {
@@ -361,7 +371,7 @@ void run_filters_and_control()
 			//todo
 			break;
 		case MANUAL_ST:
-			//todo
+			calculate_motor_values(pitch, roll, yaw, lift);
 			break;
 		case CALIBRATION_ST:
 			zero_motors();
