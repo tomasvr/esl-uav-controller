@@ -135,76 +135,76 @@ int16_t clip_motor_value(int16_t value) {
 
 
 
-void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint8_t js_total_value) {
-	//printf("FCB: JS AXIS RECEIVED - axis: %d value: %d \n", joystick_axis, js_total_value);
-	uint8_t percentage = 0; // (percentage%)
-	switch(joystick_axis){
+// void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint8_t js_total_value) {
+// 	//printf("FCB: JS AXIS RECEIVED - axis: %d value: %d \n", joystick_axis, js_total_value);
+// 	uint8_t percentage = 0; // (percentage%)
+// 	switch(joystick_axis){
 
-		case ROLL_AXIS:
-			if(js_total_value <= JS_AXIS_MID_VALUE){ // roll counterclockwise
-				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
-				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				ae[3] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
-			}
-			else{ // roll clockwise
-				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
-				ae[1] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
-				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-			}
-			break;
+// 		case ROLL_AXIS:
+// 			if(js_total_value <= JS_AXIS_MID_VALUE){ // roll counterclockwise
+// 				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
+// 				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+// 				ae[3] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
+// 			}
+// 			else{ // roll clockwise
+// 				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
+// 				ae[1] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
+// 				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+// 			}
+// 			break;
 
-		case PITCH_AXIS:
-			if(js_total_value <= JS_AXIS_MID_VALUE){ // pitch down
-				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
-				ae[0] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
-				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-			}
-			else{ // pitch up
-				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
-				ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				ae[2] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
-			}
-			break;
+// 		case PITCH_AXIS:
+// 			if(js_total_value <= JS_AXIS_MID_VALUE){ // pitch down
+// 				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
+// 				ae[0] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
+// 				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+// 			}
+// 			else{ // pitch up
+// 				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
+// 				ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+// 				ae[2] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
+// 			}
+// 			break;
 
-		case YAW_AXIS:
-			if(js_total_value <= JS_AXIS_MID_VALUE){ // yaw counterclockwise
+// 		case YAW_AXIS:
+// 			if(js_total_value <= JS_AXIS_MID_VALUE){ // yaw counterclockwise
 
-				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
-				ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);		
-			}
-			else{ // yaw clockwise
-				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
-				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-			}
-			break;
+// 				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
+// 				ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+// 				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);		
+// 			}
+// 			else{ // yaw clockwise
+// 				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
+// 				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+// 				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+// 			}
+// 			break;
 
-		case LIFT_THROTTLE:
-			if(js_total_value <= JS_AXIS_MID_VALUE){
-				percentage = (uint8_t) (100.f * (JS_AXIS_MID_VALUE-js_total_value) / JS_AXIS_DIVIDE_VALUE);
-			}
-			else{
-				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value+JS_AXIS_MID_VALUE) / JS_AXIS_DIVIDE_VALUE);
-			}
-			motor_lift_level = MOTOR_UPPER_LIMIT * percentage / 100;
-			//printf("FCB: percentage: %f lift_level: %d \n", percentage, motor_lift_level);
-			ae[0] = motor_lift_level;
-			ae[1] = motor_lift_level;
-			ae[2] = motor_lift_level;
-			ae[3] = motor_lift_level;
-			break;
+// 		case LIFT_THROTTLE:
+// 			if(js_total_value <= JS_AXIS_MID_VALUE){
+// 				percentage = (uint8_t) (100.f * (JS_AXIS_MID_VALUE-js_total_value) / JS_AXIS_DIVIDE_VALUE);
+// 			}
+// 			else{
+// 				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value+JS_AXIS_MID_VALUE) / JS_AXIS_DIVIDE_VALUE);
+// 			}
+// 			motor_lift_level = MOTOR_UPPER_LIMIT * percentage / 100;
+// 			//printf("FCB: percentage: %f lift_level: %d \n", percentage, motor_lift_level);
+// 			ae[0] = motor_lift_level;
+// 			ae[1] = motor_lift_level;
+// 			ae[2] = motor_lift_level;
+// 			ae[3] = motor_lift_level;
+// 			break;
 
-		default:
-			enter_panic_mode(false);
-			break;
-	}
-	// printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);		
-	return;
-}
+// 		default:
+// 			enter_panic_mode(false);
+// 			break;
+// 	}
+// 	// printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);		
+// 	return;
+// }
 
-/* Translate thorttle to range: 0-255 */
-int8_t translate_throttle(int8_t throttle) {
+/* Translate js axis to range: 0-255 instead of 0 in the middle */
+uint8_t translate_throttle(uint8_t throttle) {
 	if(throttle <= JS_AXIS_MID_VALUE){
 		throttle = JS_AXIS_MID_VALUE - throttle;
 	}
@@ -275,15 +275,16 @@ void messg_decode(uint8_t message_byte){
 					break;
 				case JS_AXIS_COMM:
 	 				//joystick_axis = retrieve_js_axis(message_byte);
+					//printf("axis: %d value: %d \n", js_axis_type, message_byte);						
 					switch (js_axis_type) {
 						case ROLL_AXIS:
-							roll = message_byte;
+							roll = (int8_t) message_byte;
 							break;
 						case PITCH_AXIS:
-							pitch = message_byte;
+							pitch = (int8_t) message_byte;
 							break;
 						case YAW_AXIS:
-							yaw = message_byte;
+							yaw = (int8_t) message_byte;
 							break;
 						case LIFT_THROTTLE:
 							message_byte = translate_throttle(message_byte);

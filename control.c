@@ -348,7 +348,7 @@ void update_motors(void)
 #endif
 }
 
-void calculate_motor_values(int16_t pitch, int16_t roll, int16_t yaw, int16_t lift) {
+void calculate_motor_values(int16_t pitch, int16_t roll, int16_t yaw, uint16_t lift) { //TODO: add min throttle (around 170) and max throttle (1000)
 	ae[0] = (lift << 2) + pitch - yaw;
 	ae[1] = (lift << 2) - roll + yaw;
 	ae[2] = (lift << 2) - pitch - yaw;
