@@ -72,7 +72,7 @@ uint8_t js_total_value;
 
 // controller object declaration
 CONTROLLER yaw_control;
-CONTROLLER *yaw_control_pointer = & yaw_control;
+CONTROLLER *yaw_control_pointer = &yaw_control;
 // CONTROLLER *roll_control;
 // CONTROLLER *pitch_control;
 

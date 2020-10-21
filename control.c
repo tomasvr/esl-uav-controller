@@ -191,23 +191,6 @@ void decrease_p_value(CONTROLLER *controller)
 	}
 }
 
-void keyboard_yaw_ctrl_kp()
-{
-	switch(YAW_KP_STATE){
-		case YAW_KP_UP: 
-			increase_p_value(yaw_control);
-			printf("kp increase\n");
-			break;
-		case YAW_KP_DOWN: 
-			decrease_p_value(yaw_control);
-			printf("kp decrease\n");
-			break;
-		default:
-			controller_init(yaw_control);
-			break;
-	}
-}
-
 void increase_motor_speed(int16_t *ae, uint8_t motor){
 	ae[motor] += STEP_SIZE;
 	if (ae[motor] > UPPER_LIMIT) ae[motor] = UPPER_LIMIT;
