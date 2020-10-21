@@ -284,14 +284,21 @@ double sqrt(double square)
 }
 
 void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed){
-	double sqr_0 = -1/(4*b)*Z_needed - 1/(4*d)*N_needed + 1/(2*b)*M_needed;
-	double sqr_1 = -1/(2*b)*L_needed - 1/(4*b)*Z_needed + 1/(4*d)*N_needed;
-	double sqr_2 = -1/(4*b)*Z_needed - 1/(4*d)*N_needed + 1/(2*b)*M_needed;
-	double sqr_3 = 1/(2*b)*L_needed - 1/(4*b)*Z_needed + 1/(4*d)*N_needed;
-	ae[0] = (int16_t) sqrt(sqr_0);
-	ae[1] = (int16_t) sqrt(sqr_1);
-	ae[2] = (int16_t) sqrt(sqr_2);
-	ae[3] = (int16_t) sqrt(sqr_3);
+	int sqr_0 = -1/(4*b)*Z_needed - N_needed/(4*d) + 1/(2*b)*M_needed;
+	// double sqr_1 = -1/(2*b)*L_needed - 1/(4*b)*Z_needed + 1/(4*d)*N_needed;
+	// double sqr_2 = -1/(4*b)*Z_needed - 1/(4*d)*N_needed + 1/(2*b)*M_needed;
+	// double sqr_3 = 1/(2*b)*L_needed - 1/(4*b)*Z_needed + 1/(4*d)*N_needed;
+	// int sqr_0 = -N_needed/4;
+	printf("sqr_0 is: %d \n", sqr_0 );
+	int res = sqrt(sqr_0);
+	printf("ae0 is: %d \n", res );
+	// printf("sqr1 is: %d \n", sqr_1 );
+	// printf("sqr2 is: %d \n", sqr_2 );
+	// printf("sqr3 is: %d \n", sqr_3 );
+	// ae[0] = (int16_t) sqrt(sqr_0);
+	// ae[1] = (int16_t) sqrt(sqr_1);
+	// ae[2] = (int16_t) sqrt(sqr_2);
+	// ae[3] = (int16_t) sqrt(sqr_3);
 	return;
 }
 
@@ -335,9 +342,9 @@ void run_filters_and_control()
 		case YAWCONTROL_ST:
 			//todo
 			// N_needed = yaw_control_calc(yaw_control_pointer, yaw_set_point, sr-sr_calib);
-			N = yaw_control_calc(yaw_control_pointer, 10, 0);
-			printf('N = %d \n', N);
-			// actuate(0, 0, 0, N); // only N_needed in yaw control mode
+			// yaw_control_calc(yaw_control_pointer, 10, 0);
+			// printf('N = %d \n', yaw_control_calc(yaw_control_pointer, 10, 0));
+			actuate(0, 0, 0, yaw_control_calc(yaw_control_pointer, 10, 0)); // only N_needed in yaw control mode
 			
 			break;
 		case FULLCONTROL_ST:
