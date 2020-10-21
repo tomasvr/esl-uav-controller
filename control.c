@@ -32,7 +32,7 @@ void speed_limit()
 {
 	for(uint8_t i = 0; i < 4; i++)
 	{
-	if(ae[i] > 350) ae[i] = 350;
+	if(ae[i] > 450) ae[i] = 450;
 	if(ae[i] < 170) ae[i] = 170;
 	}
 }
@@ -95,8 +95,6 @@ void sensor_calc(uint8_t num)
 		acce_calib[1] /= num; 
 		acce_calib[2] /= num;//sax say saz
 		// printf("| PSI_CALIB: %6d \n", gyro_calib[2]);
-		calib_done = true;
-		calib_counter = 0;
 
 		// store calibrated value
 		phi_calib = angle_calib[0]; 
@@ -108,6 +106,8 @@ void sensor_calc(uint8_t num)
 		sax_calib = acce_calib[0]; 
 		say_calib = acce_calib[1]; 
 		saz_calib = acce_calib[2];
+		calib_done = true;
+		calib_counter = 0;
 
 		// reset 
 		angle_calib[0] = 0; 
@@ -129,7 +129,7 @@ void sensor_calib()
 	sensor_calc(100); 
 	if (calib_done) 
 	{	
-		printf("\n CALIB DONE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+		printf("\n CALIB DONE\n");
 		printf("\n SR CALIB DONE, SR_CALIB: %6d\n", sr_calib);//sr
 	}
 	if(DMP)
@@ -159,10 +159,10 @@ void sensor_calib()
 int16_t yaw_set_point = 0;
 int16_t roll_set_point = 0;
 int16_t pitch_set_point = 0;
-int16_t Z_needed = 0;
-int16_t L_needed = 0;
-int16_t M_needed = 0;
-int16_t N_needed = 0;
+int16_t Z = 0;
+int16_t L = 0;
+int16_t M = 0;
+int16_t N = 1;
 
 void controller_init(CONTROLLER *controller)
 {
@@ -173,20 +173,22 @@ void controller_init(CONTROLLER *controller)
 	controller->kp = 1;
 	controller->ki = 1;
 	controller->integral = 0;
-	controller->output = 4;
+	controller->output = 0;
 	// prinf('Controller init end. \n');
 }
 
-void increase_p_value(CONTROLLER *controller)
+void  increase_p_value(CONTROLLER *controller)
 {
-	controller->kp += CONTROLLER_P_STEP_SIZE;
-	if(controller->kp > CONTROLLER__P_UPPER_LIMIT) controller->kp -= CONTROLLER_P_STEP_SIZE;
+	if (controller->kp < CONTROLLER_P_UPPER_LIMIT) {
+		controller->kp += CONTROLLER_P_STEP_SIZE;
+	}
 }
 
 void decrease_p_value(CONTROLLER *controller)
 {
-	controller->kp -= CONTROLLER_P_STEP_SIZE;
-	if(controller->kp < CONTROLLER_P_LOWER_LIMIT) controller->kp += CONTROLLER_P_STEP_SIZE;
+	if (controller->kp > CONTROLLER_P_LOWER_LIMIT) {
+		controller->kp -= CONTROLLER_P_STEP_SIZE;
+	}
 }
 
 void increase_motor_speed(int16_t *ae, uint8_t motor){
@@ -266,9 +268,8 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 	yaw_control->set_point = yaw_set_point;
 	yaw_control->err = yaw_control->set_point - sr;
 	// yaw_control->integral += yaw_control->err;
-	yaw_control->output = yaw_control->kp * yaw_control->err; // control loop without a integrator
-	// yaw_control->output = yaw_control->kp * yaw_control->integral; // control loop with a integrator
-	// printf('output = %d \n', &(yaw_control->output) );
+	yaw_control->output = yaw_control->kp * yaw_control->err;
+	// printf("the output is: %d\n", yaw_control->output);
 	return yaw_control->output;
 }
 
@@ -283,17 +284,10 @@ double sqrt(double square)
 }
 
 void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed){
-	
-	// printf("N_needed =  %d \n", N_needed);
-
 	double sqr_0 = -1/(4*b)*Z_needed - 1/(4*d)*N_needed + 1/(2*b)*M_needed;
 	double sqr_1 = -1/(2*b)*L_needed - 1/(4*b)*Z_needed + 1/(4*d)*N_needed;
 	double sqr_2 = -1/(4*b)*Z_needed - 1/(4*d)*N_needed + 1/(2*b)*M_needed;
 	double sqr_3 = 1/(2*b)*L_needed - 1/(4*b)*Z_needed + 1/(4*d)*N_needed;
-
-
-	// printf("sqr_0:%d, sqr_1:%d, sqr_2:%d, sqr_3:%d \n", sqr_0, sqr_1, sqr_2, sqr_3);
-
 	ae[0] = (int16_t) sqrt(sqr_0);
 	ae[1] = (int16_t) sqrt(sqr_1);
 	ae[2] = (int16_t) sqrt(sqr_2);
@@ -322,6 +316,7 @@ void update_motors(void)
 
 void run_filters_and_control()
 {
+	
 	// fancy stuff here
 	// control loops and/or filters
 	switch(fcb_state) {
@@ -339,6 +334,11 @@ void run_filters_and_control()
 			break;
 		case YAWCONTROL_ST:
 			//todo
+			// N_needed = yaw_control_calc(yaw_control_pointer, yaw_set_point, sr-sr_calib);
+			N = yaw_control_calc(yaw_control_pointer, 10, 0);
+			printf('N = %d \n', N);
+			// actuate(0, 0, 0, N); // only N_needed in yaw control mode
+			
 			break;
 		case FULLCONTROL_ST:
 			//todo
@@ -352,5 +352,3 @@ void run_filters_and_control()
 	// ae[0] = xxx, ae[1] = yyy etc etc
 	update_motors();
 }
-
-

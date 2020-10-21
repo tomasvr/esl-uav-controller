@@ -1,7 +1,5 @@
 /*
-
 	control.h - header file for (motor) control
-
 */
 
 #ifndef CONTROL_H__
@@ -12,7 +10,7 @@
 #define UPPER_LIMIT 1000
 
 #define CONTROLLER_P_STEP_SIZE 1
-#define CONTROLLER__P_UPPER_LIMIT 50
+#define CONTROLLER_P_UPPER_LIMIT 50
 #define CONTROLLER_P_LOWER_LIMIT 1 
 
 // the states that a motor has
@@ -27,6 +25,15 @@ extern MOTOR_CTRL g_current_m0_state;
 extern MOTOR_CTRL g_current_m1_state;
 extern MOTOR_CTRL g_current_m2_state;
 extern MOTOR_CTRL g_current_m3_state;
+
+typedef enum {
+		YAW_KP_UP,
+		YAW_KP_DOWN,
+} TRIM_CTRL;
+
+extern TRIM_CTRL YAW_KP_STATE;
+
+void keyboard_yaw_ctrl_kp(void);
 
 typedef struct // TODO: should use float?
 {
@@ -60,15 +67,15 @@ void sensor_calib(void);
 // void offset_remove(void);
 
 // controller
-#define b 1 // parameter used in control loop calculation
-#define d 1 // parameter used in control loop calculation
-extern int16_t yaw_set_point;
-extern int16_t roll_set_point;
-extern int16_t pitch_set_point;
-extern int16_t Z_needed;
-extern int16_t L_needed;
-extern int16_t M_needed;
-extern int16_t N_needed;
+#define b 1 
+#define d 1
+// extern int16_t yaw_set_point;
+// extern int16_t roll_set_point;
+// extern int16_t pitch_set_point;
+// extern int16_t Z;
+// extern int16_t L;
+// extern int16_t M;
+// extern int16_t N;
 void controller_init(CONTROLLER *controller);
 void increase_p_value(CONTROLLER *controller);
 void decrease_p_value(CONTROLLER *controller);

@@ -31,6 +31,15 @@ typedef enum {
 		LIFT_THROTTLE,	
 } JOYSTICK_AXIS_t;
 
+typedef enum {
+		P_YAW_INC,
+		P_ROLL_INC,
+		P_PITCH_INC,
+		P_YAW_DEC,
+		P_ROLL_DEC,
+		P_PITCH_DEC
+} PID_PARAMETER_CHANGE_t;
+
 /**
  * @brief      Send packet from PC to FCB.
  */

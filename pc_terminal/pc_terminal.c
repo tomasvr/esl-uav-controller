@@ -163,7 +163,7 @@ void rs232_open(void){
   	int 		result;
   	struct termios	tty;
 
-       	fd_RS232 = open("/dev/ttyUSB3", O_RDWR | O_NOCTTY);  // Hardcode your serial port here, or request it as an argument at runtime
+       	fd_RS232 = open("/dev/ttyUSB5", O_RDWR | O_NOCTTY);  // Hardcode your serial port here, or request it as an argument at runtime
 
 	assert(fd_RS232>=0);
 
@@ -312,12 +312,12 @@ uint32_t message_encode(int c){
 			break;
 
 		case 'u':
-			message = 0b00000000000000010111000001010101; // keyboard 'u' pressed, increase P yaw control
-			// TODO
+			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'u' pressed, increase P yaw control
+			message = append_parameter_change(message, P_YAW_INC);
 			break;
 		case 'j':
-			message = 0b00000000000000000111000001010101; // keyboard 'j' pressed, decrease P yaw control
-			// TODO
+			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'j' pressed, decrease P yaw control
+			message = append_parameter_change(message, P_YAW_DEC);
 			break;
 
 		case 'i':
@@ -342,6 +342,8 @@ uint32_t message_encode(int c){
 			break;
 
 		case 27: // keyboard 'ESC' pressed, SWITCH TO PANIC MODE
+			message = append_comm_type(message, ESC_COMM);
+
 		case 48: // keyboard '0' pressed, SWITCH TO PANIC MODE
 			message = handle_mode_switch(message, SAFE_ST);
 			break;
@@ -518,4 +520,3 @@ int main(int argc, char **argv)
 
 	return 0;
 }
-

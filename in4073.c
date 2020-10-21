@@ -42,7 +42,8 @@
 #include "in4073.h"
 #include <assert.h>
 
-#define USB_COMM_INTERVAL_THRESHOLD 2000000 // in us (1000000 = 1 second)    
+#define USB_COMM_INTERVAL_THRESHOLD 2000000 // in us (1000000 = 1 second) 
+#define BATTERY_CHECK_INTERVAL_THRESHOLD 5000000   
 
 uint32_t usb_comm_last_received;
 uint32_t current_time;
@@ -71,9 +72,9 @@ uint8_t js_total_value;
 
 // controller object declaration
 CONTROLLER yaw_control;
-CONTROLLER *yaw_control_ptr = &yaw_control;
-// CONTROLLER roll_control;
-// CONTROLLER pitch_control;
+CONTROLLER *yaw_control_pointer = &yaw_control;
+// CONTROLLER *roll_control;
+// CONTROLLER *pitch_control;
 
 void enter_panic_mode(bool cable_detached){
 	if (fcb_state == SAFE_ST) {
@@ -237,6 +238,9 @@ void messg_decode(uint8_t message_byte){
 
 		case 1: // Data
 			switch(g_current_comm_type) {
+				case ESC_COMM:
+					demo_done = false;
+					return;
 				case CTRL_COMM:
 					;	// C requires this semicolon here
 					uint8_t motor_states = retrieve_keyboard_motor_control(message_byte); 
@@ -274,20 +278,22 @@ void messg_decode(uint8_t message_byte){
 					}	 				
 					break;
 				case CHANGE_P_COMM:
-			 		if (message_byte == 0x01) {
-			 			printf("FCB: P CONTROL UP\n");
-			 			increase_p_value(yaw_control_ptr);
-			 		}
-			 		if (message_byte == 0x00) {
-				 		printf("FCB: P CONTROL DOWN\n");
-				 		decrease_p_value(yaw_control_ptr);
-			 		}						
+					switch(message_byte) {
+						case P_YAW_INC:
+			 				increase_p_value(yaw_control_pointer);
+			 				printf("FCB: P YAW CONTROL UP\n");
+			 				break;
+			 			case P_YAW_DEC:
+				 			printf("FCB: P YAW CONTROL DOWN\n");
+			 				decrease_p_value(yaw_control_pointer);
+			 				break;
+			 			default: 
+				 			printf("FCB: UKNOWN CHANGE P VALUE: \n", message_byte);
+					}					
 				 	break;
 				case BAT_INFO_COMM:
 					break;
 				case SYS_LOG_COMM:
-					break;
-				case ESC_COMM:
 					break;
 				case USB_CHECK_COMM:
 			 		if (check_mode_sync(message_byte, fcb_state)) {
@@ -325,6 +331,29 @@ void process_key(uint8_t c){
 	}
 }
 
+uint32_t last_time_battery;
+uint32_t current_time_battery;
+
+
+void check_battery_volt(){
+	current_time_battery = get_time_us();
+	if(current_time_battery - last_time_battery > BATTERY_CHECK_INTERVAL_THRESHOLD){
+		printf("current voltage: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
+		if(bat_volt < 1150 && bat_volt > 1100){
+			printf("CURRENT VOLTAGE: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
+		}
+		else if(bat_volt < 1100 && bat_volt > 1050){
+			printf("WARNING, CURRENT VOLTAGE1: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
+			enter_panic_mode(true);
+		}
+		else if(bat_volt < 1050){
+			printf("WARNING, CURRENT VOLTAGE2: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
+			enter_panic_mode(true); 
+		}
+	last_time_battery = current_time_battery;
+	}
+}
+
 /*------------------------------------------------------------------
  * main -- everything you need is here :)
  *------------------------------------------------------------------
@@ -339,18 +368,17 @@ int main(void)
 	imu_init(true, 100);	
 	baro_init();
 	spi_flash_init();
-	ble_init();
-
-	uint32_t counter = 0;
+	ble_init();	
+	
 	demo_done = false;
+	int counter = 0;
 
 	usb_comm_last_received = get_time_us();
 	
 	motor_lift_level = 0;
 	
-	controller_init(yaw_control_ptr);
-	// printf("Before prinf the output \n");
-	printf('output = %ld \n', yaw_control_ptr->output);
+	controller_init(yaw_control_pointer);
+	// printf('N_needed = %d \n', N_needed);
 
 	printf(" AE0 AE1 AE2 AE3  | MODE \n");
 	while (!demo_done)
@@ -359,11 +387,17 @@ int main(void)
 
 		if (counter % 100 == 0) check_USB_connection_alive();
 
+		//check_battery_volt();//enable panic mode when connect to drone
+
 		if (check_timer_flag()) 
 		{
+		
 			if (counter % 20 == 0) 
 			{
 				nrf_gpio_pin_toggle(BLUE);
+				// printf("p yaw param: %4d \n", yaw_control_pointer->kp);
+				// printf("p yaw output: %4d \n", yaw_control_pointer->output);
+				// printf("p yaw error: %4d \n", yaw_control_pointer->err);	
  			}
 			adc_request_sample();
 			read_baro();
@@ -372,7 +406,7 @@ int main(void)
 			printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
 			// printf("%6d %6d %6d | ", phi, theta, psi);
 			// printf("%6d %6d %6d | ", sp, sq, sr);
-			// printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
+			//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 			printf("%4d \n", fcb_state - 1);
 			clear_timer_flag();
 			//printf("%4d \n", motor_lift_level);
@@ -394,6 +428,7 @@ int main(void)
 		// 	keyboard_ctrl_action();
 		// }
 
+
 		// Execute commands  that only need to be handled in certain mode
 		if (fcb_state == PANIC_ST)
 		{
@@ -409,13 +444,15 @@ int main(void)
 			//offset_remove();
 			fcb_state = SAFE_ST;
 		}
-		if (fcb_state == YAWCONTROL_ST)
-		{
-			// N_needed = yaw_control_calc(yaw_control, yaw_set_point, sr-sr_calib);
-			yaw_control_ptr->kp = 10;
-			N_needed = yaw_control_calc(yaw_control_ptr, 10, 0);
-			actuate(0, 0, 0, N_needed); // only N_needed in yay control mode
-		}
+		// if (fcb_state == YAWCONTROL_ST)
+		// {
+		// 	// N_needed = yaw_control_calc(yaw_control_pointer, yaw_set_point, sr-sr_calib);
+		// 	N_needed = yaw_control_calc(yaw_control_pointer, 10, 0);
+
+		// 	// printf('N_needed = %d \n', N_needed);
+			
+		// 	actuate(0, 0, 0, N_needed); // only N_needed in yay control mode
+		// }
 		if (fcb_state == FULLCONTROL_ST)
 		{
 			// TODO: do full controller things
