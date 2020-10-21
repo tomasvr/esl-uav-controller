@@ -159,10 +159,10 @@ void sensor_calib()
 int16_t yaw_set_point = 0;
 int16_t roll_set_point = 0;
 int16_t pitch_set_point = 0;
-int16_t Z_needed = 0;
-int16_t L_needed = 0;
-int16_t M_needed = 0;
-int16_t N_needed = 0;
+int16_t Z = 0;
+int16_t L = 0;
+int16_t M = 0;
+int16_t N = 1;
 
 void controller_init(CONTROLLER *controller)
 {
@@ -269,6 +269,7 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 	yaw_control->err = yaw_control->set_point - sr;
 	// yaw_control->integral += yaw_control->err;
 	yaw_control->output = yaw_control->kp * yaw_control->err;
+	// printf("the output is: %d\n", yaw_control->output);
 	return yaw_control->output;
 }
 
@@ -315,6 +316,7 @@ void update_motors(void)
 
 void run_filters_and_control()
 {
+	
 	// fancy stuff here
 	// control loops and/or filters
 	switch(fcb_state) {
@@ -332,6 +334,11 @@ void run_filters_and_control()
 			break;
 		case YAWCONTROL_ST:
 			//todo
+			// N_needed = yaw_control_calc(yaw_control_pointer, yaw_set_point, sr-sr_calib);
+			N = yaw_control_calc(yaw_control_pointer, 10, 0);
+			printf('N = %d \n', N);
+			// actuate(0, 0, 0, N); // only N_needed in yaw control mode
+			
 			break;
 		case FULLCONTROL_ST:
 			//todo
@@ -345,5 +352,6 @@ void run_filters_and_control()
 	// ae[0] = xxx, ae[1] = yyy etc etc
 	update_motors();
 }
+
 
 

@@ -368,17 +368,17 @@ int main(void)
 	imu_init(true, 100);	
 	baro_init();
 	spi_flash_init();
-	ble_init();
-
-	uint32_t counter = 0;
+	ble_init();	
+	
 	demo_done = false;
+	int counter = 0;
 
 	usb_comm_last_received = get_time_us();
 	
 	motor_lift_level = 0;
 	
 	controller_init(yaw_control_pointer);
-	printf('N_needed = %d \n', N_needed);
+	// printf('N_needed = %d \n', N_needed);
 
 	printf(" AE0 AE1 AE2 AE3  | MODE \n");
 	while (!demo_done)
@@ -444,15 +444,15 @@ int main(void)
 			//offset_remove();
 			fcb_state = SAFE_ST;
 		}
-		if (fcb_state == YAWCONTROL_ST)
-		{
-			// N_needed = yaw_control_calc(yaw_control_pointer, yaw_set_point, sr-sr_calib);
-			N_needed = yaw_control_calc(yaw_control_pointer, 10, 0);
+		// if (fcb_state == YAWCONTROL_ST)
+		// {
+		// 	// N_needed = yaw_control_calc(yaw_control_pointer, yaw_set_point, sr-sr_calib);
+		// 	N_needed = yaw_control_calc(yaw_control_pointer, 10, 0);
 
-			// printf('N_needed = %d \n', N_needed);
+		// 	// printf('N_needed = %d \n', N_needed);
 			
-			actuate(0, 0, 0, N_needed); // only N_needed in yay control mode
-		}
+		// 	actuate(0, 0, 0, N_needed); // only N_needed in yay control mode
+		// }
 		if (fcb_state == FULLCONTROL_ST)
 		{
 			// TODO: do full controller things

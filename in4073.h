@@ -20,10 +20,6 @@
 #include "ml.h"
 #include "app_util_platform.h"
 #include <math.h>
-// js:
-// #include <stdlib.h> 
-// #include <unistd.h> 
-// #include <pthread.h> 
 
 // custom includes
 #include "logging.h"

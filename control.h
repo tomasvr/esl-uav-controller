@@ -69,13 +69,13 @@ void sensor_calib(void);
 // controller
 #define b 1 
 #define d 1
-extern int16_t yaw_set_point;
-extern int16_t roll_set_point;
-extern int16_t pitch_set_point;
-extern int16_t Z_needed;
-extern int16_t L_needed;
-extern int16_t M_needed;
-extern int16_t N_needed;
+// extern int16_t yaw_set_point;
+// extern int16_t roll_set_point;
+// extern int16_t pitch_set_point;
+// extern int16_t Z;
+// extern int16_t L;
+// extern int16_t M;
+// extern int16_t N;
 void controller_init(CONTROLLER *controller);
 void increase_p_value(CONTROLLER *controller);
 void decrease_p_value(CONTROLLER *controller);
