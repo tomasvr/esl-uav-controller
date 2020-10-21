@@ -42,7 +42,8 @@
 #include "in4073.h"
 #include <assert.h>
 
-#define USB_COMM_INTERVAL_THRESHOLD 2000000 // in us (1000000 = 1 second)    
+#define USB_COMM_INTERVAL_THRESHOLD 2000000 // in us (1000000 = 1 second) 
+#define BATTERY_CHECK_INTERVAL_THRESHOLD 5000000   
 
 uint32_t usb_comm_last_received;
 uint32_t current_time;
@@ -324,6 +325,29 @@ void process_key(uint8_t c){
 	}
 }
 
+uint32_t last_time_battery;
+uint32_t current_time_battery;
+
+
+void check_battery_volt(){
+	current_time_battery = get_time_us();
+	if(current_time_battery - last_time_battery > BATTERY_CHECK_INTERVAL_THRESHOLD){
+		printf("current voltage: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
+		if(bat_volt < 1150 && bat_volt > 1100){
+			printf("CURRENT VOLTAGE: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
+		}
+		else if(bat_volt < 1100 && bat_volt > 1050){
+			printf("WARNING, CURRENT VOLTAGE1: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
+			enter_panic_mode(true);
+		}
+		else if(bat_volt < 1050){
+			printf("WARNING, CURRENT VOLTAGE2: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
+			enter_panic_mode(true); 
+		}
+	last_time_battery = current_time_battery;
+	}
+}
+
 /*------------------------------------------------------------------
  * main -- everything you need is here :)
  *------------------------------------------------------------------
@@ -356,6 +380,8 @@ int main(void)
 
 		if (counter % 100 == 0) check_USB_connection_alive();
 
+		check_battery_volt();//enable panic mode when connect to drone
+
 		if (check_timer_flag()) 
 		{
 			if (counter % 20 == 0) 
@@ -366,10 +392,10 @@ int main(void)
 			read_baro();
 
 			// printf("%10ld | ", get_time_us());
-			printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
+			// printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
 			// printf("%6d %6d %6d | ", phi, theta, psi);
 			// printf("%6d %6d %6d | ", sp, sq, sr);
-			// printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
+			printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 			printf("%4d \n", fcb_state - 1);
 			clear_timer_flag();
 			//printf("%4d \n", motor_lift_level);

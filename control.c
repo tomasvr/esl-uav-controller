@@ -32,7 +32,7 @@ void speed_limit()
 {
 	for(uint8_t i = 0; i < 4; i++)
 	{
-	if(ae[i] > 350) ae[i] = 350;
+	if(ae[i] > 450) ae[i] = 450;
 	if(ae[i] < 170) ae[i] = 170;
 	}
 }
@@ -95,8 +95,6 @@ void sensor_calc(uint8_t num)
 		acce_calib[1] /= num; 
 		acce_calib[2] /= num;//sax say saz
 		// printf("| PSI_CALIB: %6d \n", gyro_calib[2]);
-		calib_done = true;
-		calib_counter = 0;
 
 		// store calibrated value
 		phi_calib = angle_calib[0]; 
@@ -108,6 +106,8 @@ void sensor_calc(uint8_t num)
 		sax_calib = acce_calib[0]; 
 		say_calib = acce_calib[1]; 
 		saz_calib = acce_calib[2];
+		calib_done = true;
+		calib_counter = 0;
 
 		// reset 
 		angle_calib[0] = 0; 
@@ -129,7 +129,7 @@ void sensor_calib()
 	sensor_calc(100); 
 	if (calib_done) 
 	{	
-		printf("\n CALIB DONE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+		printf("\n CALIB DONE\n");
 		printf("\n SR CALIB DONE, SR_CALIB: %6d\n", sr_calib);//sr
 	}
 	if(DMP)
@@ -187,6 +187,23 @@ void decrease_p_value(CONTROLLER *controller)
 {
 	controller->kp -= CONTROLLER_P_STEP_SIZE;
 	if(controller->kp < CONTROLLER_P_LOWER_LIMIT) controller->kp += CONTROLLER_P_STEP_SIZE;
+}
+
+void keyboard_yaw_ctrl_kp()
+{
+	switch(YAW_KP_STATE){
+		case YAW_KP_UP: 
+			increase_p_value(yaw_control);
+			printf("kp increase\n");
+			break;
+		case YAW_KP_DOWN: 
+			decrease_p_value(yaw_control);
+			printf("kp decrease\n");
+			break;
+		default:
+			controller_init(yaw_control);
+			break;
+	}
 }
 
 void increase_motor_speed(int16_t *ae, uint8_t motor){
