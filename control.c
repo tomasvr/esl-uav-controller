@@ -177,16 +177,18 @@ void controller_init(CONTROLLER *controller)
 	// prinf('Controller init end. \n');
 }
 
-void increase_p_value(CONTROLLER *controller)
+void  increase_p_value(CONTROLLER *controller)
 {
-	controller->kp += CONTROLLER_P_STEP_SIZE;
-	if(controller->kp > CONTROLLER__P_UPPER_LIMIT) controller->kp -= CONTROLLER_P_STEP_SIZE;
+	if (controller->kp < CONTROLLER_P_UPPER_LIMIT) {
+		controller->kp += CONTROLLER_P_STEP_SIZE;
+	}
 }
 
 void decrease_p_value(CONTROLLER *controller)
 {
-	controller->kp -= CONTROLLER_P_STEP_SIZE;
-	if(controller->kp < CONTROLLER_P_LOWER_LIMIT) controller->kp += CONTROLLER_P_STEP_SIZE;
+	if (controller->kp > CONTROLLER_P_LOWER_LIMIT) {
+		controller->kp -= CONTROLLER_P_STEP_SIZE;
+	}
 }
 
 void increase_motor_speed(int16_t *ae, uint8_t motor){

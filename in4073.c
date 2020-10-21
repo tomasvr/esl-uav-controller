@@ -273,14 +273,18 @@ void messg_decode(uint8_t message_byte){
 					}	 				
 					break;
 				case CHANGE_P_COMM:
-			 		if (message_byte == 0x01) {
-			 			printf("FCB: P CONTROL UP\n");
-			 			increase_p_value(yaw_control);
-			 		}
-			 		if (message_byte == 0x00) {
-				 		printf("FCB: P CONTROL DOWN\n");
-				 		decrease_p_value(yaw_control);
-			 		}						
+					switch(message_byte) {
+						case P_YAW_INC:
+			 				increase_p_value(yaw_control);
+			 				printf("FCB: P YAW CONTROL UP\n");
+			 				break;
+			 			case P_YAW_DEC:
+				 			printf("FCB: P YAW CONTROL DOWN\n");
+			 				decrease_p_value(yaw_control);
+			 				break;
+			 			default: 
+				 			printf("FCB: UKNOWN CHANGE P VALUE: \n", message_byte);
+					}					
 				 	break;
 				case BAT_INFO_COMM:
 					break;
@@ -390,6 +394,7 @@ int main(void)
 		// if (g_current_comm_type == CTRL_COMM){
 		// 	keyboard_ctrl_action();
 		// }
+			printf("p yaw param: %4d \n", yaw_control->kp);
 
 		// Execute commands  that only need to be handled in certain mode
 		if (fcb_state == PANIC_ST)
