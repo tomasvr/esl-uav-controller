@@ -159,10 +159,10 @@ void sensor_calib()
 int16_t yaw_set_point = 0;
 int16_t roll_set_point = 0;
 int16_t pitch_set_point = 0;
-int16_t Z_needed = 0;
-int16_t L_needed = 0;
-int16_t M_needed = 0;
-int16_t N_needed = 0;
+int16_t Z = 0;
+int16_t L = 0;
+int16_t M = 0;
+int16_t N = 1;
 
 void controller_init(CONTROLLER *controller)
 {
@@ -170,7 +170,7 @@ void controller_init(CONTROLLER *controller)
 	controller->set_point = 0;
 	controller->sensor_value = 0;
 	controller->err = 0;
-	controller->kp = 1;
+	controller->kp = 25;
 	controller->ki = 1;
 	controller->integral = 0;
 	controller->output = 0;
@@ -269,6 +269,7 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 	yaw_control->err = yaw_control->set_point - sr;
 	// yaw_control->integral += yaw_control->err;
 	yaw_control->output = yaw_control->kp * yaw_control->err;
+	//printf("yaw output: %d\n", yaw_control->output);
 	return yaw_control->output;
 }
 
@@ -282,15 +283,49 @@ double sqrt(double square)
     return root;
 }
 
-void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed){
-	double sqr_0 = -1/(4*b)*Z_needed - 1/(4*d)*N_needed + 1/(2*b)*M_needed;
-	double sqr_1 = -1/(2*b)*L_needed - 1/(4*b)*Z_needed + 1/(4*d)*N_needed;
-	double sqr_2 = -1/(4*b)*Z_needed - 1/(4*d)*N_needed + 1/(2*b)*M_needed;
-	double sqr_3 = 1/(2*b)*L_needed - 1/(4*b)*Z_needed + 1/(4*d)*N_needed;
-	ae[0] = (int16_t) sqrt(sqr_0);
-	ae[1] = (int16_t) sqrt(sqr_1);
-	ae[2] = (int16_t) sqrt(sqr_2);
-	ae[3] = (int16_t) sqrt(sqr_3);
+void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed)
+{
+	int sqr_0 = Z_needed/(4*b) - N_needed/(4*d) + M_needed/(2*b);
+	int sqr_1 = -L_needed/(2*b) + Z_needed/(4*b) + N_needed/(4*d);
+	int sqr_2 = -Z_needed/(4*b) - N_needed/(4*d) + M_needed/(2*b);
+	int sqr_3 = L_needed/(2*b) + Z_needed/(4*b) + N_needed/(4*d);
+	// int sqr_0 = -N_needed/4;
+	// printf("sqr_0 is: %d \n", sqr_0 );
+	// bool isNegative = false;
+
+	// TODO: sqr_* should be positive, check(&fix) this
+	if(sqr_0 < 0)
+	{
+		sqr_0 = -sqr_0;
+	}
+	if(sqr_1 < 0)
+	{
+		sqr_1 = -sqr_1;
+	}
+	if(sqr_2 < 0)
+	{
+		sqr_2 = -sqr_2;
+	}
+	if(sqr_3 < 0)
+	{
+		sqr_3 = -sqr_3;
+	}
+
+	int res_0 = sqrt(sqr_0);
+	int res_1 = sqrt(sqr_1);
+	int res_2 = sqrt(sqr_2);
+	int res_3 = sqrt(sqr_3);
+	// printf("ae0 is: %d, isNegative: %B \n", res, isNegative);
+	// printf("sqr1 is: %d \n", sqr_1 );
+	// printf("sqr2 is: %d \n", sqr_2 );
+	// printf("sqr3 is: %d \n", sqr_3 );
+	ae[0] = res_0;
+	ae[1] = res_1;
+	ae[2] = res_2;
+	ae[3] = res_3;
+	// ae[1] = (int16_t) sqrt(sqr_1);
+	// ae[2] = (int16_t) sqrt(sqr_2);
+	// ae[3] = (int16_t) sqrt(sqr_3);
 	return;
 }
 
@@ -313,8 +348,19 @@ void update_motors(void)
 #endif
 }
 
+void calculate_motor_values(int16_t pitch, int16_t roll, int16_t yaw, uint16_t lift) { //TODO: add min throttle (around 170) and max throttle (1000)
+	ae[0] = (lift << 2) + pitch - yaw;
+	ae[1] = (lift << 2) - roll + yaw;
+	ae[2] = (lift << 2) - pitch - yaw;
+	ae[3] = (lift << 2) + roll + yaw;
+}
+
 void run_filters_and_control()
 {
+	// printf("roll: %d\n", roll);
+	// printf("pitch: %d\n", pitch);
+	// printf("yaw: %d\n", yaw);
+	// printf("lift: %d\n", lift);
 	// fancy stuff here
 	// control loops and/or filters
 	switch(fcb_state) {
@@ -325,13 +371,21 @@ void run_filters_and_control()
 			//todo
 			break;
 		case MANUAL_ST:
-			//todo
+			calculate_motor_values(pitch, roll, yaw, lift);
 			break;
 		case CALIBRATION_ST:
 			zero_motors();
 			break;
 		case YAWCONTROL_ST:
 			//todo
+			// N_needed = yaw_control_calc(yaw_control_pointer, yaw_set_point, sr-sr_calib);
+			// yaw_control_calc(yaw_control_pointer, 10, 0);
+			// printf('N = %d \n', yaw_control_calc(yaw_control_pointer, 10, 0));
+			//actuate(100, 0, 0, yaw_control_calc(yaw_control_pointer, 60, 0)); // only N_needed in yaw control mode
+			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr >> 8)*-1 ), lift); // i think sr needs *-1 (reverse sign)
+			//printf("sr: %d\n", sr >> 8);
+			//printf("yaw: %d\n", yaw);
+			
 			break;
 		case FULLCONTROL_ST:
 			//todo
@@ -345,5 +399,3 @@ void run_filters_and_control()
 	// ae[0] = xxx, ae[1] = yyy etc etc
 	update_motors();
 }
-
-
