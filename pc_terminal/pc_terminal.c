@@ -312,12 +312,12 @@ uint32_t message_encode(int c){
 			break;
 
 		case 'u':
-			message = 0b00000000000000010111000001010101; // keyboard 'u' pressed, increase P yaw control
-			// TODO
+			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'u' pressed, increase P yaw control
+			message = append_parameter_change(message, P_YAW_INC);
 			break;
 		case 'j':
-			message = 0b00000000000000000111000001010101; // keyboard 'j' pressed, decrease P yaw control
-			// TODO
+			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'j' pressed, decrease P yaw control
+			message = append_parameter_change(message, P_YAW_DEC);
 			break;
 
 		case 'i':
