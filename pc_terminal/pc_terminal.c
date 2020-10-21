@@ -79,8 +79,8 @@ int	axis[6];
 int	button[12];
 bool time2poll;
 
-STATE_t g_current_state = SAFE_ST;
-STATE_t g_dest_state = NO_WHERE;
+STATE_t pc_state = SAFE_ST;
+STATE_t g_dest_state = UNKNOWN_ST;
 
 #include <stdio.h>
 #include <termios.h>
@@ -246,10 +246,16 @@ int rs232_putchar(int c){ // change char to uint32_t
 	return result;
 }
 
-bool ESC = false;
 
 
 
+uint32_t handle_mode_switch(uint32_t message, STATE_t to_state) {
+	message = append_comm_type(message, MODE_SW_COMM);
+	message = append_mode(message, to_state); 
+	pc_state = mode_sw_action("TERM", pc_state, to_state);
+	g_dest_state = UNKNOWN_ST;
+	return message;
+}
 
 uint32_t message_encode(int c){
 	uint32_t message = BASE_MESSAGE_PACKET_BITS; // 0b00000000000000000000000001010101
@@ -259,7 +265,7 @@ uint32_t message_encode(int c){
 			// printf("entered case for usb check message\n");
 			//message = 0b00000000000000001001000001010101; // 000000000-00000000-11110000-01010101 (empty - empty - USB_check_comm - startbit)
 			message = append_comm_type(message, USB_CHECK_COMM);
-			message = append_mode(message, g_current_state); // append current state to check at FCB side
+			message = append_mode(message, pc_state); // append current state to check at FCB side
 			break;
 		case 'a':
 			// printf("a pressed\n");
@@ -317,81 +323,42 @@ uint32_t message_encode(int c){
 		case 'i':
 			// TODO: fill in the encoded message
 			// message = 0b00000000000000010111000001010101; // keyboard 'i' pressed, increase P1 roll/pitch control
-			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			if (pc_state != SAFE_ST) message = append_mode(message, pc_state);
 			break;
 		case 'k':
 			// TODO: fill in the encoded message
 			// message = 0b00000000000000000111000001010101; // keyboard 'j' pressed, decrease P1 roll/pitch control
-			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			if (pc_state != SAFE_ST) message = append_mode(message, pc_state);
 			break;
 		case 'o':
 			// TODO: fill in the encoded message
 			// message = 0b00000000000000010111000001010101; // keyboard 'o' pressed, increase P2 roll/pitch control
-			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			if (pc_state != SAFE_ST) message = append_mode(message, pc_state);
 			break;
 		case 'l':
 			// TODO: fill in the encoded message
 			// message = 0b00000000000000000111000001010101; // keyboard 'l' pressed, decrease P2 roll/pitch control
-			if (g_current_state != SAFE_ST) message = append_mode(message, g_current_state);
+			if (pc_state != SAFE_ST) message = append_mode(message, pc_state);
 			break;
 
-
-		// ESC
-		case 27: // keyboard 'ESC' pressed, drone switches to PANIC_ST
-			//message = 0b 00000000 00000000 11110000 01010101;
-			message = append_comm_type(message, ESC_COMM);
-			message = append_mode(message, g_current_state); 
-			ESC = true;
-			g_current_state = mode_sw_action("TERM", g_current_state, g_dest_state, ESC);
+		case 27: // keyboard 'ESC' pressed, SWITCH TO PANIC MODE
+		case 48: // keyboard '0' pressed, SWITCH TO PANIC MODE
+			message = handle_mode_switch(message, SAFE_ST);
 			break;
-
-		// KEYBOARD 0 (SAFE_ST)
-		case 48: // keyboard '0' pressed, dorne switches to SAFE_ST
-			//message = 0b00000000000000000001000001010101; //000000000-00000000-00010000-01010101 (empty - CTRL_COMM - MODE_SW_COMM - startbit)
-			message = append_comm_type(message, MODE_SW_COMM);
-			message = append_mode(message, SAFE_ST); 
-			g_current_state = mode_sw_action("TERM", g_current_state, SAFE_ST, ESC);
-			g_dest_state = NO_WHERE;
+		case 49: // KEYBOARD 1 (switch to PANIC_ST)
+			message = handle_mode_switch(message, PANIC_ST);
 			break;
-
-		// KEYBOARD 1 (PANIC_ST)
-		case 49: // keyboard '1' pressed, dorne switches to PANIC_ST
-			//message = 0b00000000100000000001000001010101;
-			message = append_comm_type(message, MODE_SW_COMM);
-			message = append_mode(message, PANIC_ST); 
-			g_current_state = mode_sw_action("TERM", g_current_state, PANIC_ST, ESC);
-			g_dest_state = NO_WHERE;
+		case 50:  // KEYBOARD 2 (switch to MANUAL_ST)
+			message = handle_mode_switch(message, MANUAL_ST);
 			break;
-
-		// KEYBOARD 2 (MANUAL_ST)
-		case 50: // keyboard '2' pressed dorne switches to MANUAL_ST
-			//message = 0b00000000000100000001000001010101; 
-			message = append_comm_type(message, MODE_SW_COMM);
-			message = append_mode(message, MANUAL_ST); 
-			g_current_state = mode_sw_action("TERM", g_current_state, MANUAL_ST, ESC);
-			g_dest_state = NO_WHERE;
+		case 51: // KEYBOARD 3 (switch to CALIBRATION_ST)
+			message = handle_mode_switch(message, CALIBRATION_ST);
 			break;
-
-		// KEYBOARD 3 (CALIBRATION_ST)
-		case 51:
-			//message = 0b00000000001000000001000001010101; 
-			message = append_comm_type(message, MODE_SW_COMM);
-			message = append_mode(message, CALIBRATION_ST); 
-			g_current_state = mode_sw_action("TERM", g_current_state, CALIBRATION_ST, ESC);
-			g_dest_state = NO_WHERE;
-			break;
-
-		// KEYBOARD 4 (YAWCONTROL_ST)
-		case 52: // keyboard '4' switches drone to yaw control mode
-			//message = 0b00000000001100000001000001010101;
-			message = append_comm_type(message, MODE_SW_COMM);
-			message = append_mode(message, YAWCONTROL_ST); 
-			g_current_state = mode_sw_action("TERM", g_current_state, YAWCONTROL_ST, ESC);
-			g_dest_state = NO_WHERE;
+		case 52: // KEYBOARD 4 (switch to YAWCONTROL_ST)
+			message = handle_mode_switch(message, YAWCONTROL_ST);
 			break;
 		default:
 			printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
-			//exit(-1);
 	}
 	//print_packet(message, "PC: Send message: ");
 	return message;
@@ -401,10 +368,8 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	uint32_t message = 0b00000000000000000000000001010101; // base message
 	if (js_type == 1) { //buttons
 		if (js_number == 0) message = append_comm_type(message, ESC_COMM);
-		else message = append_comm_type(message, MODE_SW_COMM);
-		
-		STATE_t state_from_js_button = js_number; // The button number indicates which state (see states.h)
-		message = append_mode(message, state_from_js_button);
+		STATE_t to_state = js_number; // The button number indicates which state (see states.h)
+		message = handle_mode_switch(message, to_state);
 	}
 	else if ( (js_type == 2) || (js_type == 130)) { //axis (130 occurs at startup)
 		message = append_comm_type(message, JS_AXIS_COMM);
@@ -513,11 +478,11 @@ int main(int argc, char **argv)
 			// distinguish the arrows with ESC
  			rs232_putchar(message_encode(c));
 
-			if (g_current_state == PANIC_ST){
+			if (pc_state == PANIC_ST){
 				// c = rs232_getchar(); //delay until character received again
 				// term_putchar(c);
 				// term_puts("Character received from FCB, leaving panic mode on PC-side");
-				g_current_state = SAFE_ST;
+				pc_state = SAFE_ST;
 			}
 			
 			//printf("Message sent!\n");

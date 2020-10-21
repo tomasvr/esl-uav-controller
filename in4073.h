@@ -45,7 +45,7 @@
 #define JS_AXIS_DIVIDE_VALUE 	254 	// used to be 65535
 
 bool demo_done;
-
+STATE_t fcb_state;
 // Control
 uint16_t motor_lift_level;
 int16_t motor[4],ae[4]; // should this be uint16_t or int16_t? why do we want negative values for motor
