@@ -377,6 +377,7 @@ int main(void)
 	motor_lift_level = 0;
 	
 	controller_init(yaw_control_pointer);
+	printf('N_needed = %d \n', N_needed);
 
 	printf(" AE0 AE1 AE2 AE3  | MODE \n");
 	while (!demo_done)
@@ -393,15 +394,15 @@ int main(void)
 			if (counter % 20 == 0) 
 			{
 				nrf_gpio_pin_toggle(BLUE);
-				printf("p yaw param: %4d \n", yaw_control_pointer->kp);
-				printf("p yaw output: %4d \n", yaw_control_pointer->output);
-				printf("p yaw error: %4d \n", yaw_control_pointer->err);	
+				// printf("p yaw param: %4d \n", yaw_control_pointer->kp);
+				// printf("p yaw output: %4d \n", yaw_control_pointer->output);
+				// printf("p yaw error: %4d \n", yaw_control_pointer->err);	
  			}
 			adc_request_sample();
 			read_baro();
 
 			// printf("%10ld | ", get_time_us());
-			// printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
+			printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
 			// printf("%6d %6d %6d | ", phi, theta, psi);
 			// printf("%6d %6d %6d | ", sp, sq, sr);
 			//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
@@ -444,7 +445,11 @@ int main(void)
 		}
 		if (fcb_state == YAWCONTROL_ST)
 		{
-			N_needed = yaw_control_calc(yaw_control_pointer, yaw_set_point, sr-sr_calib);
+			// N_needed = yaw_control_calc(yaw_control_pointer, yaw_set_point, sr-sr_calib);
+			N_needed = yaw_control_calc(yaw_control_pointer, 10, 0);
+
+			// printf('N_needed = %d \n', N_needed);
+			
 			actuate(0, 0, 0, N_needed); // only N_needed in yay control mode
 		}
 		if (fcb_state == FULLCONTROL_ST)
