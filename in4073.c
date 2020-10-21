@@ -324,6 +324,15 @@ void process_key(uint8_t c){
 	}
 }
 
+
+void check_battery_volt(){
+		printf("current voltage: %d.%dV \n", bat_volt/100, bat_volt&0x00FF );
+	if(bat_volt < 1100){
+		printf("Low battery voltage, current voltage: %d.%dV \n", bat_volt/100, bat_volt&0x00FF );
+		enter_panic_mode(true);
+	}
+}
+
 /*------------------------------------------------------------------
  * main -- everything you need is here :)
  *------------------------------------------------------------------
@@ -355,6 +364,9 @@ int main(void)
 		if (rx_queue.count) process_key( dequeue(&rx_queue) );
 
 		if (counter % 100 == 0) check_USB_connection_alive();
+
+		//check battery voltege
+		if (counter % 1200 == 0) check_battery_volt();//enable panic mode when connect to drone, print for test
 
 		if (check_timer_flag()) 
 		{
