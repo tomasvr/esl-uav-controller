@@ -371,14 +371,13 @@ void messg_decode(uint8_t messg){
 	 		printf("manual message: "PRINTF_BINARY_PATTERN_INT8"\n", PRINTF_BYTE_TO_BINARY_INT8(messg));
 	 		result = find_motor_state(messg);
 	 		assert(result == 1 && "QR: Fail to find the motor state.");
-	 		if(g_current_state == YAWCONTROL_ST){
-	 			if(FRAG_COUNT == 2){
-	 				printf("yaw message: "PRINTF_BINARY_PATTERN_INT8"\n", PRINTF_BYTE_TO_BINARY_INT8(messg));
-	 				find_yaw_kp_state(messg);
-	 			}
-	 		}
-
 	 	}
+	 		if(g_current_state == YAWCONTROL_ST){
+				if(FRAG_COUNT == 2){
+					printf("yaw message: "PRINTF_BINARY_PATTERN_INT8"\n", PRINTF_BYTE_TO_BINARY_INT8(messg));
+					find_yaw_kp_state(messg);
+				}
+		}
 	 	// else if (g_current_comm_type == JS_AXIS_COMM && (g_current_state == MANUAL_ST || g_current_state == YAWCONTROL_ST)) {
 	 	// 	int result;
 		// 	result = find_motor_state_js(messg, FRAG_COUNT);
