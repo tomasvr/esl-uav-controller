@@ -148,42 +148,46 @@ void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint8_t js_total_value) 
 	switch(joystick_axis){
 
 		case ROLL_AXIS:
-			if(js_total_value <= JS_AXIS_MID_VALUE){ // roll counterclockwise
+			if(js_total_value <= JS_AXIS_MID_VALUE){ // roll clockwise
 				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
-				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				ae[3] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
-			}
-			else{ // roll clockwise
-				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
 				ae[1] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
 				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+			}
+			else{ // roll counterclockwise
+				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
+				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+				ae[3] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			break;
 
 		case PITCH_AXIS:
-			if(js_total_value <= JS_AXIS_MID_VALUE){ // pitch down
+			if(js_total_value <= JS_AXIS_MID_VALUE){ // pitch up
 				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
-				ae[0] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
-				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-			}
-			else{ // pitch up
-				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
 				ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 				ae[2] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
+			}
+			else{ // pitch down
+				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
+				ae[0] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
+				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
 			}
 			break;
 
 		case YAW_AXIS:
-			if(js_total_value <= JS_AXIS_MID_VALUE){ // yaw counterclockwise
+			if(js_total_value <= JS_AXIS_MID_VALUE){ // yaw clockwise
 
 				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
 				ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);		
+				ae[1] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
+				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);	
+				ae[3] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);	
 			}
-			else{ // yaw clockwise
+			else{ // yaw counterclockwise
 				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
+				ae[0] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
 				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
+				ae[2] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);	
+				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);	
 			}
 			break;
 
@@ -380,7 +384,7 @@ int main(void)
 
 		if (counter % 100 == 0) check_USB_connection_alive();
 
-		check_battery_volt();//enable panic mode when connect to drone
+		// check_battery_volt();//enable when connected to drone
 
 		if (check_timer_flag()) 
 		{
@@ -392,10 +396,10 @@ int main(void)
 			read_baro();
 
 			// printf("%10ld | ", get_time_us());
-			// printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
+			printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
 			// printf("%6d %6d %6d | ", phi, theta, psi);
 			// printf("%6d %6d %6d | ", sp, sq, sr);
-			printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
+			// printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 			printf("%4d \n", fcb_state - 1);
 			clear_timer_flag();
 			//printf("%4d \n", motor_lift_level);
@@ -404,7 +408,7 @@ int main(void)
 		if (check_sensor_int_flag()) 
 		{
 			get_dmp_data();
-			run_filters_and_control();
+			// run_filters_and_control();
 		}
 
 		// Execute commands that need to be handled in all modes
