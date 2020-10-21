@@ -62,7 +62,7 @@
 
 #define PACKET_LENGTH 3 //in bytes
 
-#define ENABLE_JOYSTICK
+// #define ENABLE_JOYSTICK
 
 /* Used for keyboard control */
 #define LIFT_UP 	0b01010101
