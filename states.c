@@ -31,7 +31,7 @@ STATE_t mode_sw_action(char caller[], STATE_t state, STATE_t to_state) {
 				return state;
 			} 
 			if (js_axis_values_zeroed() == 0) {
-				printf("%s: MODE_SWITCH_ERROR: please but joystick in neutral position before leaving SAFE MODE\n", caller);
+				printf("%s: MODE_SWITCH_ERROR: please put joystick in neutral position before leaving SAFE MODE\n", caller);
 				return state;
 			}	
 			break;
