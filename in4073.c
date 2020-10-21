@@ -238,6 +238,9 @@ void messg_decode(uint8_t message_byte){
 
 		case 1: // Data
 			switch(g_current_comm_type) {
+				case ESC_COMM:
+					demo_done = false;
+					return;
 				case CTRL_COMM:
 					;	// C requires this semicolon here
 					uint8_t motor_states = retrieve_keyboard_motor_control(message_byte); 
@@ -291,8 +294,6 @@ void messg_decode(uint8_t message_byte){
 				case BAT_INFO_COMM:
 					break;
 				case SYS_LOG_COMM:
-					break;
-				case ESC_COMM:
 					break;
 				case USB_CHECK_COMM:
 			 		if (check_mode_sync(message_byte, fcb_state)) {
