@@ -10,7 +10,7 @@
 #define UPPER_LIMIT 1000
 
 #define CONTROLLER_P_STEP_SIZE 1
-#define CONTROLLER__P_UPPER_LIMIT 50
+#define CONTROLLER_P_UPPER_LIMIT 50
 #define CONTROLLER_P_LOWER_LIMIT 1 
 
 // the states that a motor has

@@ -71,7 +71,8 @@ JOYSTICK_AXIS_t joystick_axis;
 uint8_t js_total_value;
 
 // controller object declaration
-CONTROLLER *yaw_control;
+CONTROLLER yaw_control;
+CONTROLLER *yaw_control_pointer = &yaw_control;
 // CONTROLLER *roll_control;
 // CONTROLLER *pitch_control;
 
@@ -241,6 +242,9 @@ void messg_decode(uint8_t message_byte){
 
 		case 1: // Data
 			switch(g_current_comm_type) {
+				case ESC_COMM:
+					demo_done = false;
+					return;
 				case CTRL_COMM:
 					;	// C requires this semicolon here
 					uint8_t motor_states = retrieve_keyboard_motor_control(message_byte); 
@@ -278,20 +282,22 @@ void messg_decode(uint8_t message_byte){
 					}	 				
 					break;
 				case CHANGE_P_COMM:
-			 		if (message_byte == 0x01) {
-			 			printf("FCB: P CONTROL UP\n");
-			 			increase_p_value(yaw_control);
-			 		}
-			 		if (message_byte == 0x00) {
-				 		printf("FCB: P CONTROL DOWN\n");
-				 		decrease_p_value(yaw_control);
-			 		}						
+					switch(message_byte) {
+						case P_YAW_INC:
+			 				increase_p_value(yaw_control_pointer);
+			 				printf("FCB: P YAW CONTROL UP\n");
+			 				break;
+			 			case P_YAW_DEC:
+				 			printf("FCB: P YAW CONTROL DOWN\n");
+			 				decrease_p_value(yaw_control_pointer);
+			 				break;
+			 			default: 
+				 			printf("FCB: UKNOWN CHANGE P VALUE: \n", message_byte);
+					}					
 				 	break;
 				case BAT_INFO_COMM:
 					break;
 				case SYS_LOG_COMM:
-					break;
-				case ESC_COMM:
 					break;
 				case USB_CHECK_COMM:
 			 		if (check_mode_sync(message_byte, fcb_state)) {
@@ -375,7 +381,7 @@ int main(void)
 	
 	motor_lift_level = 0;
 	
-	controller_init(yaw_control);
+	controller_init(yaw_control_pointer);
 
 	printf(" AE0 AE1 AE2 AE3  | MODE \n");
 	while (!demo_done)
@@ -384,13 +390,17 @@ int main(void)
 
 		if (counter % 100 == 0) check_USB_connection_alive();
 
-		// check_battery_volt();//enable when connected to drone
+		//check_battery_volt();//enable panic mode when connect to drone
 
 		if (check_timer_flag()) 
 		{
+		
 			if (counter % 20 == 0) 
 			{
 				nrf_gpio_pin_toggle(BLUE);
+				printf("p yaw param: %4d \n", yaw_control_pointer->kp);
+				printf("p yaw output: %4d \n", yaw_control_pointer->output);
+				printf("p yaw error: %4d \n", yaw_control_pointer->err);	
  			}
 			adc_request_sample();
 			read_baro();
@@ -421,6 +431,7 @@ int main(void)
 		// 	keyboard_ctrl_action();
 		// }
 
+
 		// Execute commands  that only need to be handled in certain mode
 		if (fcb_state == PANIC_ST)
 		{
@@ -438,7 +449,7 @@ int main(void)
 		}
 		if (fcb_state == YAWCONTROL_ST)
 		{
-			N_needed = yaw_control_calc(yaw_control, yaw_set_point, sr-sr_calib);
+			N_needed = yaw_control_calc(yaw_control_pointer, yaw_set_point, sr-sr_calib);
 			actuate(0, 0, 0, N_needed); // only N_needed in yay control mode
 		}
 		if (fcb_state == FULLCONTROL_ST)
