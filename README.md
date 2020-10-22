@@ -36,7 +36,7 @@
 
 ## Lower priority
 
-- Fix state mismatch function
+- [Jiahao] Fix state mismatch function
 	- enter panic mode on state mismatch
 
 - [Everyone] Big clean up 
