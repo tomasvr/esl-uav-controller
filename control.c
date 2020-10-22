@@ -273,24 +273,16 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 	return yaw_control->output;
 }
 
-int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, int16_t sq)
+int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, int16_t sq, int16_t theta)
 {
-	pitch_control->set_point = pitch_set_point;
-	pitch_control->err = pitch_control->set_point - sq;
-	// pitch_control->integral += pitch_control->err;
-	pitch_control->output = pitch_control->kp * pitch_control->err;
-	//printf("pitch output: %d\n", pitch_control->output);
-	return pitch_control->output;
+	int16_t output = ((pitch_set_point-theta) * pitch_control->kp_1 - sq) * pitch_control->kp_2;
+	return output;
 }
 
-int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int16_t sp)
+int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int16_t sp, int16_t phi)
 {
-	roll_control->set_point = roll_set_point;
-	roll_control->err = roll_control->set_point - sp;
-	// roll_control->integral += roll_control->err;
-	roll_control->output = roll_control->kp * roll_control->err;
-	//printf("roll setpoint: %d sq: %d err: %d output: %d \n", roll_set_point, sp, roll_control->err, roll_control->output);
-	return roll_control->output;
+	int16_t output = ((roll_set_point-phi) * roll_control->kp_1 - sp) * roll_control->kp_2;
+	return output;
 }
 
 double sqrt(double square)
