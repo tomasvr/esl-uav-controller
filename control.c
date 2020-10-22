@@ -273,6 +273,26 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 	return yaw_control->output;
 }
 
+int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, int16_t sp)
+{
+	pitch_control->set_point = pitch_set_point;
+	pitch_control->err = pitch_control->set_point - sp;
+	// yaw_control->integral += yaw_control->err;
+	pitch_control->output = pitch_control->kp * pitch_control->err;
+	//printf("yaw output: %d\n", yaw_control->output);
+	return pitch_control->output;
+}
+
+int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int16_t sq)
+{
+	roll_control->set_point = roll_set_point;
+	roll_control->err = roll_control->set_point - sq;
+	// yaw_control->integral += yaw_control->err;
+	roll_control->output = roll_control->kp * roll_control->err;
+	//printf("yaw output: %d\n", yaw_control->output);
+	return roll_control->output;
+}
+
 double sqrt(double square)
 {
     double root=square/3;
@@ -388,7 +408,11 @@ void run_filters_and_control()
 			
 			break;
 		case FULLCONTROL_ST:
-			//todo
+			calculate_motor_values(
+				pitch_control_calc(pitch_control_pointer, pitch, (sp >> 8)*-1 ), 
+				roll_control_calc(roll_control_pointer, roll, (sq >> 8)*-1), 
+				yaw_control_calc(yaw_control_pointer, yaw, (sr >> 8)*-1 ),  // i think sr needs *-1 (reverse sign)
+				lift);
 			break;
 		case UNKNOWN_ST:	
 			zero_motors();

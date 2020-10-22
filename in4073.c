@@ -73,15 +73,18 @@ uint8_t js_total_value;
 // controller object declaration
 CONTROLLER yaw_control;
 CONTROLLER *yaw_control_pointer = &yaw_control;
-// CONTROLLER *roll_control;
-// CONTROLLER *pitch_control;
+CONTROLLER roll_control;
+CONTROLLER *roll_control_pointer = &roll_control;
+CONTROLLER pitch_control;
+CONTROLLER *pitch_control_pointer = &pitch_control;
 
-void enter_panic_mode(bool cable_detached){
+void enter_panic_mode(bool cable_detached, char caller[]){
 	if (fcb_state == SAFE_ST) {
 		return; // if in safe mode then you do not need to go to panic mode
 	}
-	printf("FCB: QR: Entered PANIC MODE.");
-	int16_t motor_speed = motor_lift_level;
+	printf("FCB: QR: Entered PANIC MODE called by: %s", caller);
+	uint16_t temp = lift;
+	uint16_t motor_speed = (temp << 2);
 	while (motor_speed > 0) {
 		motor_speed = motor_speed - 10; 
 		if (motor_speed < 10) {
@@ -91,11 +94,11 @@ void enter_panic_mode(bool cable_detached){
 		ae[1] = motor_speed;
 		ae[2] = motor_speed;
 		ae[3] = motor_speed;
+		printf("motor speed: %d\n", motor_speed);
 		update_motors(); //or run filters_and_control() ?
 		nrf_delay_ms(100);
-
 	}
-	motor_lift_level = 0; //reset motor_lift_level
+	lift = 0; //reset motor_lift_level
 	fcb_state = SAFE_ST;
 	if (cable_detached) { //wait for reboot
 		while(1) {
@@ -115,7 +118,7 @@ void USB_comm_update_received() {
 void check_USB_connection_alive() {
 	current_time = get_time_us();
 	if (current_time - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: check for overflow? <--(Need fix when operation time > 70 mins)
-		enter_panic_mode(true);
+		enter_panic_mode(true, "usb_check failed");
 	}
 }
 
@@ -134,74 +137,6 @@ int16_t clip_motor_value(int16_t value) {
 }
 
 
-
-// void process_js_axis_cmd(JOYSTICK_AXIS_t joystick_axis, uint8_t js_total_value) {
-// 	//printf("FCB: JS AXIS RECEIVED - axis: %d value: %d \n", joystick_axis, js_total_value);
-// 	uint8_t percentage = 0; // (percentage%)
-// 	switch(joystick_axis){
-
-// 		case ROLL_AXIS:
-// 			if(js_total_value <= JS_AXIS_MID_VALUE){ // roll counterclockwise
-// 				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
-// 				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-// 				ae[3] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
-// 			}
-// 			else{ // roll clockwise
-// 				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
-// 				ae[1] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
-// 				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-// 			}
-// 			break;
-
-// 		case PITCH_AXIS:
-// 			if(js_total_value <= JS_AXIS_MID_VALUE){ // pitch down
-// 				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
-// 				ae[0] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
-// 				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-// 			}
-// 			else{ // pitch up
-// 				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
-// 				ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-// 				ae[2] = (int16_t) clip_motor_value(motor_lift_level - MOTOR_MAX_CHANGE * percentage / 100);
-// 			}
-// 			break;
-
-// 		case YAW_AXIS:
-// 			if(js_total_value <= JS_AXIS_MID_VALUE){ // yaw counterclockwise
-
-// 				percentage = (uint8_t) (100.f * js_total_value / JS_AXIS_MID_VALUE);
-// 				ae[0] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-// 				ae[2] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);		
-// 			}
-// 			else{ // yaw clockwise
-// 				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value) / JS_AXIS_MID_VALUE);
-// 				ae[1] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-// 				ae[3] = (int16_t) clip_motor_value(motor_lift_level + MOTOR_MAX_CHANGE * percentage / 100);
-// 			}
-// 			break;
-
-// 		case LIFT_THROTTLE:
-// 			if(js_total_value <= JS_AXIS_MID_VALUE){
-// 				percentage = (uint8_t) (100.f * (JS_AXIS_MID_VALUE-js_total_value) / JS_AXIS_DIVIDE_VALUE);
-// 			}
-// 			else{
-// 				percentage = (uint8_t) (100.f * (JS_AXIS_MAX_VALUE-js_total_value+JS_AXIS_MID_VALUE) / JS_AXIS_DIVIDE_VALUE);
-// 			}
-// 			motor_lift_level = MOTOR_UPPER_LIMIT * percentage / 100;
-// 			//printf("FCB: percentage: %f lift_level: %d \n", percentage, motor_lift_level);
-// 			ae[0] = motor_lift_level;
-// 			ae[1] = motor_lift_level;
-// 			ae[2] = motor_lift_level;
-// 			ae[3] = motor_lift_level;
-// 			break;
-
-// 		default:
-// 			enter_panic_mode(false);
-// 			break;
-// 	}
-// 	// printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);		
-// 	return;
-// }
 
 /* Translate js axis to range: 0-255 instead of 0 in the middle */
 uint8_t translate_throttle(uint8_t throttle) {
@@ -258,10 +193,10 @@ void messg_decode(uint8_t message_byte){
 						keyboard_ctrl_action();
 						/* If 'a' or 'z' was pressed, adjust motor_lift_level */
 						if (0b11111111 == motor_states) {
-							motor_lift_level += STEP_SIZE;
+							lift += STEP_SIZE;
 						}
 						else if (0b00000000 == motor_states) {
-							motor_lift_level -= STEP_SIZE;
+							lift -= STEP_SIZE;
 						}
 					} else {
 						printf("Cannot control keyboard motor in current mode: %d \n", fcb_state);						
@@ -302,6 +237,22 @@ void messg_decode(uint8_t message_byte){
 			 			case P_YAW_DEC:
 				 			printf("FCB: P YAW CONTROL DOWN\n");
 			 				decrease_p_value(yaw_control_pointer);
+			 				break;
+			 			case P_ROLL_INC:
+				 			printf("FCB: P ROLL CONTROL UP\n");
+			 				increase_p_value(roll_control_pointer);
+			 				break;
+			 			case P_ROLL_DEC:
+				 			printf("FCB: P ROLL CONTROL DOWN\n");
+			 				decrease_p_value(roll_control_pointer);
+			 				break;
+			 			case P_PITCH_INC:
+				 			printf("FCB: P PITCH CONTROL UP\n");
+			 				increase_p_value(pitch_control_pointer);
+			 				break;
+			 			case P_PITCH_DEC:
+				 			printf("FCB: P PITCH CONTROL DOWN\n");
+			 				decrease_p_value(pitch_control_pointer);
 			 				break;
 			 			default: 
 				 			printf("FCB: UKNOWN CHANGE P VALUE: \n", message_byte);
@@ -360,11 +311,11 @@ void check_battery_volt(){
 		}
 		else if(bat_volt < 1100 && bat_volt > 1050){
 			printf("WARNING, CURRENT VOLTAGE1: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
-			enter_panic_mode(true);
+			enter_panic_mode(true, "batter voltage too low");
 		}
 		else if(bat_volt < 1050){
 			printf("WARNING, CURRENT VOLTAGE2: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
-			enter_panic_mode(true); 
+			enter_panic_mode(true, "batter voltage CRITICAL"); 
 		}
 	last_time_battery = current_time_battery;
 	}
@@ -394,6 +345,9 @@ int main(void)
 	motor_lift_level = 0;
 	
 	controller_init(yaw_control_pointer);
+	controller_init(roll_control_pointer);
+	controller_init(pitch_control_pointer);
+
 	// printf('N_needed = %d \n', N_needed);
 
 	printf(" AE0 AE1 AE2 AE3  | MODE \n");
@@ -423,6 +377,7 @@ int main(void)
 			printf("%6d %6d %6d | ", phi, theta, psi);
 			printf("%6d %6d %6d | ", sp, sq, sr);
 			//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
+			printf("y_p: %4d r_p: %4d p_p: %4d", yaw_control.kp, roll_control.kp, pitch_control.kp);
 			printf("%4d \n", fcb_state - 1);
 			clear_timer_flag();
 			//printf("%4d \n", motor_lift_level);
@@ -438,7 +393,7 @@ int main(void)
 		if (g_current_comm_type == ESC_COMM){ // terminate program
 			demo_done = true;
 			g_current_comm_type = UNKNOWN_COMM;
-			enter_panic_mode(false);
+			enter_panic_mode(false, "ESC pressed");
 		}
 		// if (g_current_comm_type == CTRL_COMM){
 		// 	keyboard_ctrl_action();
@@ -448,7 +403,7 @@ int main(void)
 		// Execute commands  that only need to be handled in certain mode
 		if (fcb_state == PANIC_ST)
 		{
-			enter_panic_mode(false); //enter panic mode for any reason other than cable
+			enter_panic_mode(false, "PANIC STATE"); //enter panic mode for any reason other than cable
 		}
 		// if(fcb_state == MANUAL_ST)
 		// {
