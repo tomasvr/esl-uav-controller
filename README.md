@@ -8,14 +8,14 @@
 - Define maximum difference between counteracting motors (400 300 400 300) max diff: 50
 	- currently we divide by 320, but should use translate function instead
 
-- extensively check safety features
+- Extensively check safety features
 	- panic mode: ESC button, js trigger, usb disconnect, battery value
 	- Cannot enter manual/control mode unless js is neutral
 	- Check all mode switches
 
-- change while statement to if statement in pc terminal to limit amount of packets send shortly after each other
+- Change while statement to if statement in pc terminal to limit amount of packets send shortly after each other
 
-- trimming function using keyboard
+- Trimming function using keyboard
 	- counteract external offsets (e.g. cable)
 	- offest value for setpoint of pitch, roll and yaw
 
@@ -31,12 +31,12 @@
 
 - [Zehang] check USB interval value
 
-- test p values (and change resolution e.g. p-value 1)
+- Test p values (and change resolution e.g. p-value 1)
 	- experiment with p-value higher resolution
 
 ## Lower priority
 
-- fix state mismatch function
+- Fix state mismatch function
 	- enter panic mode on state mismatch
 
 - Big clean up 
@@ -44,7 +44,7 @@
 	- annotate all functions
 	- add clear comments
 
-- test logging and look at program like QT for storing data
+- Test logging and look at program like QT for storing data
 
 # Questions to TA (can mail)
 
