@@ -41,6 +41,8 @@
 
 - Big clean up 
 	- remove unncessary comments
+	- annotate all functions
+	- add clear comments
 
 - test logging and look at program like QT for storing data
 
