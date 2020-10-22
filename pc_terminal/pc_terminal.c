@@ -317,28 +317,28 @@ uint32_t message_encode(int c){
 
 		case 'u':
 			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'u' pressed, increase P yaw control
-			message = append_parameter_change(message, P_YAW_INC);
+			message = append_parameter_change(message, P_RATE_YAW_INC);
 			break;
 		case 'j':
 			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'j' pressed, decrease P yaw control
-			message = append_parameter_change(message, P_YAW_DEC);
+			message = append_parameter_change(message, P_RATE_YAW_DEC);
 			break;
 
 		case 'i':
 			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'i' pressed, increase P1 roll/pitch control
-			message = append_parameter_change(message, P_ROLL_INC);
+			message = append_parameter_change(message, P_RATE_PITCHROLL_INC);
 			break;
 		case 'k':
 			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'k' pressed, decrease P1 roll/pitch control
-			message = append_parameter_change(message, P_ROLL_DEC);
+			message = append_parameter_change(message, P_RATE_PITCHROLL_DEC);
 			break;
 		case 'o':
 			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'o' pressed, increase P2 roll/pitch control
-			message = append_parameter_change(message, P_PITCH_INC);
+			message = append_parameter_change(message, P_ANGLE_PITCHROLL_INC);
 			break;
 		case 'l':
 			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'l' pressed, decrease P2 roll/pitch control
-			message = append_parameter_change(message, P_PITCH_DEC);
+			message = append_parameter_change(message, P_ANGLE_PITCHROLL_DEC);
 			break;
 
 		case 27: // keyboard 'ESC' pressed, SWITCH TO PANIC MODE

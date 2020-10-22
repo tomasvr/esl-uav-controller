@@ -230,29 +230,33 @@ void messg_decode(uint8_t message_byte){
 					break;
 				case CHANGE_P_COMM:
 					switch(message_byte) {
-						case P_YAW_INC:
-			 				increase_p_value(yaw_control_pointer);
-			 				printf("FCB: P YAW CONTROL UP\n");
+						case P_RATE_YAW_INC:
+			 				increase_p_rate_value(yaw_control_pointer);
+			 				printf("FCB: P RATE YAW CONTROL UP\n");
 			 				break;
-			 			case P_YAW_DEC:
-				 			printf("FCB: P YAW CONTROL DOWN\n");
-			 				decrease_p_value(yaw_control_pointer);
+			 			case P_RATE_YAW_DEC:
+				 			printf("FCB: P RATE YAW CONTROL DOWN\n");
+			 				decrease_p_rate_value(yaw_control_pointer);
 			 				break;
-			 			case P_ROLL_INC:
-				 			printf("FCB: P ROLL CONTROL UP\n");
-			 				increase_p_value(roll_control_pointer);
+			 			case P_ANGLE_PITCHROLL_INC:
+				 			printf("FCB: P ANGLE PITCHROLL CONTROL UP\n");
+			 				increase_p_angle_value(pitch_control_pointer);
+			 				increase_p_angle_value(roll_control_pointer);
 			 				break;
-			 			case P_ROLL_DEC:
-				 			printf("FCB: P ROLL CONTROL DOWN\n");
-			 				decrease_p_value(roll_control_pointer);
+			 			case P_ANGLE_PITCHROLL_DEC:
+				 			printf("FCB: P ANGLE PITCHROLL CONTROL DOWN\n");
+			 				decrease_p_angle_value(pitch_control_pointer);
+			 				decrease_p_angle_value(roll_control_pointer);
 			 				break;
-			 			case P_PITCH_INC:
-				 			printf("FCB: P PITCH CONTROL UP\n");
-			 				increase_p_value(pitch_control_pointer);
+			 			case P_RATE_PITCHROLL_INC:
+				 			printf("FCB: P RATE PITCHROLL CONTROL UP\n");
+			 				increase_p_rate_value(pitch_control_pointer);
+			 				increase_p_rate_value(roll_control_pointer);
 			 				break;
-			 			case P_PITCH_DEC:
-				 			printf("FCB: P PITCH CONTROL DOWN\n");
-			 				decrease_p_value(pitch_control_pointer);
+			 			case P_RATE_PITCHROLL_DEC:
+				 			printf("FCB: P RATE PITCHROLL CONTROL DOWN\n");
+			 				decrease_p_rate_value(pitch_control_pointer);
+			 				decrease_p_rate_value(roll_control_pointer);
 			 				break;
 			 			default: 
 				 			printf("FCB: UKNOWN CHANGE P VALUE: \n", message_byte);
@@ -377,7 +381,8 @@ int main(void)
 			//printf("%6d %6d %6d | ", phi, theta, psi);
 			printf("%6d %6d %6d | ", sp, sq, sr);
 			//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
-			printf("y_p: %2d r_p: %2d p_p: %2d", yaw_control.kp, roll_control.kp, pitch_control.kp);
+			printf("y_p_r: %2d r_p_r: %2d p_p_r: %2d", yaw_control.kp_rate, roll_control.kp_rate, pitch_control.kp_rate);
+			printf("r_p_a: %2d p_p_a: %2d", roll_control.kp_angle, pitch_control.kp_angle);
 			printf("setp: %4d sp: %4d err: %4d output: %4d \n", roll_control.set_point, sp, roll_control.err, roll_control.output);
 			printf("%4d \n", fcb_state - 1);
 			clear_timer_flag();

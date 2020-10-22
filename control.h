@@ -42,7 +42,7 @@ typedef struct // TODO: should use float?
 	int16_t set_point;
 	int16_t sensor_value;
 	int16_t err;
-	uint8_t kp, ki;
+	uint8_t kp_angle, kp_rate, ki;
 	int16_t integral;
 	int16_t output;
 
