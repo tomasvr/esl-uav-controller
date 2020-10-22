@@ -389,6 +389,8 @@ void run_filters_and_control()
 			break;
 		case FULLCONTROL_ST:
 			//todo
+			// calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr >> 8)*-1 ), lift); // i think sr needs *-1 (reverse sign)
+		
 			break;
 		case UNKNOWN_ST:	
 			zero_motors();
