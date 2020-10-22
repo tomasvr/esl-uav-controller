@@ -19,7 +19,7 @@
 	- counteract external offsets (e.g. cable)
 	- offest value for setpoint of pitch, roll and yaw
 
-- Time the duration of control loops, needs to be under 10ms and important to optimize
+- [Jiahao] Time the duration of control loops, needs to be under 10ms and important to optimize
 	- use current_time - start_time
 
 - Cornercases: check what happens when pitch or roll in maximzed (tilt mcu all the way to left or right or down or up)
