@@ -209,7 +209,7 @@ int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, i
 	pitch_control->output = pitch_control->kp_rate * pitch_control->err;
 	//printf("pitch output: %d\n", pitch_control->output);
 	//return pitch_control->output;
-	int16_t output = ((pitch_set_point-theta) * pitch_control->kp_angle - sq) * pitch_control->kp_rate;
+	int16_t output = ((pitch_set_point - theta) * pitch_control->kp_angle - sq) * pitch_control->kp_rate;
 	return output;
 }
 
@@ -221,7 +221,7 @@ int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int1
 	roll_control->output = roll_control->kp_rate * roll_control->err;
 	//printf("roll setpoint: %d sq: %d err: %d output: %d \n", roll_set_point, sp, roll_control->err, roll_control->output);
 	//return roll_control->output;
-	int16_t output = ((roll_set_point-phi) * roll_control->kp_angle - sp) * roll_control->kp_rate;
+	int16_t output = ((roll_set_point - phi) * roll_control->kp_angle - sp) * roll_control->kp_rate;
 	return output;
 }
 
@@ -263,10 +263,10 @@ void update_motors(void)
 }
 
 void calculate_motor_values(int16_t pitch, int16_t roll, int16_t yaw, uint16_t lift) { //TODO: add min throttle (around 170) and max throttle (1000)
-	ae[0] = operating_motor_bounds((lift << 2) + pitch - yaw);
-	ae[1] = operating_motor_bounds((lift << 2) - roll  + yaw);
-	ae[2] = operating_motor_bounds((lift << 2) - pitch - yaw);
-	ae[3] = operating_motor_bounds((lift << 2) + roll  + yaw);
+	ae[0] = operating_motor_bounds((lift << 2) + (pitch /320 - yaw/320));
+	ae[1] = operating_motor_bounds((lift << 2) - (roll/320  + yaw/320));
+	ae[2] = operating_motor_bounds((lift << 2) - (pitch/320 - yaw/320));
+	ae[3] = operating_motor_bounds((lift << 2) + (roll/320  + yaw /320));
 }
 
 void run_filters_and_control()
@@ -293,14 +293,14 @@ void run_filters_and_control()
 		case YAWCONTROL_ST:
 			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr>> 8)*-1 ), lift); // i think sr needs *-1 (reverse sign)
 			//printf("sr: %d\n", sr >> 8);
-			//printf("yaw: %d\n", yaw);
 			break;
 		case FULLCONTROL_ST:
 			calculate_motor_values(
-				pitch_control_calc(pitch_control_pointer, pitch, (sq >> 8), (theta >> 8)), 
-				roll_control_calc(roll_control_pointer, roll, (sp >> 8), (phi >> 8)), 
-				yaw_control_calc(yaw_control_pointer, yaw, (sr >> 8)*-1 ),  // i think sr needs *-1 (reverse sign)
+				pitch_control_calc(pitch_control_pointer, pitch << 8, (sq), (theta)), 
+				roll_control_calc(roll_control_pointer, roll << 8, (sp), (phi)), 
+				yaw_control_calc(yaw_control_pointer, yaw << 8, (sr)*-1 ),  // i think sr needs *-1 (reverse sign)
 				lift);
+			//printf("roll: %d sp: %d phi: %d\n", roll << 8, sp, phi);			
 			break;
 		case UNKNOWN_ST:	
 			zero_motors();

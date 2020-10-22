@@ -223,13 +223,13 @@ void messg_decode(uint8_t message_byte){
 					//printf("axis: %d value: %d \n", js_axis_type, message_byte);						
 					switch (js_axis_type) {
 						case ROLL_AXIS:
-							roll = (int8_t) message_byte;
+							roll = (int16_t) message_byte;
 							break;
 						case PITCH_AXIS:
-							pitch = (int8_t) message_byte;
+							pitch = (int16_t) message_byte;
 							break;
 						case YAW_AXIS:
-							yaw = (int8_t) message_byte;
+							yaw = (int16_t) message_byte;
 							break;
 						case LIFT_THROTTLE:
 							message_byte = translate_throttle(message_byte);
