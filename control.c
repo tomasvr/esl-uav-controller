@@ -139,18 +139,18 @@ void sensor_calib()
 	}
 }
 
-// void offset_remove()
-// {
-// 	phi -= phi_calib; 
-// 	theta -= theta_calib; 
-// 	psi -= psi_calib;
-// 	sp -= sp_calib; 
-// 	sq -= sq_calib; 
-// 	sr -= sr_calib;
-// 	sax -= sax_calib; 
-// 	say -= say_calib; 
-// 	saz -= saz_calib;
-// }
+void offset_remove()
+{
+	phi -= phi_calib; 
+	theta -= theta_calib; 
+	psi -= psi_calib;
+	sp -= sp_calib; 
+	sq -= sq_calib; 
+	sr -= sr_calib;
+	sax -= sax_calib; 
+	say -= say_calib; 
+	saz -= saz_calib;
+}
 
 
 // #define yaw_speed_init 170
@@ -421,13 +421,13 @@ void run_filters_and_control()
 			// yaw_control_calc(yaw_control_pointer, 10, 0);
 			// printf('N = %d \n', yaw_control_calc(yaw_control_pointer, 10, 0));
 			//actuate(100, 0, 0, yaw_control_calc(yaw_control_pointer, 60, 0)); // only N_needed in yaw control mode
-			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr >> 8)*-1 ), lift); // i think sr needs *-1 (reverse sign)
+			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr-sr_calib >> 8)*-1 ), lift); // i think sr needs *-1 (reverse sign)
 			//printf("sr: %d\n", sr >> 8);
 			//printf("yaw: %d\n", yaw);
 			
 			break;
 		case FULLCONTROL_ST:
-
+			offset_remove();
 			calculate_motor_values(
 				pitch_control_calc(pitch_control_pointer, pitch, (sq >> 8), (theta >> 8)), 
 				roll_control_calc(roll_control_pointer, roll, (sp >> 8), (phi >> 8)), 
