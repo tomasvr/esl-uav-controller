@@ -29,7 +29,7 @@
 	- Use different versions of the code in different branches to test right away
 	- Test trimming functions for offset
 
-- [Tomas] check USB interval value
+- [Zehang] check USB interval value
 
 - test p values (and change resolution e.g. p-value 1)
 	- experiment with p-value higher resolution
