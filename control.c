@@ -408,6 +408,7 @@ void run_filters_and_control()
 			
 			break;
 		case FULLCONTROL_ST:
+
 			calculate_motor_values(
 				pitch_control_calc(pitch_control_pointer, pitch, (sq >> 8)), 
 				roll_control_calc(roll_control_pointer, roll, (sp >> 8)), 
