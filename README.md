@@ -8,7 +8,7 @@
 - [Zehang] Define maximum difference between counteracting motors (400 300 400 300) max diff: 50
 	- currently we divide by 320, but should use translate function instead
 
-- Extensively check safety features
+- [Zehang] Extensively check safety features
 	- panic mode: ESC button, js trigger, usb disconnect, battery value
 	- Cannot enter manual/control mode unless js is neutral
 	- Check all mode switches
@@ -25,7 +25,7 @@
 - [Jiahao] Cornercases: check what happens when pitch or roll in maximzed (tilt mcu all the way to left or right or down or up)
 	- can be done with MCU, check motor values
 
-- [Zehang] Define a test plan
+- Define a test plan
 	- Use different versions of the code in different branches to test right away
 	- Test trimming functions for offset
 
