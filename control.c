@@ -284,6 +284,7 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 	yaw_control->err = yaw_control->set_point - sr;
 	// yaw_control->integral += yaw_control->err;
 	yaw_control->output = yaw_control->kp_rate * yaw_control->err;
+	// yaw_control->output = yaw_control->kp_rate * yaw_control->integral;
 	//printf("yaw output: %d\n", yaw_control->output);
 	return yaw_control->output;
 }
@@ -421,13 +422,13 @@ void run_filters_and_control()
 			// yaw_control_calc(yaw_control_pointer, 10, 0);
 			// printf('N = %d \n', yaw_control_calc(yaw_control_pointer, 10, 0));
 			//actuate(100, 0, 0, yaw_control_calc(yaw_control_pointer, 60, 0)); // only N_needed in yaw control mode
-			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr-sr_calib >> 8)*-1 ), lift); // i think sr needs *-1 (reverse sign)
+			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr>> 8)*-1 ), lift); // i think sr needs *-1 (reverse sign)
 			//printf("sr: %d\n", sr >> 8);
 			//printf("yaw: %d\n", yaw);
 			
 			break;
 		case FULLCONTROL_ST:
-			offset_remove();
+			// offset_remove();
 			calculate_motor_values(
 				pitch_control_calc(pitch_control_pointer, pitch, (sq >> 8), (theta >> 8)), 
 				roll_control_calc(roll_control_pointer, roll, (sp >> 8), (phi >> 8)), 
