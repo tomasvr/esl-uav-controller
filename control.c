@@ -40,6 +40,7 @@ void speed_limit()
 void clip_motors() {
 	for (int i = 0; i < 4; i++) {
 		if (ae[i] > MAX_ALLOWED_SPEED) 	ae[i] = MAX_ALLOWED_SPEED;
+		if (ae[i] > MIN_ALLOWED_SPEED) 	ae[i] = MIN_ALLOWED_SPEED;
 		if (ae[i] < 0)		ae[i] = 0;		
 	}
 }
