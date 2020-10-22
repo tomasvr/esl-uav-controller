@@ -126,18 +126,6 @@ void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint8_t js_total_valu
 	joystick_axis_stored_values[joystick_axis] = js_total_value;
 }
 
-int16_t clip_motor_value(int16_t value) { 
-	if (value > 1000) {
-		return 1000;
-	}
-	else if (value < 0) {
-		return 0;
-	}
-	return value;
-}
-
-
-
 /* Translate js axis to range: 0-255 instead of 0 in the middle */
 uint8_t translate_throttle(uint8_t throttle) {
 	if(throttle <= JS_AXIS_MID_VALUE){

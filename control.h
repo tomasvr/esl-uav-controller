@@ -14,7 +14,7 @@
 #define CONTROLLER_P_LOWER_LIMIT 1 
 
 #define MAX_ALLOWED_SPEED 600
-#define MIN_ALLOWED_SPEED 175
+#define MIN_ALLOWED_SPEED 0
 
 // the states that a motor has
 typedef enum {

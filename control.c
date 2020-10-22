@@ -28,23 +28,6 @@ void switch_led(int color) {
 	}
 }
 
-void speed_limit()
-{
-	for(uint8_t i = 0; i < 4; i++)
-	{
-	if(ae[i] > 450) ae[i] = 450;
-	if(ae[i] < 170) ae[i] = 170;
-	}
-}
-
-void clip_motors() {
-	for (int i = 0; i < 4; i++) {
-		if (ae[i] > MAX_ALLOWED_SPEED) 	ae[i] = MAX_ALLOWED_SPEED;
-		if (ae[i] > MIN_ALLOWED_SPEED) 	ae[i] = MIN_ALLOWED_SPEED;
-		if (ae[i] < 0)		ae[i] = 0;		
-	}
-}
-
 void zero_motors() {
 	ae[0] = 0;
 	ae[1] = 0;
@@ -207,78 +190,6 @@ void decrease_p_angle_value(CONTROLLER *controller)
 	}
 }
 
-// void increase_motor_speed(uint8_t motor){
-// 	if ( (ae[motor] + STEP_SIZE) <= 1000) {
-// 		ae[motor] += STEP_SIZE;
-// 	}
-// }
-
-// void decrease_motor_speed(uint8_t motor){
-// 	if ( (ae[motor] - STEP_SIZE) >= 0) {
-// 		ae[motor] -= STEP_SIZE;
-// 	}
-// }
-
-/*------------------------------------------------------------------
- * keybord_ctrl_action -- allowing the keyboard to do all the actions
- *------------------------------------------------------------------
- */
-// void keyboard_ctrl_action(){
-// 	switch (g_current_m0_state){			//M0
-// 		case MOTOR_UP:
-// 			increase_motor_speed(0);
-// 			break;
-// 		case MOTOR_REMAIN:
-// 			break;
-// 		case MOTOR_DOWN:
-// 			decrease_motor_speed(0);
-// 			break;
-// 		default:
-// 			break;
-// 	}
-// 	switch (g_current_m1_state){			//M1
-// 		case MOTOR_UP:
-// 			increase_motor_speed(1);
-// 			break;
-// 		case MOTOR_REMAIN:
-// 			break;
-// 		case MOTOR_DOWN:
-// 			decrease_motor_speed(1);
-// 			break;
-// 		default:
-// 			break;
-// 	}
-// 	switch (g_current_m2_state){			//M2
-// 		case MOTOR_UP:
-// 			increase_motor_speed(2);
-// 			break;
-// 		case MOTOR_REMAIN:
-// 			break;
-// 		case MOTOR_DOWN:
-// 			decrease_motor_speed(2);
-// 			break;
-// 		default:
-// 			break;
-// 	}
-// 	switch (g_current_m3_state){			//M3
-// 		case MOTOR_UP:
-// 			increase_motor_speed(3);
-// 			break;
-// 		case MOTOR_REMAIN:
-// 			break;
-// 		case MOTOR_DOWN:
-// 			decrease_motor_speed(3);
-// 			break;
-// 		default:
-// 			break;
-// 	}
-// 	// reset motor intention
-// 	g_current_m0_state = MOTOR_REMAIN;
-// 	g_current_m1_state = MOTOR_REMAIN;
-// 	g_current_m2_state = MOTOR_REMAIN;
-// 	g_current_m3_state = MOTOR_REMAIN;
-// }
-
 int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr)
 {
 	yaw_control->set_point = yaw_set_point;
@@ -314,72 +225,34 @@ int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int1
 	return output;
 }
 
-double sqrt(double square)
-{
-    double root=square/3;
-    int i;
-    if (square <= 0) return 0;
-    for (i=0; i<32; i++)
-        root = (root + square / root) / 2;
-    return root;
+/* for safety */
+int16_t clip_motor_value(int16_t value) {
+	if (value < 0) {
+		return 0;
+	}
+	if (value > MAX_ALLOWED_SPEED) {
+		return MAX_ALLOWED_SPEED;
+	}
+	return value;
 }
 
-void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed)
-{
-	int sqr_0 = Z_needed/(4*b) - N_needed/(4*d) + M_needed/(2*b);
-	int sqr_1 = -L_needed/(2*b) + Z_needed/(4*b) + N_needed/(4*d);
-	int sqr_2 = -Z_needed/(4*b) - N_needed/(4*d) + M_needed/(2*b);
-	int sqr_3 = L_needed/(2*b) + Z_needed/(4*b) + N_needed/(4*d);
-	// int sqr_0 = -N_needed/4;
-	// printf("sqr_0 is: %d \n", sqr_0 );
-	// bool isNegative = false;
-
-	// TODO: sqr_* should be positive, check(&fix) this
-	if(sqr_0 < 0)
-	{
-		sqr_0 = -sqr_0;
+int16_t operating_motor_bounds(int16_t value) {
+	if (value < 0) {
+		return 0;
 	}
-	if(sqr_1 < 0)
-	{
-		sqr_1 = -sqr_1;
+	if (value > MAX_ALLOWED_SPEED) {
+		return MAX_ALLOWED_SPEED;
 	}
-	if(sqr_2 < 0)
-	{
-		sqr_2 = -sqr_2;
-	}
-	if(sqr_3 < 0)
-	{
-		sqr_3 = -sqr_3;
-	}
-
-	int res_0 = sqrt(sqr_0);
-	int res_1 = sqrt(sqr_1);
-	int res_2 = sqrt(sqr_2);
-	int res_3 = sqrt(sqr_3);
-	// printf("ae0 is: %d, isNegative: %B \n", res, isNegative);
-	// printf("sqr1 is: %d \n", sqr_1 );
-	// printf("sqr2 is: %d \n", sqr_2 );
-	// printf("sqr3 is: %d \n", sqr_3 );
-	ae[0] = res_0;
-	ae[1] = res_1;
-	ae[2] = res_2;
-	ae[3] = res_3;
-	// ae[1] = (int16_t) sqrt(sqr_1);
-	// ae[2] = (int16_t) sqrt(sqr_2);
-	// ae[3] = (int16_t) sqrt(sqr_3);
-	return;
+	return value;
 }
 
 void update_motors(void)
 {					
-	// if (fcb_state != SAFE_ST, PANIC_ST) //TODO
-		clip_motors();
-		// printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);
-		motor[0] = ae[0];
-		motor[1] = ae[1];
-		motor[2] = ae[2];
-		motor[3] = ae[3];
-		
+		motor[0] = clip_motor_value(ae[0]);
+		motor[1] = clip_motor_value(ae[1]);
+		motor[2] = clip_motor_value(ae[2]);
+		motor[3] = clip_motor_value(ae[3]);
+
 #ifdef DEBUG_LED
 		// The 4 LEDS represent motor speed, blue = max speed, red = minimal speed
 		if (motor[0] == 0) switch_led(-1);
@@ -390,10 +263,10 @@ void update_motors(void)
 }
 
 void calculate_motor_values(int16_t pitch, int16_t roll, int16_t yaw, uint16_t lift) { //TODO: add min throttle (around 170) and max throttle (1000)
-	ae[0] = (lift << 2) + pitch - yaw;
-	ae[1] = (lift << 2) - roll + yaw;
-	ae[2] = (lift << 2) - pitch - yaw;
-	ae[3] = (lift << 2) + roll + yaw;
+	ae[0] = operating_motor_bounds((lift << 2) + pitch - yaw);
+	ae[1] = operating_motor_bounds((lift << 2) - roll  + yaw);
+	ae[2] = operating_motor_bounds((lift << 2) - pitch - yaw);
+	ae[3] = operating_motor_bounds((lift << 2) + roll  + yaw);
 }
 
 void run_filters_and_control()
@@ -418,18 +291,11 @@ void run_filters_and_control()
 			zero_motors();
 			break;
 		case YAWCONTROL_ST:
-			//todo
-			// N_needed = yaw_control_calc(yaw_control_pointer, yaw_set_point, sr-sr_calib);
-			// yaw_control_calc(yaw_control_pointer, 10, 0);
-			// printf('N = %d \n', yaw_control_calc(yaw_control_pointer, 10, 0));
-			//actuate(100, 0, 0, yaw_control_calc(yaw_control_pointer, 60, 0)); // only N_needed in yaw control mode
 			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr>> 8)*-1 ), lift); // i think sr needs *-1 (reverse sign)
 			//printf("sr: %d\n", sr >> 8);
 			//printf("yaw: %d\n", yaw);
-			
 			break;
 		case FULLCONTROL_ST:
-			// offset_remove();
 			calculate_motor_values(
 				pitch_control_calc(pitch_control_pointer, pitch, (sq >> 8), (theta >> 8)), 
 				roll_control_calc(roll_control_pointer, roll, (sp >> 8), (phi >> 8)), 
@@ -442,6 +308,5 @@ void run_filters_and_control()
 			printf("ERROR run_filters_and_control - unknown fcb_state: %d", fcb_state);
 			break;
 	}
-	// ae[0] = xxx, ae[1] = yyy etc etc
 	update_motors();
 }

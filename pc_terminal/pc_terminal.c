@@ -62,17 +62,9 @@
 
 #define PACKET_LENGTH 3 //in bytes
 
-//#define ENABLE_JOYSTICK
+#define ENABLE_JOYSTICK
 
-/* Used for keyboard control */
-#define LIFT_UP 	0b01010101
-#define LIFT_DOWN 	0b10101010  
-#define PITCH_DOWN  0b10000100
-#define PITCH_UP  	0b01001000
-#define ROLL_RIGHT 	0b00100001
-#define ROLL_LEFT  	0b00010010
-#define YAW_LEFT 	0b10011001
-#define YAW_RIGHT 	0b01100110
+
  	
 
 // current axis and button readings
