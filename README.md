@@ -15,7 +15,7 @@
 
 - Change while statement to if statement in pc terminal to limit amount of packets send shortly after each other
 
-- Trimming function using keyboard
+- [Xinyun] Trimming function using keyboard
 	- counteract external offsets (e.g. cable)
 	- offest value for setpoint of pitch, roll and yaw
 
