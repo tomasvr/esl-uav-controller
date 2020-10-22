@@ -310,7 +310,6 @@ int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int1
 	//return roll_control->output;
 	int16_t output = ((roll_set_point-phi) * roll_control->kp_angle - sp) * roll_control->kp_rate;
 	return output;
->>>>>>> 5b277045e7e3bbee6589bc0df0803ebf203cf1e0
 }
 
 double sqrt(double square)
@@ -430,8 +429,8 @@ void run_filters_and_control()
 		case FULLCONTROL_ST:
 
 			calculate_motor_values(
-				pitch_control_calc(pitch_control_pointer, pitch, (sq >> 8)), 
-				roll_control_calc(roll_control_pointer, roll, (sp >> 8)), 
+				pitch_control_calc(pitch_control_pointer, pitch, (sq >> 8), (theta >> 8)), 
+				roll_control_calc(roll_control_pointer, roll, (sp >> 8), (phi >> 8)), 
 				yaw_control_calc(yaw_control_pointer, yaw, (sr >> 8)*-1 ),  // i think sr needs *-1 (reverse sign)
 				lift);
 			break;
