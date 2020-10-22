@@ -254,7 +254,10 @@ uint32_t handle_mode_switch(uint32_t message, STATE_t to_state) {
 	message = append_comm_type(message, MODE_SW_COMM);
 	message = append_mode(message, to_state); 
 	pc_state = mode_sw_action("TERM", pc_state, to_state);
+	// printf('The TRM state is: %d\n', pc_state);
 	g_dest_state = UNKNOWN_ST;
+	if (pc_state == CALIBRATION_ST) pc_state = SAFE_ST;
+	if (pc_state == PANIC_ST) pc_state = SAFE_ST;
 	return message;
 }
 
