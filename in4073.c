@@ -149,6 +149,36 @@ uint8_t translate_throttle(uint8_t throttle) {
 	return throttle;
 }
 
+void keyboard_adjust_motors(uint8_t motor_states) {
+	uint8_t step = STEP_SIZE >> 2;
+	switch(motor_states){
+		case LIFT_UP:
+			lift += step;
+			break;
+		case LIFT_DOWN:
+			lift -= step;
+			break;
+		case PITCH_UP:
+			pitch += step;
+			break;
+		case PITCH_DOWN:
+			pitch -= step;
+			break;
+		case ROLL_RIGHT:
+			roll += step;
+			break;
+		case ROLL_LEFT:
+			roll -= step;
+			break;
+		case YAW_RIGHT:
+			yaw += step;
+			break;
+		case YAW_LEFT:
+			yaw -= step;
+			break;				
+	}
+	printf("key adjust: %d\n", motor_states);
+}
 /*------------------------------------------------------------------
  * messg_decode -- decode messages
  *------------------------------------------------------------------
@@ -181,23 +211,15 @@ void messg_decode(uint8_t message_byte){
 					return;
 				case CTRL_COMM:
 					;	// C requires this semicolon here
-					uint8_t motor_states = retrieve_keyboard_motor_control(message_byte); 
-					//printf("FCB: motor states: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(motor_states));
-					g_current_m0_state = (motor_states >> 6) & 3; //extract last two bytes with & 3 operator 
-					g_current_m1_state = (motor_states >> 4) & 3;
-					g_current_m2_state = (motor_states >> 2) & 3;
-					g_current_m3_state = (motor_states)		 & 3;
+
 
 					/* only change motors if in appropriate mode */ //todo: move this logic to a central place
-					if (fcb_state == 	MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
-						keyboard_ctrl_action();
+					if (fcb_state == MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
+						//keyboard_ctrl_action();
 						/* If 'a' or 'z' was pressed, adjust motor_lift_level */
-						if (0b11111111 == motor_states) {
-							lift += STEP_SIZE;
-						}
-						else if (0b00000000 == motor_states) {
-							lift -= STEP_SIZE;
-						}
+						uint8_t motor_states = retrieve_keyboard_motor_control(message_byte);
+						keyboard_adjust_motors(motor_states);
+						printf("FCB: motor states: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(motor_states));
 					} else {
 						printf("Cannot control keyboard motor in current mode: %d \n", fcb_state);						
 					}

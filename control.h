@@ -48,8 +48,8 @@ typedef struct // TODO: should use float?
 
 } CONTROLLER;
 
-void increase_motor_speed(int16_t *ae, uint8_t motor);
-void decrease_motor_speed(int16_t *ae, uint8_t motor);
+void increase_motor_speed(uint8_t motor);
+void decrease_motor_speed(uint8_t motor);
 void keyboard_ctrl_action();
 
 // calibration

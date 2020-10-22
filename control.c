@@ -206,77 +206,77 @@ void decrease_p_angle_value(CONTROLLER *controller)
 	}
 }
 
-void increase_motor_speed(int16_t *ae, uint8_t motor){
-	ae[motor] += STEP_SIZE;
-	if (ae[motor] > UPPER_LIMIT) ae[motor] = UPPER_LIMIT;
-	return;
-}
+// void increase_motor_speed(uint8_t motor){
+// 	if ( (ae[motor] + STEP_SIZE) <= 1000) {
+// 		ae[motor] += STEP_SIZE;
+// 	}
+// }
 
-void decrease_motor_speed(int16_t *ae, uint8_t motor){
-	ae[motor] -= STEP_SIZE;
-	if (ae[motor] < 0) ae[motor] = 0;
-	return;
-}
+// void decrease_motor_speed(uint8_t motor){
+// 	if ( (ae[motor] - STEP_SIZE) >= 0) {
+// 		ae[motor] -= STEP_SIZE;
+// 	}
+// }
 
 /*------------------------------------------------------------------
  * keybord_ctrl_action -- allowing the keyboard to do all the actions
  *------------------------------------------------------------------
  */
-void keyboard_ctrl_action(){
-	switch (g_current_m0_state){			//M0
-		case MOTOR_UP:
-			increase_motor_speed(ae, 0);
-			break;
-		case MOTOR_REMAIN:
-			break;
-		case MOTOR_DOWN:
-			decrease_motor_speed(ae, 0);
-			break;
-		default:
-			break;
-	}
-	switch (g_current_m1_state){			//M1
-		case MOTOR_UP:
-			increase_motor_speed(ae, 1);
-			break;
-		case MOTOR_REMAIN:
-			break;
-		case MOTOR_DOWN:
-			decrease_motor_speed(ae, 1);
-			break;
-		default:
-			break;
-	}
-	switch (g_current_m2_state){			//M2
-		case MOTOR_UP:
-			increase_motor_speed(ae, 2);
-			break;
-		case MOTOR_REMAIN:
-			break;
-		case MOTOR_DOWN:
-			decrease_motor_speed(ae, 2);
-			break;
-		default:
-			break;
-	}
-	switch (g_current_m3_state){			//M3
-		case MOTOR_UP:
-			increase_motor_speed(ae, 3);
-			break;
-		case MOTOR_REMAIN:
-			break;
-		case MOTOR_DOWN:
-			decrease_motor_speed(ae, 3);
-			break;
-		default:
-			break;
-	}
-	// reset motor intention
-	g_current_m0_state = MOTOR_REMAIN;
-	g_current_m1_state = MOTOR_REMAIN;
-	g_current_m2_state = MOTOR_REMAIN;
-	g_current_m3_state = MOTOR_REMAIN;
-}
+// void keyboard_ctrl_action(){
+// 	switch (g_current_m0_state){			//M0
+// 		case MOTOR_UP:
+// 			increase_motor_speed(0);
+// 			break;
+// 		case MOTOR_REMAIN:
+// 			break;
+// 		case MOTOR_DOWN:
+// 			decrease_motor_speed(0);
+// 			break;
+// 		default:
+// 			break;
+// 	}
+// 	switch (g_current_m1_state){			//M1
+// 		case MOTOR_UP:
+// 			increase_motor_speed(1);
+// 			break;
+// 		case MOTOR_REMAIN:
+// 			break;
+// 		case MOTOR_DOWN:
+// 			decrease_motor_speed(1);
+// 			break;
+// 		default:
+// 			break;
+// 	}
+// 	switch (g_current_m2_state){			//M2
+// 		case MOTOR_UP:
+// 			increase_motor_speed(2);
+// 			break;
+// 		case MOTOR_REMAIN:
+// 			break;
+// 		case MOTOR_DOWN:
+// 			decrease_motor_speed(2);
+// 			break;
+// 		default:
+// 			break;
+// 	}
+// 	switch (g_current_m3_state){			//M3
+// 		case MOTOR_UP:
+// 			increase_motor_speed(3);
+// 			break;
+// 		case MOTOR_REMAIN:
+// 			break;
+// 		case MOTOR_DOWN:
+// 			decrease_motor_speed(3);
+// 			break;
+// 		default:
+// 			break;
+// 	}
+// 	// reset motor intention
+// 	g_current_m0_state = MOTOR_REMAIN;
+// 	g_current_m1_state = MOTOR_REMAIN;
+// 	g_current_m2_state = MOTOR_REMAIN;
+// 	g_current_m3_state = MOTOR_REMAIN;
+// }
 
 int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr)
 {
