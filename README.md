@@ -25,7 +25,7 @@
 - [Jiahao] Cornercases: check what happens when pitch or roll in maximzed (tilt mcu all the way to left or right or down or up)
 	- can be done with MCU, check motor values
 
-- Define a test plan
+- [Xinyun] Define a test plan
 	- Use different versions of the code in different branches to test right away
 	- Test trimming functions for offset
 
@@ -39,7 +39,7 @@
 - [Jiahao] Fix state mismatch function
 	- enter panic mode on state mismatch
 
-- [Everyone] Big clean up 
+- [Xinyun] Big clean up 
 	- remove unncessary comments
 	- annotate all functions
 	- add clear comments
