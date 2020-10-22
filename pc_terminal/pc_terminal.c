@@ -254,7 +254,10 @@ uint32_t handle_mode_switch(uint32_t message, STATE_t to_state) {
 	message = append_comm_type(message, MODE_SW_COMM);
 	message = append_mode(message, to_state); 
 	pc_state = mode_sw_action("TERM", pc_state, to_state);
+	// printf('The TRM state is: %d\n', pc_state);
 	g_dest_state = UNKNOWN_ST;
+	if (pc_state == CALIBRATION_ST) pc_state = SAFE_ST;
+	if (pc_state == PANIC_ST) pc_state = SAFE_ST;
 	return message;
 }
 
@@ -322,24 +325,20 @@ uint32_t message_encode(int c){
 			break;
 
 		case 'i':
-			// TODO: fill in the encoded message
-			// message = 0b00000000000000010111000001010101; // keyboard 'i' pressed, increase P1 roll/pitch control
-			if (pc_state != SAFE_ST) message = append_mode(message, pc_state);
+			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'i' pressed, increase P1 roll/pitch control
+			message = append_parameter_change(message, P_ROLL_INC);
 			break;
 		case 'k':
-			// TODO: fill in the encoded message
-			// message = 0b00000000000000000111000001010101; // keyboard 'j' pressed, decrease P1 roll/pitch control
-			if (pc_state != SAFE_ST) message = append_mode(message, pc_state);
+			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'k' pressed, decrease P1 roll/pitch control
+			message = append_parameter_change(message, P_ROLL_DEC);
 			break;
 		case 'o':
-			// TODO: fill in the encoded message
-			// message = 0b00000000000000010111000001010101; // keyboard 'o' pressed, increase P2 roll/pitch control
-			if (pc_state != SAFE_ST) message = append_mode(message, pc_state);
+			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'o' pressed, increase P2 roll/pitch control
+			message = append_parameter_change(message, P_PITCH_INC);
 			break;
 		case 'l':
-			// TODO: fill in the encoded message
-			// message = 0b00000000000000000111000001010101; // keyboard 'l' pressed, decrease P2 roll/pitch control
-			if (pc_state != SAFE_ST) message = append_mode(message, pc_state);
+			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'l' pressed, decrease P2 roll/pitch control
+			message = append_parameter_change(message, P_PITCH_DEC);
 			break;
 
 		case 27: // keyboard 'ESC' pressed, SWITCH TO PANIC MODE
@@ -360,10 +359,13 @@ uint32_t message_encode(int c){
 		case 52: // KEYBOARD 4 (switch to YAWCONTROL_ST)
 			message = handle_mode_switch(message, YAWCONTROL_ST);
 			break;
+		case 53: // KEYBOARD 5 (switch to FULLCONTROL_ST)
+			message = handle_mode_switch(message, FULLCONTROL_ST);
+			break;		
 		default:
 			printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
 	}
-	//print_packet(message, "PC: Send message: ");
+	print_packet(message, "PC: Send message: ");
 	return message;
 }
 

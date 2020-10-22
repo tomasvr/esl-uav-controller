@@ -39,7 +39,7 @@ void speed_limit()
 
 void clip_motors() {
 	for (int i = 0; i < 4; i++) {
-		if (ae[i] > 1000) 	ae[i] = 1000;
+		if (ae[i] > MAX_ALLOWED_SPEED) 	ae[i] = MAX_ALLOWED_SPEED;
 		if (ae[i] < 0)		ae[i] = 0;		
 	}
 }
@@ -400,7 +400,12 @@ void run_filters_and_control()
 			
 			break;
 		case FULLCONTROL_ST:
-			//todo
+
+			calculate_motor_values(
+				pitch_control_calc(pitch_control_pointer, pitch, (sq >> 8)), 
+				roll_control_calc(roll_control_pointer, roll, (sp >> 8)), 
+				yaw_control_calc(yaw_control_pointer, yaw, (sr >> 8)*-1 ),  // i think sr needs *-1 (reverse sign)
+				lift);
 			break;
 		case UNKNOWN_ST:	
 			zero_motors();
