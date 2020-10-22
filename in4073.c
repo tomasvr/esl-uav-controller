@@ -374,10 +374,11 @@ int main(void)
 
 			// printf("%10ld | ", get_time_us());
 			printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
-			printf("%6d %6d %6d | ", phi, theta, psi);
+			//printf("%6d %6d %6d | ", phi, theta, psi);
 			printf("%6d %6d %6d | ", sp, sq, sr);
 			//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
-			printf("y_p: %4d r_p: %4d p_p: %4d", yaw_control.kp, roll_control.kp, pitch_control.kp);
+			printf("y_p: %2d r_p: %2d p_p: %2d", yaw_control.kp, roll_control.kp, pitch_control.kp);
+			printf("setp: %4d sp: %4d err: %4d output: %4d \n", roll_control.set_point, sp, roll_control.err, roll_control.output);
 			printf("%4d \n", fcb_state - 1);
 			clear_timer_flag();
 			//printf("%4d \n", motor_lift_level);

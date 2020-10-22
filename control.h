@@ -13,6 +13,8 @@
 #define CONTROLLER_P_UPPER_LIMIT 50
 #define CONTROLLER_P_LOWER_LIMIT 1 
 
+#define MAX_ALLOWED_SPEED 600
+
 // the states that a motor has
 typedef enum {
 		MOTOR_REMAIN,

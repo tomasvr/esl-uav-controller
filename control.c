@@ -39,7 +39,7 @@ void speed_limit()
 
 void clip_motors() {
 	for (int i = 0; i < 4; i++) {
-		if (ae[i] > 1000) 	ae[i] = 1000;
+		if (ae[i] > MAX_ALLOWED_SPEED) 	ae[i] = MAX_ALLOWED_SPEED;
 		if (ae[i] < 0)		ae[i] = 0;		
 	}
 }
@@ -273,23 +273,23 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 	return yaw_control->output;
 }
 
-int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, int16_t sp)
+int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, int16_t sq)
 {
 	pitch_control->set_point = pitch_set_point;
-	pitch_control->err = pitch_control->set_point - sp;
-	// yaw_control->integral += yaw_control->err;
+	pitch_control->err = pitch_control->set_point - sq;
+	// pitch_control->integral += pitch_control->err;
 	pitch_control->output = pitch_control->kp * pitch_control->err;
-	//printf("yaw output: %d\n", yaw_control->output);
+	//printf("pitch output: %d\n", pitch_control->output);
 	return pitch_control->output;
 }
 
-int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int16_t sq)
+int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int16_t sp)
 {
 	roll_control->set_point = roll_set_point;
-	roll_control->err = roll_control->set_point - sq;
-	// yaw_control->integral += yaw_control->err;
+	roll_control->err = roll_control->set_point - sp;
+	// roll_control->integral += roll_control->err;
 	roll_control->output = roll_control->kp * roll_control->err;
-	//printf("yaw output: %d\n", yaw_control->output);
+	//printf("roll setpoint: %d sq: %d err: %d output: %d \n", roll_set_point, sp, roll_control->err, roll_control->output);
 	return roll_control->output;
 }
 
@@ -409,8 +409,8 @@ void run_filters_and_control()
 			break;
 		case FULLCONTROL_ST:
 			calculate_motor_values(
-				pitch_control_calc(pitch_control_pointer, pitch, (sp >> 8)*-1 ), 
-				roll_control_calc(roll_control_pointer, roll, (sq >> 8)*-1), 
+				pitch_control_calc(pitch_control_pointer, pitch, (sq >> 8)), 
+				roll_control_calc(roll_control_pointer, roll, (sp >> 8)), 
 				yaw_control_calc(yaw_control_pointer, yaw, (sr >> 8)*-1 ),  // i think sr needs *-1 (reverse sign)
 				lift);
 			break;

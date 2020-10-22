@@ -356,6 +356,9 @@ uint32_t message_encode(int c){
 		case 52: // KEYBOARD 4 (switch to YAWCONTROL_ST)
 			message = handle_mode_switch(message, YAWCONTROL_ST);
 			break;
+		case 53: // KEYBOARD 5 (switch to FULLCONTROL_ST)
+			message = handle_mode_switch(message, FULLCONTROL_ST);
+			break;		
 		default:
 			printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
 	}
