@@ -154,8 +154,8 @@ void controller_init(CONTROLLER *controller)
 	controller->set_point = 0;
 	controller->sensor_value = 0;
 	controller->err = 0;
-	controller->kp_rate = 5;
-	controller->kp_angle = 5;
+	controller->kp_rate = 1;
+	controller->kp_angle = 1;
 	controller->ki = 1;
 	controller->integral = 0;
 	controller->output = 0;
