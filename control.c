@@ -273,6 +273,18 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 	return yaw_control->output;
 }
 
+int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, int16_t sq, int16_t theta)
+{
+	int16_t output = ((pitch_set_point-theta) * pitch_control->kp_1 - sq) * pitch_control->kp_2;
+	return output;
+}
+
+int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int16_t sp, int16_t phi)
+{
+	int16_t output = ((roll_set_point-phi) * roll_control->kp_1 - sp) * roll_control->kp_2;
+	return output;
+}
+
 double sqrt(double square)
 {
     double root=square/3;
