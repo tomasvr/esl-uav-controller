@@ -39,7 +39,7 @@
 - Fix state mismatch function
 	- enter panic mode on state mismatch
 
-- Big clean up 
+- [Everyone] Big clean up 
 	- remove unncessary comments
 	- annotate all functions
 	- add clear comments
