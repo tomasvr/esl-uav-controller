@@ -1,13 +1,7 @@
-/*------------------------------------------------------------
- * Simple pc terminal in C
- *
- * Arjan J.C. van Gemund (+ mods by Ioannis Protonotarios)
- *
- * read more: http://mirror.datenwolf.net/serial/
- *------------------------------------------------------------
- */
 
 
+
+// TODO: remove this macros after debug
 /* --- PRINTF_BYTE_TO_BINARY macro's --- */
 #define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
 #define PRINTF_BYTE_TO_BINARY_INT8(i)    \
@@ -261,105 +255,113 @@ uint32_t handle_mode_switch(uint32_t message, STATE_t to_state) {
 	return message;
 }
 
+/* 
+* Encode keybord commands.
+* J. Cui 
+*/
 uint32_t message_encode(int c){
-	uint32_t message = BASE_MESSAGE_PACKET_BITS; // 0b00000000000000000000000001010101
+	uint32_t message = BASE_MESSAGE_PACKET_BITS; 
 	switch(c){
 
-		case USB_CHECK_MESSAGE:// USB_COMM_CHECK_MESSAGE //todo: take other number than 99? (i chose it randomly)
-			// printf("entered case for usb check message\n");
-			//message = 0b00000000000000001001000001010101; // 000000000-00000000-11110000-01010101 (empty - empty - USB_check_comm - startbit)
+		case USB_CHECK_MESSAGE:// USB_COMM_CHECK_MESSAGE 				//TODO: take other number than 99? (i chose it randomly)
 			message = append_comm_type(message, USB_CHECK_COMM);
-			message = append_mode(message, pc_state); // append current state to check at FCB side
+			message = append_mode(message, pc_state); 
 			break;
 		case 'a':
-			// printf("a pressed\n");
-			// keyboard 'a' pressed, drone lift up, this command has a default mode -> MANUAL_ST
+			// keyboard 'a' pressed, drone lift up
 			message = append_comm_type(message, CTRL_COMM);
-			message = append_keyboard_motor_control(message, LIFT_UP); // 0b01-01-01-01 = 0bM0-M1-M2-M3,  00 = REMAIN, 01 = UP, 10 = DOWN
+			message = append_keyboard_motor_control(message, LIFT_UP);
 			break;
 		case 'z':
-			// keyboard 'z' pressed, drone lift down, this command has a default mode -> MANUAL_ST
+			// keyboard 'z' pressed, drone lift down
 			message = append_comm_type(message, CTRL_COMM);
 			message = append_keyboard_motor_control(message, LIFT_DOWN);
 			break;
 		case 'A':
-			// keyboard '↑' pressed, drone pitch down, this command has a default mode -> MANUAL_ST
+			// keyboard '↑' pressed, drone pitch down
 			message = append_comm_type(message, CTRL_COMM);
 			message = append_keyboard_motor_control(message, PITCH_DOWN);
 			break;
 		case 'B':
-			// keyboard '↓' pressed, drone pitch up, this command has a default mode -> MANUAL_ST
+			// keyboard '↓' pressed, drone pitch up
 			message = append_comm_type(message, CTRL_COMM);
 			message = append_keyboard_motor_control(message, PITCH_UP);
 			break;
 		case 'C':
-			// keyboard '->' pressed, drone roll down, this command has a default mode -> MANUAL_ST
+			// keyboard '->' pressed, drone roll down
 			message = append_comm_type(message, CTRL_COMM);
 			message = append_keyboard_motor_control(message, ROLL_RIGHT);		
 			break;
-
 		case 'D':
-			// keyboard '<-' pressed, drone roll up, this command has a default mode -> MANUAL_ST
+			// keyboard '<-' pressed, drone roll up
 			message = append_comm_type(message, CTRL_COMM);
 			message = append_keyboard_motor_control(message, ROLL_LEFT);		
 			break;
-
 		case 'q':
-			// keyboard 'q' pressed, drone yaw down(left), this command has a default mode -> MANUAL_ST
+			// keyboard 'q' pressed, drone yaw down(left)
 			message = append_comm_type(message, CTRL_COMM);
 			message = append_keyboard_motor_control(message, YAW_LEFT);		
 			break;
 		case 'w':
-			// keyboard 'w' pressed, drone yaw up(right), this command has a default mode -> MANUAL_ST
+			// keyboard 'w' pressed, drone yaw up(right)
 			message = append_comm_type(message, CTRL_COMM);
 			message = append_keyboard_motor_control(message, YAW_RIGHT);		
 			break;
-
 		case 'u':
-			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'u' pressed, increase P yaw control
+			// keyboard 'u' pressed, increase P yaw control
+			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_RATE_YAW_INC);
 			break;
 		case 'j':
-			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'j' pressed, decrease P yaw control
+			// keyboard 'j' pressed, decrease P yaw control
+			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_RATE_YAW_DEC);
 			break;
-
 		case 'i':
-			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'i' pressed, increase P1 roll/pitch control
+			// keyboard 'i' pressed, increase P1 roll/pitch control
+			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_RATE_PITCHROLL_INC);
 			break;
 		case 'k':
-			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'k' pressed, decrease P1 roll/pitch control
+			// keyboard 'k' pressed, decrease P1 roll/pitch control
+			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_RATE_PITCHROLL_DEC);
 			break;
 		case 'o':
-			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'o' pressed, increase P2 roll/pitch control
+			// keyboard 'o' pressed, increase P2 roll/pitch control
+			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_ANGLE_PITCHROLL_INC);
 			break;
 		case 'l':
-			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'l' pressed, decrease P2 roll/pitch control
+			// keyboard 'l' pressed, decrease P2 roll/pitch control
+			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_ANGLE_PITCHROLL_DEC);
 			break;
-
-		case 27: // keyboard 'ESC' pressed, SWITCH TO PANIC MODE
+		case 27: 
+			// keyboard 'ESC' pressed, SWITCH TO PANIC MODE
 			message = append_comm_type(message, ESC_COMM);
-
-		case 48: // keyboard '0' pressed, SWITCH TO PANIC MODE
+		case 48: 
+			// keyboard '0' pressed, SWITCH TO PANIC MODE
 			message = handle_mode_switch(message, SAFE_ST);
 			break;
-		case 49: // KEYBOARD 1 (switch to PANIC_ST)
+		case 49: 
+			// KEYBOARD 1 (switch to PANIC_ST)
 			message = handle_mode_switch(message, PANIC_ST);
 			break;
-		case 50:  // KEYBOARD 2 (switch to MANUAL_ST)
+		case 50:  
+			// KEYBOARD 2 (switch to MANUAL_ST)
 			message = handle_mode_switch(message, MANUAL_ST);
 			break;
-		case 51: // KEYBOARD 3 (switch to CALIBRATION_ST)
+		case 51: 
+			// KEYBOARD 3 (switch to CALIBRATION_ST)
 			message = handle_mode_switch(message, CALIBRATION_ST);
 			break;
-		case 52: // KEYBOARD 4 (switch to YAWCONTROL_ST)
+		case 52: 
+			// KEYBOARD 4 (switch to YAWCONTROL_ST)
 			message = handle_mode_switch(message, YAWCONTROL_ST);
 			break;
-		case 53: // KEYBOARD 5 (switch to FULLCONTROL_ST)
+		case 53: 
+			// KEYBOARD 5 (switch to FULLCONTROL_ST)
 			message = handle_mode_switch(message, FULLCONTROL_ST);
 			break;		
 		default:
@@ -369,14 +371,18 @@ uint32_t message_encode(int c){
 	return message;
 }
 
+/* 
+* Encode joystick commands.
+* "aruthor"
+*/
 void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	uint32_t message = 0b00000000000000000000000001010101; // base message
-	if (js_type == 1) { //buttons
+	if (js_type == 1) { // js buttons
 		if (js_number == 0) message = append_comm_type(message, ESC_COMM);
 		STATE_t to_state = js_number; // The button number indicates which state (see states.h)
 		message = handle_mode_switch(message, to_state);
 	}
-	else if ( (js_type == 2) || (js_type == 130)) { //axis (130 occurs at startup)
+	else if ( (js_type == 2) || (js_type == 130)) { // js axis (130 occurs at startup)
 		message = append_comm_type(message, JS_AXIS_COMM);
 		JOYSTICK_AXIS_t axis_number_from_js = js_number;
 		message = append_js_axis_type(message, axis_number_from_js);
@@ -390,11 +396,15 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	rs232_putchar(message);
 }
 
-
+/* 
+* Send USB check message.
+* "aruthor"
+*/
 void send_USB_check_message() {
 	rs232_putchar(message_encode(USB_CHECK_MESSAGE));
 }
 
+// Not using this function?
 unsigned int mon_time_ms(void){
     unsigned int    ms;
     struct timeval  tv;
@@ -405,6 +415,7 @@ unsigned int mon_time_ms(void){
     return ms;
 }
 
+// Not using this function?
 void mon_delay_ms(unsigned int ms){
         struct timespec req, rem;
         req.tv_sec = ms / 1000;
@@ -412,10 +423,14 @@ void mon_delay_ms(unsigned int ms){
         assert(nanosleep(&req,&rem) == 0);
 }
 
+/* 
+* Get time stamp.
+* "aruthor"
+*/
 uint32_t GetTimeStamp() {
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    return tv.tv_sec*(uint32_t)1000000+tv.tv_usec; //todo: check for overflow? <-- (32 bit allows for about 70 minutes before overflow, fix this later?)
+    return tv.tv_sec*(uint32_t)1000000+tv.tv_usec; //TODO: check for overflow? <-- (32 bit allows for about 70 minutes before overflow, fix this later?)
 }
 
 
@@ -443,7 +458,6 @@ int main(int argc, char **argv)
 	// js: initializaiton
 	int 			fd;
 	struct js_event js;
-	//unsigned int	t, i;
 	if ((fd = open(JS_DEV, O_RDONLY)) < 0) {
 		perror("jstest");
 		exit(1);
@@ -457,53 +471,42 @@ int main(int argc, char **argv)
 	 */
 	int counter = 0;
 	while(true){
-	 
-		/*---------------------------------------------------
-		 *			communication: pc -> drone
-		 *---------------------------------------------------
+		/*
+		 * Communication: pc -> drone
 		 */
-
-		/* Send USB connection message */
+		// Send USB connection message
 		current_time = GetTimeStamp();
+
 		if((current_time - last_USB_check_time) >= USB_SEND_CHECK_INTERVAL) {
 			//printf("PC: Time to send USB check message\n");
 			send_USB_check_message();
 			last_USB_check_time = current_time;
 		}
-		if ((c = term_getchar_nb()) != -1){
 
-			// distinguish the characters and arrows
-			if (c == '\033') { // if the first value is esc
-			    term_getchar_nb(); // skip the [
+		if ((c = term_getchar_nb()) != -1){
+			// distinguish the keyboard characters and arrows
+			if (c == '\033') { 
+			    term_getchar_nb(); 
 			    c = term_getchar_nb();
 			    if (c!='A' && c!='B' && c!='C' && c!='D') {
 			    	rs232_putchar(message_encode(27));
 				}		 
 			}
-			// distinguish the arrows with ESC
+			// sned keyboard massage
  			rs232_putchar(message_encode(c));
-
-			if (pc_state == PANIC_ST){
-				// c = rs232_getchar(); //delay until character received again
-				// term_putchar(c);
-				// term_puts("Character received from FCB, leaving panic mode on PC-side");
-				pc_state = SAFE_ST;
-			}
-			
-			//printf("Message sent!\n");
+			if (pc_state == PANIC_ST) pc_state = SAFE_ST;
 		}
+
 		if ((c = rs232_getchar_nb()) != -1) term_putchar(c);
 
-		/*---------------------------------------------------
-		 *			communication: js -> pc
-		 *---------------------------------------------------
+		/*
+		 * Communication: js -> pc
 		 */
-		// mon_delay_ms(30);
 
 #ifdef ENABLE_JOYSTICK
 		current_time = GetTimeStamp();
 		if( (current_time - last_js_send_time) >= POLL_DELAY) {
-			while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) { //might have to make this an 'if' statement instead
+			while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) { // TODO: might have to make this an 'if' statement instead
 				//printf("PC: JS event: type %d, time %d, number %d, value %d\n", js.type, js.time, js.number, js.value);
 					send_js_message(js.type, js.number, js.value);
 			}
