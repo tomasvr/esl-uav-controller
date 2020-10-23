@@ -1,11 +1,3 @@
-/*------------------------------------------------------------
- * Simple pc terminal in C
- *
- * Arjan J.C. van Gemund (+ mods by Ioannis Protonotarios)
- *
- * read more: http://mirror.datenwolf.net/serial/
- *------------------------------------------------------------
- */
 
 
 /* --- PRINTF_BYTE_TO_BINARY macro's --- */
@@ -261,105 +253,111 @@ uint32_t handle_mode_switch(uint32_t message, STATE_t to_state) {
 	return message;
 }
 
+/* Encode keybord commands.
+* Author: J. Cui */
 uint32_t message_encode(int c){
-	uint32_t message = BASE_MESSAGE_PACKET_BITS; // 0b00000000000000000000000001010101
+	uint32_t message = BASE_MESSAGE_PACKET_BITS; 
 	switch(c){
 
-		case USB_CHECK_MESSAGE:// USB_COMM_CHECK_MESSAGE //todo: take other number than 99? (i chose it randomly)
-			// printf("entered case for usb check message\n");
-			//message = 0b00000000000000001001000001010101; // 000000000-00000000-11110000-01010101 (empty - empty - USB_check_comm - startbit)
+		case USB_CHECK_MESSAGE:// USB_COMM_CHECK_MESSAGE 				//TODO: take other number than 99? (i chose it randomly)
 			message = append_comm_type(message, USB_CHECK_COMM);
-			message = append_mode(message, pc_state); // append current state to check at FCB side
+			message = append_mode(message, pc_state); 
 			break;
 		case 'a':
-			// printf("a pressed\n");
-			// keyboard 'a' pressed, drone lift up, this command has a default mode -> MANUAL_ST
+			// keyboard 'a' pressed, drone lift up
 			message = append_comm_type(message, CTRL_COMM);
-			message = append_keyboard_motor_control(message, LIFT_UP); // 0b01-01-01-01 = 0bM0-M1-M2-M3,  00 = REMAIN, 01 = UP, 10 = DOWN
+			message = append_keyboard_motor_control(message, LIFT_UP);
 			break;
 		case 'z':
-			// keyboard 'z' pressed, drone lift down, this command has a default mode -> MANUAL_ST
+			// keyboard 'z' pressed, drone lift down
 			message = append_comm_type(message, CTRL_COMM);
 			message = append_keyboard_motor_control(message, LIFT_DOWN);
 			break;
 		case 'A':
-			// keyboard '↑' pressed, drone pitch down, this command has a default mode -> MANUAL_ST
+			// keyboard '↑' pressed, drone pitch down
 			message = append_comm_type(message, CTRL_COMM);
 			message = append_keyboard_motor_control(message, PITCH_DOWN);
 			break;
 		case 'B':
-			// keyboard '↓' pressed, drone pitch up, this command has a default mode -> MANUAL_ST
+			// keyboard '↓' pressed, drone pitch up
 			message = append_comm_type(message, CTRL_COMM);
 			message = append_keyboard_motor_control(message, PITCH_UP);
 			break;
 		case 'C':
-			// keyboard '->' pressed, drone roll down, this command has a default mode -> MANUAL_ST
+			// keyboard '->' pressed, drone roll down
 			message = append_comm_type(message, CTRL_COMM);
 			message = append_keyboard_motor_control(message, ROLL_RIGHT);		
 			break;
-
 		case 'D':
-			// keyboard '<-' pressed, drone roll up, this command has a default mode -> MANUAL_ST
+			// keyboard '<-' pressed, drone roll up
 			message = append_comm_type(message, CTRL_COMM);
 			message = append_keyboard_motor_control(message, ROLL_LEFT);		
 			break;
-
 		case 'q':
-			// keyboard 'q' pressed, drone yaw down(left), this command has a default mode -> MANUAL_ST
+			// keyboard 'q' pressed, drone yaw down(left)
 			message = append_comm_type(message, CTRL_COMM);
 			message = append_keyboard_motor_control(message, YAW_LEFT);		
 			break;
 		case 'w':
-			// keyboard 'w' pressed, drone yaw up(right), this command has a default mode -> MANUAL_ST
+			// keyboard 'w' pressed, drone yaw up(right)
 			message = append_comm_type(message, CTRL_COMM);
 			message = append_keyboard_motor_control(message, YAW_RIGHT);		
 			break;
-
 		case 'u':
-			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'u' pressed, increase P yaw control
+			// keyboard 'u' pressed, increase P yaw control
+			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_RATE_YAW_INC);
 			break;
 		case 'j':
-			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'j' pressed, decrease P yaw control
+			// keyboard 'j' pressed, decrease P yaw control
+			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_RATE_YAW_DEC);
 			break;
-
 		case 'i':
-			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'i' pressed, increase P1 roll/pitch control
+			// keyboard 'i' pressed, increase P1 roll/pitch control
+			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_RATE_PITCHROLL_INC);
 			break;
 		case 'k':
-			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'k' pressed, decrease P1 roll/pitch control
+			// keyboard 'k' pressed, decrease P1 roll/pitch control
+			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_RATE_PITCHROLL_DEC);
 			break;
 		case 'o':
-			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'o' pressed, increase P2 roll/pitch control
+			// keyboard 'o' pressed, increase P2 roll/pitch control
+			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_ANGLE_PITCHROLL_INC);
 			break;
 		case 'l':
-			message = append_comm_type(message, CHANGE_P_COMM); // keyboard 'l' pressed, decrease P2 roll/pitch control
+			// keyboard 'l' pressed, decrease P2 roll/pitch control
+			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_ANGLE_PITCHROLL_DEC);
 			break;
-
-		case 27: // keyboard 'ESC' pressed, SWITCH TO PANIC MODE
+		case 27: 
+			// keyboard 'ESC' pressed, SWITCH TO PANIC MODE
 			message = append_comm_type(message, ESC_COMM);
-
-		case 48: // keyboard '0' pressed, SWITCH TO PANIC MODE
+		case 48: 
+			// keyboard '0' pressed, SWITCH TO PANIC MODE
 			message = handle_mode_switch(message, SAFE_ST);
 			break;
-		case 49: // KEYBOARD 1 (switch to PANIC_ST)
+		case 49: 
+			// KEYBOARD 1 (switch to PANIC_ST)
 			message = handle_mode_switch(message, PANIC_ST);
 			break;
-		case 50:  // KEYBOARD 2 (switch to MANUAL_ST)
+		case 50:  
+			// KEYBOARD 2 (switch to MANUAL_ST)
 			message = handle_mode_switch(message, MANUAL_ST);
 			break;
-		case 51: // KEYBOARD 3 (switch to CALIBRATION_ST)
+		case 51: 
+			// KEYBOARD 3 (switch to CALIBRATION_ST)
 			message = handle_mode_switch(message, CALIBRATION_ST);
 			break;
-		case 52: // KEYBOARD 4 (switch to YAWCONTROL_ST)
+		case 52: 
+			// KEYBOARD 4 (switch to YAWCONTROL_ST)
 			message = handle_mode_switch(message, YAWCONTROL_ST);
 			break;
-		case 53: // KEYBOARD 5 (switch to FULLCONTROL_ST)
+		case 53: 
+			// KEYBOARD 5 (switch to FULLCONTROL_ST)
 			message = handle_mode_switch(message, FULLCONTROL_ST);
 			break;		
 		default:
