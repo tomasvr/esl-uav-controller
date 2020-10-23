@@ -1,5 +1,7 @@
 
 
+
+// TODO: remove this macros after debug
 /* --- PRINTF_BYTE_TO_BINARY macro's --- */
 #define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
 #define PRINTF_BYTE_TO_BINARY_INT8(i)    \
@@ -253,8 +255,10 @@ uint32_t handle_mode_switch(uint32_t message, STATE_t to_state) {
 	return message;
 }
 
-/* Encode keybord commands.
-* Author: J. Cui */
+/* 
+* Encode keybord commands.
+* J. Cui 
+*/
 uint32_t message_encode(int c){
 	uint32_t message = BASE_MESSAGE_PACKET_BITS; 
 	switch(c){
@@ -367,14 +371,18 @@ uint32_t message_encode(int c){
 	return message;
 }
 
+/* 
+* Encode joystick commands.
+* "aruthor"
+*/
 void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	uint32_t message = 0b00000000000000000000000001010101; // base message
-	if (js_type == 1) { //buttons
+	if (js_type == 1) { // js buttons
 		if (js_number == 0) message = append_comm_type(message, ESC_COMM);
 		STATE_t to_state = js_number; // The button number indicates which state (see states.h)
 		message = handle_mode_switch(message, to_state);
 	}
-	else if ( (js_type == 2) || (js_type == 130)) { //axis (130 occurs at startup)
+	else if ( (js_type == 2) || (js_type == 130)) { // js axis (130 occurs at startup)
 		message = append_comm_type(message, JS_AXIS_COMM);
 		JOYSTICK_AXIS_t axis_number_from_js = js_number;
 		message = append_js_axis_type(message, axis_number_from_js);
@@ -388,11 +396,15 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	rs232_putchar(message);
 }
 
-
+/* 
+* Send USB check message.
+* "aruthor"
+*/
 void send_USB_check_message() {
 	rs232_putchar(message_encode(USB_CHECK_MESSAGE));
 }
 
+// Not using this function?
 unsigned int mon_time_ms(void){
     unsigned int    ms;
     struct timeval  tv;
@@ -403,6 +415,7 @@ unsigned int mon_time_ms(void){
     return ms;
 }
 
+// Not using this function?
 void mon_delay_ms(unsigned int ms){
         struct timespec req, rem;
         req.tv_sec = ms / 1000;
@@ -410,10 +423,14 @@ void mon_delay_ms(unsigned int ms){
         assert(nanosleep(&req,&rem) == 0);
 }
 
+/* 
+* Get time stamp.
+* "aruthor"
+*/
 uint32_t GetTimeStamp() {
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    return tv.tv_sec*(uint32_t)1000000+tv.tv_usec; //todo: check for overflow? <-- (32 bit allows for about 70 minutes before overflow, fix this later?)
+    return tv.tv_sec*(uint32_t)1000000+tv.tv_usec; //TODO: check for overflow? <-- (32 bit allows for about 70 minutes before overflow, fix this later?)
 }
 
 
@@ -441,7 +458,6 @@ int main(int argc, char **argv)
 	// js: initializaiton
 	int 			fd;
 	struct js_event js;
-	//unsigned int	t, i;
 	if ((fd = open(JS_DEV, O_RDONLY)) < 0) {
 		perror("jstest");
 		exit(1);
@@ -455,53 +471,42 @@ int main(int argc, char **argv)
 	 */
 	int counter = 0;
 	while(true){
-	 
-		/*---------------------------------------------------
-		 *			communication: pc -> drone
-		 *---------------------------------------------------
+		/*
+		 * Communication: pc -> drone
 		 */
-
-		/* Send USB connection message */
+		// Send USB connection message
 		current_time = GetTimeStamp();
+
 		if((current_time - last_USB_check_time) >= USB_SEND_CHECK_INTERVAL) {
 			//printf("PC: Time to send USB check message\n");
 			send_USB_check_message();
 			last_USB_check_time = current_time;
 		}
-		if ((c = term_getchar_nb()) != -1){
 
-			// distinguish the characters and arrows
-			if (c == '\033') { // if the first value is esc
-			    term_getchar_nb(); // skip the [
+		if ((c = term_getchar_nb()) != -1){
+			// distinguish the keyboard characters and arrows
+			if (c == '\033') { 
+			    term_getchar_nb(); 
 			    c = term_getchar_nb();
 			    if (c!='A' && c!='B' && c!='C' && c!='D') {
 			    	rs232_putchar(message_encode(27));
 				}		 
 			}
-			// distinguish the arrows with ESC
+			// sned keyboard massage
  			rs232_putchar(message_encode(c));
-
-			if (pc_state == PANIC_ST){
-				// c = rs232_getchar(); //delay until character received again
-				// term_putchar(c);
-				// term_puts("Character received from FCB, leaving panic mode on PC-side");
-				pc_state = SAFE_ST;
-			}
-			
-			//printf("Message sent!\n");
+			if (pc_state == PANIC_ST) pc_state = SAFE_ST;
 		}
+
 		if ((c = rs232_getchar_nb()) != -1) term_putchar(c);
 
-		/*---------------------------------------------------
-		 *			communication: js -> pc
-		 *---------------------------------------------------
+		/*
+		 * Communication: js -> pc
 		 */
-		// mon_delay_ms(30);
 
 #ifdef ENABLE_JOYSTICK
 		current_time = GetTimeStamp();
 		if( (current_time - last_js_send_time) >= POLL_DELAY) {
-			while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) { //might have to make this an 'if' statement instead
+			while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) { // TODO: might have to make this an 'if' statement instead
 				//printf("PC: JS event: type %d, time %d, number %d, value %d\n", js.type, js.time, js.number, js.value);
 					send_js_message(js.type, js.number, js.value);
 			}
