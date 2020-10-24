@@ -57,7 +57,6 @@ void keyboard_ctrl_action();
 extern bool DMP;
 extern bool calib_done;
 extern uint8_t calib_counter;
-// int16_t sensor_calib = 0:
 extern int16_t sensor_sum;
 extern int32_t angle_calib[3];
 extern int32_t gyro_calib[3];
@@ -67,18 +66,11 @@ extern int16_t sp_calib, sq_calib, sr_calib;
 extern int16_t sax_calib, say_calib, saz_calib;
 void sensor_calc(uint8_t);
 void sensor_calib(void);
-// void offset_remove(void);
 
 // controller
 #define b 1 
 #define d 1
-// extern int16_t yaw_set_point;
-// extern int16_t roll_set_point;
-// extern int16_t pitch_set_point;
-// extern int16_t Z;
-// extern int16_t L;
-// extern int16_t M;
-// extern int16_t N;
+
 void controller_init(CONTROLLER *controller);
 void increase_p_value(CONTROLLER *controller);
 void decrease_p_value(CONTROLLER *controller);

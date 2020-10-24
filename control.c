@@ -14,29 +14,23 @@
 #include "in4073.h"
 #include "control.h"
 
-// This funciton is used for debugging
-// if color == -1, then all leds are turned off
-// gpio_pin_set TURNS OFF led
-// gpio_pin_clear TURNS ON led
-
+/*This funciton is used for debugging
+* if color == -1, then all leds are turned off
+* gpio_pin_set TURNS OFF led
+* gpio_pin_clear TURNS ON led
+* "aruthor"
+*/
 void switch_led(int color) {
 	nrf_gpio_pin_set(GREEN);
 	nrf_gpio_pin_set(RED);
 	nrf_gpio_pin_set(YELLOW);
-	if (color != -1) {
-		nrf_gpio_pin_clear(color);
-	}
+	if (color != -1) nrf_gpio_pin_clear(color);
 }
 
-void speed_limit()
-{
-	for(uint8_t i = 0; i < 4; i++)
-	{
-	if(ae[i] > 450) ae[i] = 450;
-	if(ae[i] < 170) ae[i] = 170;
-	}
-}
-
+/*
+* Limit the motors' speed in [170, 450].
+* "aruthor"
+*/
 void clip_motors() {
 	for (int i = 0; i < 4; i++) {
 		if (ae[i] > MAX_ALLOWED_SPEED) 	ae[i] = MAX_ALLOWED_SPEED;
@@ -45,6 +39,10 @@ void clip_motors() {
 	}
 }
 
+/*
+* Set all motor speed to 0.
+* "aruthor"
+*/
 void zero_motors() {
 	ae[0] = 0;
 	ae[1] = 0;
@@ -52,111 +50,98 @@ void zero_motors() {
 	ae[3] = 0;	
 }
 
-// calibraiton
+// Calibration
 bool DMP = true;
 bool calib_done = false;
-uint8_t calib_counter = 0;
-// int16_t sensor_calib = 0:
-int16_t sensor_sum = 0;
-int32_t angle_calib[3] = {0};
-int32_t gyro_calib[3] = {0};
-int32_t acce_calib[3] = {0};
-int16_t phi_calib = 0, theta_calib = 0, psi_calib = 0;
-int16_t sp_calib = 0, sq_calib = 0, sr_calib = 0;
-int16_t sax_calib = 0, say_calib = 0, saz_calib = 0;
+int16_t sensor_sum 	= 0;
+uint8_t calib_counter 	= 0;
+int32_t angle_calib[3] 	= {0};
+int32_t gyro_calib[3] 	= {0};
+int32_t acce_calib[3] 	= {0};
+int16_t phi_calib = 0, 	theta_calib = 0, psi_calib = 0;
+int16_t sp_calib = 0, 	sq_calib = 0, 	sr_calib = 0;
+int16_t sax_calib = 0, 	say_calib = 0, 	saz_calib = 0;
 
-void sensor_calc(uint8_t num)
-{
-	do
-	{
-		angle_calib[0] += phi; 
-		angle_calib[1] += theta; 
-		angle_calib[2] += psi; 
-		gyro_calib[0] += sp; 
-		gyro_calib[1] += sq; 
-		gyro_calib[2] += sr; 
-		acce_calib[0] += sax; 
-		acce_calib[1] += say; 
-		acce_calib[2] += saz;
+/*
+*
+*/
+void sensor_calc(uint8_t num) {
+	do{
+		angle_calib[0] 	+= phi; 
+		angle_calib[1]	+= theta; 
+		angle_calib[2] 	+= psi; 
+		gyro_calib[0] 	+= sp; 
+		gyro_calib[1] 	+= sq; 
+		gyro_calib[2] 	+= sr; 
+		acce_calib[0]	+= sax; 
+		acce_calib[1] 	+= say; 
+		acce_calib[2] 	+= saz;
 		calib_counter++;
 
 	}while(calib_counter < num);
 
-	if(calib_counter == num)
-	{
+	if(calib_counter == num){
 		// calculate average
-		// printf("| SUM: %6d \n", gyro_calib[2]);
-		angle_calib[0] /= num; 
-		angle_calib[1] /= num; 
-		angle_calib[2] /= num;//phi theta psi 
-		gyro_calib[0] /= num; 
-		gyro_calib[1] /= num; 
-		gyro_calib[2] /= num;//sp sq sr
-		acce_calib[0] /= num; 
-		acce_calib[1] /= num; 
-		acce_calib[2] /= num;//sax say saz
-		// printf("| PSI_CALIB: %6d \n", gyro_calib[2]);
+		angle_calib[0] 	/= num; 
+		angle_calib[1] 	/= num; 
+		angle_calib[2] 	/= num;//phi theta psi 
+		gyro_calib[0] 	/= num; 
+		gyro_calib[1] 	/= num; 
+		gyro_calib[2] 	/= num;//sp sq sr
+		acce_calib[0] 	/= num; 
+		acce_calib[1]	/= num; 
+		acce_calib[2] 	/= num;//sax say saz
 
 		// store calibrated value
-		phi_calib = angle_calib[0]; 
+		phi_calib 	= angle_calib[0]; 
 		theta_calib = angle_calib[1]; 
-		psi_calib = angle_calib[2];
-		sp_calib = gyro_calib[0]; 
-		sq_calib = gyro_calib[1]; 
-		sr_calib = gyro_calib[2];
-		sax_calib = acce_calib[0]; 
-		say_calib = acce_calib[1]; 
-		saz_calib = acce_calib[2];
-		calib_done = true;
+		psi_calib 	= angle_calib[2];
+		sp_calib 	= gyro_calib[0]; 
+		sq_calib 	= gyro_calib[1]; 
+		sr_calib 	= gyro_calib[2];
+		sax_calib 	= acce_calib[0]; 
+		say_calib 	= acce_calib[1]; 
+		saz_calib 	= acce_calib[2];
+		calib_done 	= true;
 		calib_counter = 0;
 
 		// reset 
-		angle_calib[0] = 0; 
-		angle_calib[1] = 0; 
-		angle_calib[2] = 0;
-		gyro_calib[0] = 0; 
-		gyro_calib[1] = 0; 
-		gyro_calib[2] = 0;
-		acce_calib[0] = 0; 
-		acce_calib[1] = 0; 
-		acce_calib[2] = 0;
+		angle_calib[0] 	= 0; 
+		angle_calib[1] 	= 0; 
+		angle_calib[2] 	= 0;
+		gyro_calib[0] 	= 0; 
+		gyro_calib[1] 	= 0; 
+		gyro_calib[2] 	= 0;
+		acce_calib[0] 	= 0; 
+		acce_calib[1] 	= 0; 
+		acce_calib[2] 	= 0;
 	}
 	else calib_done = false; // not calibrated yet
-	// 	return -1;
 }
 
-void sensor_calib()
-{
+void sensor_calib() {
 	sensor_calc(100); 
-	if (calib_done) 
-	{	
-		printf("\n CALIB DONE\n");
-		printf("\n SR CALIB DONE, SR_CALIB: %6d\n", sr_calib);//sr
-	}
-	if(DMP)
-	{
+	if (calib_done) printf("\n CALIB DONE\n");
+	
+	if(DMP){
 		dmp_set_gyro_bias(gyro_calib);
 		dmp_set_accel_bias(acce_calib);
 	}
 }
 
-void offset_remove()
-{
-	phi -= phi_calib; 
-	theta -= theta_calib; 
-	psi -= psi_calib;
-	sp -= sp_calib; 
-	sq -= sq_calib; 
-	sr -= sr_calib;
+void offset_remove() {
+	phi 	-= phi_calib; 
+	theta 	-= theta_calib; 
+	psi 	-= psi_calib;
+	sp 	-= sp_calib; 
+	sq 	-= sq_calib; 
+	sr 	-= sr_calib;
 	sax -= sax_calib; 
 	say -= say_calib; 
 	saz -= saz_calib;
 }
 
-
-// #define yaw_speed_init 170
-
-// controller
+// Control loop
 int16_t yaw_set_point = 0;
 int16_t roll_set_point = 0;
 int16_t pitch_set_point = 0;
@@ -165,9 +150,11 @@ int16_t L = 0;
 int16_t M = 0;
 int16_t N = 1;
 
-void controller_init(CONTROLLER *controller)
-{
-	// prinf('Controller init begin... \n');
+/*
+* Initial the control struct.
+* "aruthor"
+*/
+void controller_init(CONTROLLER *controller) {
 	controller->set_point = 0;
 	controller->sensor_value = 0;
 	controller->err = 0;
@@ -176,35 +163,26 @@ void controller_init(CONTROLLER *controller)
 	controller->ki = 1;
 	controller->integral = 0;
 	controller->output = 0;
-	// prinf('Controller init end. \n');
 }
 
-void  increase_p_rate_value(CONTROLLER *controller)
-{
-	if (controller->kp_rate < CONTROLLER_P_UPPER_LIMIT) {
+void  increase_p_rate_value(CONTROLLER *controller) {
+	if (controller->kp_rate < CONTROLLER_P_UPPER_LIMIT) 
 		controller->kp_rate += CONTROLLER_P_STEP_SIZE;
-	}
 }
 
-void decrease_p_rate_value(CONTROLLER *controller)
-{
-	if (controller->kp_rate > CONTROLLER_P_LOWER_LIMIT) {
+void decrease_p_rate_value(CONTROLLER *controller) {
+	if (controller->kp_rate > CONTROLLER_P_LOWER_LIMIT) 
 		controller->kp_rate -= CONTROLLER_P_STEP_SIZE;
-	}
 }
 
-void  increase_p_angle_value(CONTROLLER *controller)
-{
-	if (controller->kp_angle < CONTROLLER_P_UPPER_LIMIT) {
+void  increase_p_angle_value(CONTROLLER *controller) {
+	if (controller->kp_angle < CONTROLLER_P_UPPER_LIMIT) 
 		controller->kp_angle += CONTROLLER_P_STEP_SIZE;
-	}
 }
 
-void decrease_p_angle_value(CONTROLLER *controller)
-{
-	if (controller->kp_angle > CONTROLLER_P_LOWER_LIMIT) {
+void decrease_p_angle_value(CONTROLLER *controller) {
+	if (controller->kp_angle > CONTROLLER_P_LOWER_LIMIT)
 		controller->kp_angle-= CONTROLLER_P_STEP_SIZE;
-	}
 }
 
 // void increase_motor_speed(uint8_t motor){
@@ -219,9 +197,9 @@ void decrease_p_angle_value(CONTROLLER *controller)
 // 	}
 // }
 
-/*------------------------------------------------------------------
+/*
  * keybord_ctrl_action -- allowing the keyboard to do all the actions
- *------------------------------------------------------------------
+ *
  */
 // void keyboard_ctrl_action(){
 // 	switch (g_current_m0_state){			//M0
@@ -279,19 +257,14 @@ void decrease_p_angle_value(CONTROLLER *controller)
 // 	g_current_m3_state = MOTOR_REMAIN;
 // }
 
-int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr)
-{
+int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr) {
 	yaw_control->set_point = yaw_set_point;
 	yaw_control->err = yaw_control->set_point - sr;
-	// yaw_control->integral += yaw_control->err;
 	yaw_control->output = yaw_control->kp_rate * yaw_control->err;
-	// yaw_control->output = yaw_control->kp_rate * yaw_control->integral;
-	//printf("yaw output: %d\n", yaw_control->output);
 	return yaw_control->output;
 }
 
-int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, int16_t sq, int16_t theta)
-{
+int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, int16_t sq, int16_t theta) {
 	pitch_control->set_point = pitch_set_point;
 	pitch_control->err = pitch_control->set_point - sq;
 	// pitch_control->integral += pitch_control->err;
@@ -302,8 +275,7 @@ int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, i
 	return output;
 }
 
-int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int16_t sp, int16_t phi)
-{
+int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int16_t sp, int16_t phi) {
 	roll_control->set_point = roll_set_point;
 	roll_control->err = roll_control->set_point - sp;
 	// roll_control->integral += roll_control->err;
@@ -314,8 +286,7 @@ int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int1
 	return output;
 }
 
-double sqrt(double square)
-{
+double sqrt(double square) {
     double root=square/3;
     int i;
     if (square <= 0) return 0;
@@ -324,15 +295,11 @@ double sqrt(double square)
     return root;
 }
 
-void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed)
-{
+void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed) {
 	int sqr_0 = Z_needed/(4*b) - N_needed/(4*d) + M_needed/(2*b);
 	int sqr_1 = -L_needed/(2*b) + Z_needed/(4*b) + N_needed/(4*d);
 	int sqr_2 = -Z_needed/(4*b) - N_needed/(4*d) + M_needed/(2*b);
 	int sqr_3 = L_needed/(2*b) + Z_needed/(4*b) + N_needed/(4*d);
-	// int sqr_0 = -N_needed/4;
-	// printf("sqr_0 is: %d \n", sqr_0 );
-	// bool isNegative = false;
 
 	// TODO: sqr_* should be positive, check(&fix) this
 	if(sqr_0 < 0)
@@ -396,12 +363,7 @@ void calculate_motor_values(int16_t pitch, int16_t roll, int16_t yaw, uint16_t l
 	ae[3] = (lift << 2) + roll + yaw;
 }
 
-void run_filters_and_control()
-{
-	// printf("roll: %d\n", roll);
-	// printf("pitch: %d\n", pitch);
-	// printf("yaw: %d\n", yaw);
-	// printf("lift: %d\n", lift);
+void run_filters_and_control() {
 	// fancy stuff here
 	// control loops and/or filters
 	switch(fcb_state) {
@@ -424,12 +386,8 @@ void run_filters_and_control()
 			// printf('N = %d \n', yaw_control_calc(yaw_control_pointer, 10, 0));
 			//actuate(100, 0, 0, yaw_control_calc(yaw_control_pointer, 60, 0)); // only N_needed in yaw control mode
 			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr>> 8)*-1 ), lift); // i think sr needs *-1 (reverse sign)
-			//printf("sr: %d\n", sr >> 8);
-			//printf("yaw: %d\n", yaw);
-			
 			break;
 		case FULLCONTROL_ST:
-			// offset_remove();
 			calculate_motor_values(
 				pitch_control_calc(pitch_control_pointer, pitch, (sq >> 8), (theta >> 8)), 
 				roll_control_calc(roll_control_pointer, roll, (sp >> 8), (phi >> 8)), 
@@ -442,6 +400,6 @@ void run_filters_and_control()
 			printf("ERROR run_filters_and_control - unknown fcb_state: %d", fcb_state);
 			break;
 	}
-	// ae[0] = xxx, ae[1] = yyy etc etc
+
 	update_motors();
 }
