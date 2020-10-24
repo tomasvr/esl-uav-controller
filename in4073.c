@@ -153,9 +153,12 @@ void keyboard_adjust_motors(uint8_t motor_states) {
 	switch(motor_states){
 		case LIFT_UP:
 			lift += step;
+			lift = clip_motor_value(lift << 2) / 4;
 			break;
 		case LIFT_DOWN:
-			lift -= step;
+			if (lift != 0) 
+				lift -= step;
+			lift = clip_motor_value(lift << 2) / 4;
 			break;
 		case PITCH_UP:
 			pitch += step;

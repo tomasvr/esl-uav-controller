@@ -34,7 +34,7 @@ void switch_led(int color) {
 void clip_motors() {
 	for (int i = 0; i < 4; i++) {
 		if (ae[i] > MAX_ALLOWED_SPEED) 	ae[i] = MAX_ALLOWED_SPEED;
-		if (ae[i] > MIN_ALLOWED_SPEED) 	ae[i] = MIN_ALLOWED_SPEED;
+		if (ae[i] < MIN_ALLOWED_SPEED) 	ae[i] = MIN_ALLOWED_SPEED;
 		if (ae[i] < 0)		ae[i] = 0;		
 	}
 }
@@ -339,14 +339,13 @@ void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_nee
 
 void update_motors(void)
 {					
-	// if (fcb_state != SAFE_ST, PANIC_ST) //TODO
-		clip_motors();
+	if (fcb_state != SAFE_ST) clip_motors();
 		// printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);
 		motor[0] = ae[0];
 		motor[1] = ae[1];
 		motor[2] = ae[2];
 		motor[3] = ae[3];
-		
+
 #ifdef DEBUG_LED
 		// The 4 LEDS represent motor speed, blue = max speed, red = minimal speed
 		if (motor[0] == 0) switch_led(-1);
@@ -357,10 +356,16 @@ void update_motors(void)
 }
 
 void calculate_motor_values(int16_t pitch, int16_t roll, int16_t yaw, uint16_t lift) { //TODO: add min throttle (around 170) and max throttle (1000)
-	ae[0] = (lift << 2) + pitch - yaw;
-	ae[1] = (lift << 2) - roll + yaw;
-	ae[2] = (lift << 2) - pitch - yaw;
-	ae[3] = (lift << 2) + roll + yaw;
+	// printf("the lift is : %d", lift);
+	// ae[0] = (lift << 2) + pitch - yaw;
+	// ae[1] = (lift << 2) - roll + yaw;
+	// ae[2] = (lift << 2) - pitch - yaw;
+	// ae[3] = (lift << 2) + roll + yaw;
+
+	ae[0] = (lift << 1) + 150 + pitch - yaw;
+	ae[1] = (lift << 1) + 150 - roll + yaw;
+	ae[2] = (lift << 1) + 150 - pitch - yaw;
+	ae[3] = (lift << 1) + 150 + roll + yaw;
 }
 
 void run_filters_and_control() {
