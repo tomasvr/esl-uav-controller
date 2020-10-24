@@ -53,6 +53,7 @@ void run_filters_and_control();
 // js values, receives 8 bit value but make it 16 to scale to 1000 (motor values)
 int8_t roll, pitch, yaw;
 uint8_t lift;
+
 // Timers
 #define TIMER_PERIOD	50 //50ms=20Hz (MAX 23bit, 4.6h)
 void timers_init(void);
