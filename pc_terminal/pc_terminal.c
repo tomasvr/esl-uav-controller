@@ -206,7 +206,6 @@ void rs232_close(void){
   	assert (result==0);
 }
 
-
 int	rs232_getchar_nb(){
 	int 		result;
 	unsigned char 	c;
@@ -223,14 +222,12 @@ int	rs232_getchar_nb(){
 	}
 }
 
-
 int rs232_getchar(){
 	int 	c;
 	while ((c = rs232_getchar_nb()) == -1)
 		;
 	return c;
 }
-
 
 int rs232_putchar(int c){ // change char to uint32_t
 	int result;
@@ -240,9 +237,6 @@ int rs232_putchar(int c){ // change char to uint32_t
 	assert(result == PACKET_LENGTH);
 	return result;
 }
-
-
-
 
 uint32_t handle_mode_switch(uint32_t message, STATE_t to_state) {
 	message = append_comm_type(message, MODE_SW_COMM);

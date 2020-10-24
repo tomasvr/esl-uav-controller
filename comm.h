@@ -4,12 +4,11 @@
 
 #include "states.h"
 #include <inttypes.h>
-//#include <stdint.h>
 
 #ifndef COMM_H__
 #define COMM_H__
 
-#define BASE_MESSAGE_PACKET_BITS 0b00000000000000000000000001010101 //
+#define BASE_MESSAGE_PACKET_BITS 0b00000000000000000000000001010101
 
 /* Used for keyboard control */
 #define LIFT_UP 	0b01010101
@@ -24,7 +23,7 @@
 // the command types during communication
 typedef enum {
 	UNKNOWN_COMM,
-	CTRL_COMM, // this means keyboard command
+	CTRL_COMM, // keyboard command
 	MODE_SW_COMM,
 	JS_AXIS_COMM, // joystick commands
 	CHANGE_P_COMM,
@@ -50,16 +49,7 @@ typedef enum {
 		P_RATE_PITCHROLL_DEC,
 } PID_PARAMETER_CHANGE_t;
 
-/**
- * @brief      Send packet from PC to FCB.
- */
-// bool send_packet_to_fcb(uint8_t data);
-
 int check_mode_sync (uint8_t state, STATE_t fcb_state);
-
-COMM_TYPE find_comm_type (uint8_t comm_type);
-
-STATE_t find_dest_state(uint8_t messg);
 
 uint32_t append_mode(uint32_t message, STATE_t mode);
 

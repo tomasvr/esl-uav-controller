@@ -391,9 +391,6 @@ int main(void)
 			if (counter % 20 == 0) 
 			{
 				nrf_gpio_pin_toggle(BLUE);
-				// printf("p yaw param: %4d \n", yaw_control_pointer->kp);
-				// printf("p yaw output: %4d \n", yaw_control_pointer->output);
-				// printf("p yaw error: %4d \n", yaw_control_pointer->err);	
  			}
 			adc_request_sample();
 			read_baro();
@@ -405,7 +402,7 @@ int main(void)
 			//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 			printf("y_p_r: %2d r_p_r: %2d p_p_r: %2d", yaw_control.kp_rate, roll_control.kp_rate, pitch_control.kp_rate);
 			printf("r_p_a: %2d p_p_a: %2d", roll_control.kp_angle, pitch_control.kp_angle);
-			printf("setp: %4d sp: %4d err: %4d output: %4d \n", roll_control.set_point, sp, roll_control.err, roll_control.output);
+			printf("setp: %4d sp: %4d err: %4d output: %4d ", roll_control.set_point, sp, roll_control.err, roll_control.output);
 			printf("%4d \n", fcb_state - 1);
 			clear_timer_flag();
 			//printf("%4d \n", motor_lift_level);
