@@ -16,6 +16,8 @@
 #define MAX_ALLOWED_SPEED 1000
 #define MIN_ALLOWED_SPEED 0
 
+#define MAX_ALLOWED_DIFF_MOTOR 50
+
 // the states that a motor has
 typedef enum {
 		MOTOR_REMAIN,
