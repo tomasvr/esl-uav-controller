@@ -48,13 +48,12 @@
 #include "../comm.h"
 
 #define JS_DEV	"/dev/input/js0"
-// #define THRESHOLD_READ 2767
-#define POLL_DELAY 20000 // 1000000us = 1000ms = 1s // 20000 = 20ms
 
 #define USB_SEND_CHECK_INTERVAL 1000000 // Control how often USB check messages are send
 #define USB_CHECK_MESSAGE 0 // Message ID for check USB type message (no need to change)
 
 #define PACKET_LENGTH 3 //in bytes
+#define PACKET_SEND_INTERVAL 20000
 
 #define ENABLE_JOYSTICK
 
@@ -83,6 +82,10 @@ STATE_t g_dest_state = UNKNOWN_ST;
 #include <string.h>
 #include <inttypes.h>
 #include <stdbool.h>
+
+uint32_t current_time;
+uint32_t last_js_send_time;
+uint32_t last_js_axis_send_time;
  
 /*------------------------------------------------------------
  * console I/O
@@ -158,7 +161,7 @@ void rs232_open(void){
   	int 		result;
   	struct termios	tty;
 
-       	fd_RS232 = open("/dev/ttyUSB1", O_RDWR | O_NOCTTY);  // Hardcode your serial port here, or request it as an argument at runtime
+       	fd_RS232 = open("/dev/ttyUSB2", O_RDWR | O_NOCTTY);  // Hardcode your serial port here, or request it as an argument at runtime
 
 	assert(fd_RS232>=0);
 
@@ -375,19 +378,24 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 		if (js_number == 0) message = append_comm_type(message, ESC_COMM);
 		STATE_t to_state = js_number; // The button number indicates which state (see states.h)
 		message = handle_mode_switch(message, to_state);
+		rs232_putchar(message);
 	}
 	else if ( (js_type == 2) || (js_type == 130)) { // js axis (130 occurs at startup)
-		message = append_comm_type(message, JS_AXIS_COMM);
-		JOYSTICK_AXIS_t axis_number_from_js = js_number;
-		message = append_js_axis_type(message, axis_number_from_js);
-		uint8_t js_value_smaller = (js_value >> 8);
-		message |= (js_value_smaller << 16);
-		//printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value_smaller);
+		if( (current_time - last_js_send_time) >= PACKET_SEND_INTERVAL) {
+			message = append_comm_type(message, JS_AXIS_COMM);
+			JOYSTICK_AXIS_t axis_number_from_js = js_number;
+			message = append_js_axis_type(message, axis_number_from_js);
+			uint8_t js_value_smaller = (js_value >> 8);
+			message |= (js_value_smaller << 16);
+			//printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value_smaller);
+			last_js_axis_send_time = current_time;
+			rs232_putchar(message);
+		}
 	} else {
 		printf("ERROR in send_js_message: UKNOWN IF BUTTON OR AXIS (js_type)\n");
 		return;
 	}
-	rs232_putchar(message);
+	// rs232_putchar(message);
 }
 
 /* 
@@ -427,7 +435,6 @@ uint32_t GetTimeStamp() {
     return tv.tv_sec*(uint32_t)1000000+tv.tv_usec; //TODO: check for overflow? <-- (32 bit allows for about 70 minutes before overflow, fix this later?)
 }
 
-
 /*----------------------------------------------------------------
  * main -- execute terminal
  *----------------------------------------------------------------
@@ -445,7 +452,7 @@ int main(int argc, char **argv)
 	while ((c = rs232_getchar_nb()) != -1)
 		fputc(c,stderr);
 
-	uint32_t current_time;
+	
 	uint32_t last_USB_check_time = GetTimeStamp();
 
 #ifdef ENABLE_JOYSTICK
@@ -458,7 +465,8 @@ int main(int argc, char **argv)
 	}
 	fcntl(fd, F_SETFL, O_NONBLOCK);// non-blocking mode
 
-	uint32_t last_js_send_time = GetTimeStamp();
+	last_js_send_time = GetTimeStamp();
+	last_js_axis_send_time = GetTimeStamp();
 #endif
 
 	/* send & receive
@@ -499,17 +507,32 @@ int main(int argc, char **argv)
 
 #ifdef ENABLE_JOYSTICK
 		current_time = GetTimeStamp();
-		if( (current_time - last_js_send_time) >= POLL_DELAY) {
-			while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) { // TODO: might have to make this an 'if' statement instead
+		
+		// if( (current_time - last_js_send_time) >= POLL_DELAY) {
+		// 	while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) { // TODO: might have to make this an 'if' statement instead
+		// 		//printf("PC: JS event: type %d, time %d, number %d, value %d\n", js.type, js.time, js.number, js.value);
+		// 			send_js_message(js.type, js.number, js.value);
+		// 	}
+		// 	if (errno != EAGAIN) {
+		// 		perror("\nPC: jstest: error reading\n");
+		// 		exit (1);
+		// 	}			
+		// 	last_js_send_time = current_time;
+		// } 
+
+		while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) { // TODO: might have to make this an 'if' statement instead
+			// if( (current_time - last_js_send_time) >= PACKET_SEND_INTERVAL) {
 				//printf("PC: JS event: type %d, time %d, number %d, value %d\n", js.type, js.time, js.number, js.value);
-					send_js_message(js.type, js.number, js.value);
-			}
-			if (errno != EAGAIN) {
-				perror("\nPC: jstest: error reading\n");
-				exit (1);
-			}			
-			last_js_send_time = current_time;
-		} 
+				// printf("Packet sent!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n");
+				send_js_message(js.type, js.number, js.value);
+			// }
+		}
+		if (errno != EAGAIN) {
+			perror("\nPC: jstest: error reading\n");
+			exit (1);
+		}			
+		last_js_send_time = current_time;
+
 #endif
 	counter++;	
 	}
