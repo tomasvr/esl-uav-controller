@@ -29,6 +29,7 @@
 	
 - [Jiahao] Fix state mismatch function
 	- enter panic mode on state mismatch
+	- pc should not enter switch mode when the js is not in a normal position
 
 - [Xinyun] Define a test plan
 	- Use different versions of the code in different branches to test right away
