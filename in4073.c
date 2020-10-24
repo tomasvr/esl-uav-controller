@@ -307,12 +307,12 @@ void messg_decode(uint8_t message_byte){
 	}
 }
 
-/*------------------------------------------------------------------
- * process_key -- process command keys
- *------------------------------------------------------------------
+/*
+ * Process the received packet.
+ * J. Cui
  */
-void process_key(uint8_t c){	
-	if (c == 0x55 && FRAG_COUNT == 0 && fcb_state != PANIC_ST) { // '0x55': 0b01010101(start byte)
+void process_packet(uint8_t c){	
+	if (c == 0x55 && FRAG_COUNT == 0 && fcb_state != PANIC_ST) {
 		FRAG_COUNT = 2;
 		return;
 	}
@@ -327,7 +327,10 @@ void process_key(uint8_t c){
 uint32_t last_time_battery;
 uint32_t current_time_battery;
 
-
+/*
+ * Check battery voltage.
+ * "aruthor"
+ */
 void check_battery_volt(){
 	current_time_battery = get_time_us();
 	if(current_time_battery - last_time_battery > BATTERY_CHECK_INTERVAL_THRESHOLD){
@@ -345,6 +348,20 @@ void check_battery_volt(){
 		}
 	last_time_battery = current_time_battery;
 	}
+}
+
+void print_log_in_ter() {
+	// printf("%10ld | ", get_time_us());
+	printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
+	//printf("%6d %6d %6d | ", phi, theta, psi);
+	printf("%6d %6d %6d | ", sp, sq, sr);
+	//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
+	printf("y_p_r: %2d r_p_r: %2d p_p_r: %2d", yaw_control.kp_rate, roll_control.kp_rate, pitch_control.kp_rate);
+	printf("r_p_a: %2d p_p_a: %2d", roll_control.kp_angle, pitch_control.kp_angle);
+	printf("setp: %4d sp: %4d err: %4d output: %4d ", roll_control.set_point, sp, roll_control.err, roll_control.output);
+	printf("%4d \n", fcb_state - 1);
+	clear_timer_flag();
+	//printf("%4d \n", motor_lift_level);
 }
 
 /*------------------------------------------------------------------
@@ -373,43 +390,24 @@ int main(void)
 	controller_init(yaw_control_pointer);
 	controller_init(roll_control_pointer);
 	controller_init(pitch_control_pointer);
-
-	// printf('N_needed = %d \n', N_needed);
-
-	printf(" AE0 AE1 AE2 AE3  | MODE \n");
+	// printf(" AE0 AE1 AE2 AE3  | MODE \n");
 	while (!demo_done)
 	{
-		if (rx_queue.count) process_key( dequeue(&rx_queue) );
+		if (rx_queue.count) process_packet( dequeue(&rx_queue) );
 
 		if (counter % 100 == 0) check_USB_connection_alive();
-
 		//check_battery_volt();//enable panic mode when connect to drone
 
-		if (check_timer_flag()) 
-		{
-		
-			if (counter % 20 == 0) 
-			{
+		if (check_timer_flag()) {
+			if (counter % 20 == 0) {
 				nrf_gpio_pin_toggle(BLUE);
  			}
 			adc_request_sample();
 			read_baro();
-
-			// printf("%10ld | ", get_time_us());
-			printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
-			//printf("%6d %6d %6d | ", phi, theta, psi);
-			printf("%6d %6d %6d | ", sp, sq, sr);
-			//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
-			printf("y_p_r: %2d r_p_r: %2d p_p_r: %2d", yaw_control.kp_rate, roll_control.kp_rate, pitch_control.kp_rate);
-			printf("r_p_a: %2d p_p_a: %2d", roll_control.kp_angle, pitch_control.kp_angle);
-			printf("setp: %4d sp: %4d err: %4d output: %4d ", roll_control.set_point, sp, roll_control.err, roll_control.output);
-			printf("%4d \n", fcb_state - 1);
-			clear_timer_flag();
-			//printf("%4d \n", motor_lift_level);
+			print_log_in_ter();
 		}
 
-		if (check_sensor_int_flag()) 
-		{
+		if (check_sensor_int_flag()) {
 			get_dmp_data();
 			run_filters_and_control();
 		}
@@ -420,40 +418,38 @@ int main(void)
 			g_current_comm_type = UNKNOWN_COMM;
 			enter_panic_mode(false, "ESC pressed");
 		}
+
+		// Execute commands  that only need to be handled in certain mode
+		if (fcb_state == PANIC_ST) {
+			enter_panic_mode(false, "PANIC STATE"); //enter panic mode for any reason other than cable
+		}
+		if (fcb_state == CALIBRATION_ST) {
+			sensor_calib();
+			fcb_state = SAFE_ST;
+		}
+		if (fcb_state == FULLCONTROL_ST){
+			// TODO: do full controller things
+		}
+		counter++;
+
+		// TODO: delete this logic
 		// if (g_current_comm_type == CTRL_COMM){
 		// 	keyboard_ctrl_action();
 		// }
 
-
-		// Execute commands  that only need to be handled in certain mode
-		if (fcb_state == PANIC_ST)
-		{
-			enter_panic_mode(false, "PANIC STATE"); //enter panic mode for any reason other than cable
-		}
+		// TODO: delete this logic
 		// if(fcb_state == MANUAL_ST)
 		// {
 		// 	process_js_axis_cmd(joystick_axis, js_total_value);
 		// }
-		if (fcb_state == CALIBRATION_ST) 
-		{
-			sensor_calib();
-			//offset_remove();
-			fcb_state = SAFE_ST;
-		}
+		
+		// TODO: delete this logic
 		// if (fcb_state == YAWCONTROL_ST)
 		// {
 		// 	// N_needed = yaw_control_calc(yaw_control_pointer, yaw_set_point, sr-sr_calib);
-		// 	N_needed = yaw_control_calc(yaw_control_pointer, 10, 0);
-
-		// 	// printf('N_needed = %d \n', N_needed);
-			
+		// 	N_needed = yaw_control_calc(yaw_control_pointer, 10, 0);			
 		// 	actuate(0, 0, 0, N_needed); // only N_needed in yay control mode
 		// }
-		if (fcb_state == FULLCONTROL_ST)
-		{
-			// TODO: do full controller things
-		}
-		counter++;
 	}
 	printf("\n\t Goodbye \n\n");
 	nrf_delay_ms(100);
