@@ -26,6 +26,9 @@
 
 - [Jiahao] Cornercases: check what happens when pitch or roll in maximzed (tilt mcu all the way to left or right or down or up)
 	- can be done with MCU, check motor values
+	
+- [Jiahao] Fix state mismatch function
+	- enter panic mode on state mismatch
 
 - [Xinyun] Define a test plan
 	- Use different versions of the code in different branches to test right away
@@ -37,9 +40,6 @@
 	- experiment with p-value higher resolution
 
 ## Lower priority
-
-- [Jiahao] Fix state mismatch function
-	- enter panic mode on state mismatch
 
 - [Everyone] Big clean up 
 	- remove unncessary comments
