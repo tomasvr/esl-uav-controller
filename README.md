@@ -15,7 +15,7 @@
 	- Cannot enter manual/control mode unless js is neutral
 	- Check all mode switches
 
-- [Zehang]Change while statement to if statement in pc terminal to limit amount of packets send shortly after each other
+- [Zehang][DONE] Change while statement to if statement in pc terminal to limit amount of packets send shortly after each other
 
 - [Xinyun] Trimming function using keyboard
 	- counteract external offsets (e.g. cable)
