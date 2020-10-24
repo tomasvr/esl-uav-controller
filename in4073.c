@@ -13,6 +13,7 @@
  *------------------------------------------------------------------
  */
 
+// TODO: delete the macros after debug
 /* --- PRINTF_BYTE_TO_BINARY macro's --- */
 #define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
 #define PRINTF_BYTE_TO_BINARY_INT8(i)    \
@@ -136,8 +137,6 @@ int16_t clip_motor_value(int16_t value) {
 	return value;
 }
 
-
-
 /* Translate js axis to range: 0-255 instead of 0 in the middle */
 uint8_t translate_throttle(uint8_t throttle) {
 	if(throttle <= JS_AXIS_MID_VALUE){
@@ -179,9 +178,9 @@ void keyboard_adjust_motors(uint8_t motor_states) {
 	}
 	printf("key adjust: %d\n", motor_states);
 }
-/*------------------------------------------------------------------
- * messg_decode -- decode messages
- *------------------------------------------------------------------
+/*
+ * Decode messages
+ * "aruthor"
  */
 void messg_decode(uint8_t message_byte){
 
@@ -211,7 +210,6 @@ void messg_decode(uint8_t message_byte){
 					return;
 				case CTRL_COMM:
 					;	// C requires this semicolon here
-
 
 					/* only change motors if in appropriate mode */ //todo: move this logic to a central place
 					if (fcb_state == MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
@@ -350,6 +348,10 @@ void check_battery_volt(){
 	}
 }
 
+/*
+* Print info in the terminal.
+* J. Cui
+*/
 void print_log_in_ter() {
 	// printf("%10ld | ", get_time_us());
 	printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
