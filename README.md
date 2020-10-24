@@ -2,10 +2,10 @@
 
 ## High priority
 
-- [Jiahao] adjust joystick sensitivity (too high)
+- [Jiahao][DONE] adjust joystick sensitivity (too high)
 	- translate lift to appropriate values
 
-- [Jiahao] motor speed clip bug
+- [Jiahao][DONE] motor speed clip bug
 
 - [Zehang] Define maximum difference between counteracting motors (400 300 400 300) max diff: 50
 	- currently we divide by 320, but should use translate function instead
