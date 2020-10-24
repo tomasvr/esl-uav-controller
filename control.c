@@ -375,7 +375,6 @@ uint32_t calculate_time_diff (uint32_t start_time) {
 
 void run_filters_and_control() {
 	// fancy stuff here
-	uint32_t enter_time;
 	// control loops and/or filters
 	switch(fcb_state) {
 		case SAFE_ST:
@@ -396,8 +395,7 @@ void run_filters_and_control() {
 			// yaw_control_calc(yaw_control_pointer, 10, 0);
 			// printf('N = %d \n', yaw_control_calc(yaw_control_pointer, 10, 0));
 			//actuate(100, 0, 0, yaw_control_calc(yaw_control_pointer, 60, 0)); // only N_needed in yaw control mode
-			enter_time = get_time_us();
-			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr>> 8)*-1 ), lift); // i think sr needs *-1 (reverse sign)
+			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr>> 8)*-1 ), lift); // i think sr needs *-1 (reverse sign
 			// printf("FCB: The control loop took %d us.\n", calculate_time_diff(enter_time));
 			break;
 		case FULLCONTROL_ST:
