@@ -363,20 +363,19 @@ void calculate_motor_values(int16_t pitch, int16_t roll, int16_t yaw, uint16_t l
 	// ae[2] = (lift << 2) - pitch - yaw;
 	// ae[3] = (lift << 2) + roll + yaw;
 
-	// ae[0] = (lift << 1) + 150 + (pitch - yaw);
-	// ae[1] = (lift << 1) + 150 - (roll + yaw);
-	// ae[2] = (lift << 1) + 150 - (pitch - yaw);
-	// ae[3] = (lift << 1) + 150 + (roll + yaw);
-
 	ae[0] = (lift << 1) + 150 + (pitch - yaw) * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[1] = (lift << 1) + 150 - (roll + yaw) * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[2] = (lift << 1) + 150 - (pitch - yaw) * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[1] = (lift << 1) + 150 - (roll - yaw) * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[2] = (lift << 1) + 150 - (pitch + yaw) * MAX_ALLOWED_DIFF_MOTOR / 256;
 	ae[3] = (lift << 1) + 150 + (roll + yaw) * MAX_ALLOWED_DIFF_MOTOR / 256;
+}
 
+uint32_t calculate_time_diff (uint32_t start_time) {
+	return get_time_us() - start_time;
 }
 
 void run_filters_and_control() {
 	// fancy stuff here
+	uint32_t enter_time;
 	// control loops and/or filters
 	switch(fcb_state) {
 		case SAFE_ST:
@@ -397,7 +396,9 @@ void run_filters_and_control() {
 			// yaw_control_calc(yaw_control_pointer, 10, 0);
 			// printf('N = %d \n', yaw_control_calc(yaw_control_pointer, 10, 0));
 			//actuate(100, 0, 0, yaw_control_calc(yaw_control_pointer, 60, 0)); // only N_needed in yaw control mode
+			enter_time = get_time_us();
 			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr>> 8)*-1 ), lift); // i think sr needs *-1 (reverse sign)
+			// printf("FCB: The control loop took %d us.\n", calculate_time_diff(enter_time));
 			break;
 		case FULLCONTROL_ST:
 			calculate_motor_values(
