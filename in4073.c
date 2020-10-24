@@ -48,6 +48,7 @@
 
 uint32_t usb_comm_last_received;
 uint32_t current_time;
+uint32_t ctrl_loop_time;
 
 // each packet includes 3 fragments
 uint8_t FRAG_COUNT = 0;
@@ -364,7 +365,8 @@ void print_log_in_ter() {
 	printf("y_p_r: %2d r_p_r: %2d p_p_r: %2d", yaw_control.kp_rate, roll_control.kp_rate, pitch_control.kp_rate);
 	printf("r_p_a: %2d p_p_a: %2d", roll_control.kp_angle, pitch_control.kp_angle);
 	printf("setp: %4d sp: %4d err: %4d output: %4d ", roll_control.set_point, sp, roll_control.err, roll_control.output);
-	printf("%4d \n", fcb_state - 1);
+	printf("%4d |", fcb_state - 1);
+	printf("%4d \n", ctrl_loop_time);
 	clear_timer_flag();
 	//printf("%4d \n", motor_lift_level);
 }
@@ -414,7 +416,9 @@ int main(void)
 
 		if (check_sensor_int_flag()) {
 			get_dmp_data();
+			ctrl_loop_time = get_time_us();
 			run_filters_and_control();
+			ctrl_loop_time = get_time_us() - ctrl_loop_time;
 		}
 
 		// Execute commands that need to be handled in all modes
