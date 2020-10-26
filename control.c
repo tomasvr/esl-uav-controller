@@ -35,7 +35,7 @@ void clip_motors() {
 	for (int i = 0; i < 4; i++) {
 		if (ae[i] > MAX_ALLOWED_SPEED) 	ae[i] = MAX_ALLOWED_SPEED;
 		if (ae[i] < MIN_ALLOWED_SPEED) 	ae[i] = MIN_ALLOWED_SPEED;
-		if (ae[i] < 0)		ae[i] = 0;		
+		if (ae[i] < 0)					ae[i] = 0;		
 	}
 }
 
@@ -50,7 +50,7 @@ void zero_motors() {
 	ae[3] = 0;	
 }
 
-// Calibration
+// variable declaration for Calibration
 bool DMP = true;
 bool calib_done = false;
 int16_t sensor_sum 	= 0;
@@ -121,7 +121,7 @@ void sensor_calc(uint8_t num) {
 
 void sensor_calib() {
 	sensor_calc(100); 
-	if (calib_done) printf("\n CALIB DONE\n");
+	if (calib_done) printf("\n CALIB DONE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 	
 	if(DMP){
 		dmp_set_gyro_bias(gyro_calib);
@@ -141,7 +141,7 @@ void offset_remove() {
 	saz -= saz_calib;
 }
 
-// Control loop
+// variable declaration for control loop
 int16_t yaw_set_point = 0;
 int16_t roll_set_point = 0;
 int16_t pitch_set_point = 0;
@@ -151,9 +151,9 @@ int16_t M = 0;
 int16_t N = 1;
 
 /*
-* Initial the control struct.
-* "aruthor"
-*/
+ * Initial the control struct.
+ * Zehang Wu
+ */
 void controller_init(CONTROLLER *controller) {
 	controller->set_point = 0;
 	controller->sensor_value = 0;
@@ -185,78 +185,9 @@ void decrease_p_angle_value(CONTROLLER *controller) {
 		controller->kp_angle-= CONTROLLER_P_STEP_SIZE;
 }
 
-// void increase_motor_speed(uint8_t motor){
-// 	if ( (ae[motor] + STEP_SIZE) <= 1000) {
-// 		ae[motor] += STEP_SIZE;
-// 	}
-// }
-
-// void decrease_motor_speed(uint8_t motor){
-// 	if ( (ae[motor] - STEP_SIZE) >= 0) {
-// 		ae[motor] -= STEP_SIZE;
-// 	}
-// }
-
-/*
- * keybord_ctrl_action -- allowing the keyboard to do all the actions
- *
+/* one step calculation for yaw control loop
+ * Zehang Wu
  */
-// void keyboard_ctrl_action(){
-// 	switch (g_current_m0_state){			//M0
-// 		case MOTOR_UP:
-// 			increase_motor_speed(0);
-// 			break;
-// 		case MOTOR_REMAIN:
-// 			break;
-// 		case MOTOR_DOWN:
-// 			decrease_motor_speed(0);
-// 			break;
-// 		default:
-// 			break;
-// 	}
-// 	switch (g_current_m1_state){			//M1
-// 		case MOTOR_UP:
-// 			increase_motor_speed(1);
-// 			break;
-// 		case MOTOR_REMAIN:
-// 			break;
-// 		case MOTOR_DOWN:
-// 			decrease_motor_speed(1);
-// 			break;
-// 		default:
-// 			break;
-// 	}
-// 	switch (g_current_m2_state){			//M2
-// 		case MOTOR_UP:
-// 			increase_motor_speed(2);
-// 			break;
-// 		case MOTOR_REMAIN:
-// 			break;
-// 		case MOTOR_DOWN:
-// 			decrease_motor_speed(2);
-// 			break;
-// 		default:
-// 			break;
-// 	}
-// 	switch (g_current_m3_state){			//M3
-// 		case MOTOR_UP:
-// 			increase_motor_speed(3);
-// 			break;
-// 		case MOTOR_REMAIN:
-// 			break;
-// 		case MOTOR_DOWN:
-// 			decrease_motor_speed(3);
-// 			break;
-// 		default:
-// 			break;
-// 	}
-// 	// reset motor intention
-// 	g_current_m0_state = MOTOR_REMAIN;
-// 	g_current_m1_state = MOTOR_REMAIN;
-// 	g_current_m2_state = MOTOR_REMAIN;
-// 	g_current_m3_state = MOTOR_REMAIN;
-// }
-
 int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr) {
 	yaw_control->set_point = yaw_set_point;
 	yaw_control->err = yaw_control->set_point - sr;
@@ -264,77 +195,28 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 	return yaw_control->output;
 }
 
+/* one step calculation for pitch control loop
+ * Zehang Wu
+ */
 int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, int16_t sq, int16_t theta) {
 	pitch_control->set_point = pitch_set_point;
 	pitch_control->err = pitch_control->set_point - sq;
 	// pitch_control->integral += pitch_control->err;
 	pitch_control->output = pitch_control->kp_rate * pitch_control->err;
-	//printf("pitch output: %d\n", pitch_control->output);
-	//return pitch_control->output;
 	int16_t output = ((pitch_set_point-theta) * pitch_control->kp_angle - sq) * pitch_control->kp_rate;
 	return output;
 }
 
+/* one step calculation for roll control loop
+ * Zehang Wu
+ */
 int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int16_t sp, int16_t phi) {
 	roll_control->set_point = roll_set_point;
 	roll_control->err = roll_control->set_point - sp;
 	// roll_control->integral += roll_control->err;
 	roll_control->output = roll_control->kp_rate * roll_control->err;
-	//printf("roll setpoint: %d sq: %d err: %d output: %d \n", roll_set_point, sp, roll_control->err, roll_control->output);
-	//return roll_control->output;
 	int16_t output = ((roll_set_point-phi) * roll_control->kp_angle - sp) * roll_control->kp_rate;
 	return output;
-}
-
-double sqrt(double square) {
-    double root=square/3;
-    int i;
-    if (square <= 0) return 0;
-    for (i=0; i<32; i++)
-        root = (root + square / root) / 2;
-    return root;
-}
-
-void actuate(int16_t Z_needed, int16_t L_needed, int16_t M_needed, int16_t N_needed) {
-	int sqr_0 = Z_needed/(4*b) - N_needed/(4*d) + M_needed/(2*b);
-	int sqr_1 = -L_needed/(2*b) + Z_needed/(4*b) + N_needed/(4*d);
-	int sqr_2 = -Z_needed/(4*b) - N_needed/(4*d) + M_needed/(2*b);
-	int sqr_3 = L_needed/(2*b) + Z_needed/(4*b) + N_needed/(4*d);
-
-	// TODO: sqr_* should be positive, check(&fix) this
-	if(sqr_0 < 0)
-	{
-		sqr_0 = -sqr_0;
-	}
-	if(sqr_1 < 0)
-	{
-		sqr_1 = -sqr_1;
-	}
-	if(sqr_2 < 0)
-	{
-		sqr_2 = -sqr_2;
-	}
-	if(sqr_3 < 0)
-	{
-		sqr_3 = -sqr_3;
-	}
-
-	int res_0 = sqrt(sqr_0);
-	int res_1 = sqrt(sqr_1);
-	int res_2 = sqrt(sqr_2);
-	int res_3 = sqrt(sqr_3);
-	// printf("ae0 is: %d, isNegative: %B \n", res, isNegative);
-	// printf("sqr1 is: %d \n", sqr_1 );
-	// printf("sqr2 is: %d \n", sqr_2 );
-	// printf("sqr3 is: %d \n", sqr_3 );
-	ae[0] = res_0;
-	ae[1] = res_1;
-	ae[2] = res_2;
-	ae[3] = res_3;
-	// ae[1] = (int16_t) sqrt(sqr_1);
-	// ae[2] = (int16_t) sqrt(sqr_2);
-	// ae[3] = (int16_t) sqrt(sqr_3);
-	return;
 }
 
 void update_motors(void)
@@ -355,6 +237,9 @@ void update_motors(void)
 #endif
 }
 
+/* calculate actuator values(ae[*]) from pitch, roll, paw and lift
+ * 'Author'
+ */
 void calculate_motor_values(int16_t pitch, int16_t roll, int16_t yaw, uint16_t lift) { //TODO: add min throttle (around 170) and max throttle (1000)
 	// printf("the lift is : %d", lift);
 	// printf("the pitch is : %d \n", pitch);
@@ -382,19 +267,18 @@ void run_filters_and_control() {
 			break;
 		case PANIC_ST:
 			//todo
+			enter_panic_mode(false, "PANIC STATE"); //enter panic mode for any reason other than cable
 			break;
 		case MANUAL_ST:
 			calculate_motor_values(pitch, roll, yaw, lift);
 			break;
 		case CALIBRATION_ST:
+		sensor_calib();
+			fcb_state = SAFE_ST;
 			zero_motors();
 			break;
 		case YAWCONTROL_ST:
 			//todo
-			// N_needed = yaw_control_calc(yaw_control_pointer, yaw_set_point, sr-sr_calib);
-			// yaw_control_calc(yaw_control_pointer, 10, 0);
-			// printf('N = %d \n', yaw_control_calc(yaw_control_pointer, 10, 0));
-			//actuate(100, 0, 0, yaw_control_calc(yaw_control_pointer, 60, 0)); // only N_needed in yaw control mode
 			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr>> 8)*-1 ), lift); // i think sr needs *-1 (reverse sign
 			// printf("FCB: The control loop took %d us.\n", calculate_time_diff(enter_time));
 			break;
