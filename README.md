@@ -2,27 +2,14 @@
 
 ## High priority
 
-- [Jiahao][DONE] adjust joystick sensitivity (too high)
-	- translate lift to appropriate values
-
-- [Jiahao][DONE] motor speed clip bug
-
-- [Zehang][DONE] Define maximum difference between counteracting motors (400 300 400 300) max diff: 50
-	- currently we divide by 320, but should use translate function instead
-
 - [Zehang] Extensively check safety features
 	- panic mode: ESC button, js trigger, usb disconnect, battery value
 	- Cannot enter manual/control mode unless js is neutral
 	- Check all mode switches
 
-- [Zehang][DONE] Change while statement to if statement in pc terminal to limit amount of packets send shortly after each other
-
 - [Xinyun] Trimming function using keyboard
 	- counteract external offsets (e.g. cable)
 	- offest value for setpoint of pitch, roll and yaw
-
-- [Jiahao][DONE] Time the duration of control loops, needs to be under 10ms and important to optimize
-	- use current_time - start_time
 
 - [Jiahao] Cornercases: check what happens when pitch or roll in maximzed (tilt mcu all the way to left or right or down or up)
 	- can be done with MCU, check motor values
@@ -39,6 +26,20 @@
 
 - Test p values (and change resolution e.g. p-value 1)
 	- experiment with p-value higher resolution
+	
+
+- [Jiahao][DONE] adjust joystick sensitivity (too high)
+	- translate lift to appropriate values
+
+- [Jiahao][DONE] motor speed clip bug
+
+- [Zehang][DONE] Define maximum difference between counteracting motors (400 300 400 300) max diff: 50
+	- currently we divide by 320, but should use translate function instead
+	
+- [Zehang][DONE] Change while statement to if statement in pc terminal to limit amount of packets send shortly after each other
+
+- [Jiahao][DONE] Time the duration of control loops, needs to be under 10ms and important to optimize
+	- use current_time - start_time
 
 ## Lower priority
 
