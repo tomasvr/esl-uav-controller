@@ -147,7 +147,7 @@ int16_t roll_set_point = 0;
 int16_t pitch_set_point = 0;
 
 /*
- * Initial the control struct.
+ * Initialize the control struct.
  * Zehang Wu
  */
 void controller_init(CONTROLLER *controller) {
