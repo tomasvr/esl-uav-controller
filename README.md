@@ -2,26 +2,28 @@
 
 ## High priority
 
-- [Zehang] Extensively check safety features
-	- panic mode: ESC button, js trigger, usb disconnect, battery value
-	- Cannot enter manual/control mode unless js is neutral
-	- Check all mode switches
-
-- [Xinyun] Trimming function using keyboard
-	- counteract external offsets (e.g. cable)
-	- offest value for setpoint of pitch, roll and yaw
-
 - [Jiahao] Cornercases: check what happens when pitch or roll in maximzed (tilt mcu all the way to left or right or down or up)
 	- can be done with MCU, check motor values
 	
 - [Jiahao] Fix state mismatch function
 	- enter panic mode on state mismatch
 	- pc should not enter switch mode when the js is not in a normal position
+	
+- [Xinyun] Trimming function using keyboard
+	- counteract external offsets (e.g. cable)
+	- offest value for setpoint of pitch, roll and yaw
+	
+- [Zehang] Extensively check safety features
+	- panic mode: ESC button, js trigger, usb disconnect, battery value
+	- Cannot enter manual/control mode unless js is neutral
+	- Check all mode switches
 
 - [Zehang] check USB interval value
 
 - Test p values (and change resolution e.g. p-value 1)
 	- experiment with p-value higher resolution
+	
+- KEYBOARD PRESS NOT RECOGNISED: 6, (message_encode)
 	
 ---------------------------------------------------- DONE ----------------------------------------------------
 
