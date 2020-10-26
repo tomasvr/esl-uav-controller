@@ -29,6 +29,17 @@ typedef enum {
 	FULLCONTROL_ST
 } STATE_t ;
 
+// is_allowed[state][to_state] == 1 -> is allowed to switch from 'state' to 'to_state', 0 -> not allowed
+static uint8_t is_allowed[7][7] = {
+    {0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 1, 1, 1, 1},
+    {0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 1, 0, 1, 1, 1},
+    {0, 0, 1, 0, 0, 0, 0},
+    {0, 0, 1, 1, 1, 0, 1},
+    {0, 0, 1, 1, 1, 1, 0}
+};
+
 /*
  * @brief      Outputs new state based on input state 
  * 	
