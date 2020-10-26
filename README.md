@@ -27,6 +27,7 @@
 - Test p values (and change resolution e.g. p-value 1)
 	- experiment with p-value higher resolution
 	
+---------------------------------------------------- DONE ----------------------------------------------------
 
 - [Jiahao][DONE] adjust joystick sensitivity (too high)
 	- translate lift to appropriate values
