@@ -12,4 +12,6 @@
  */
 // bool write_to_log(uint8_t data);
 
+void data_logging();
+
 #endif // logging_H__
