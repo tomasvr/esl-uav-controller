@@ -15,7 +15,6 @@
 
 #define MAX_ALLOWED_SPEED 1000
 #define MIN_ALLOWED_SPEED 0
-
 #define MAX_ALLOWED_DIFF_MOTOR 50
 
 // the states that a motor has
@@ -63,10 +62,8 @@ void sensor_calib(void);
 // controller
 #define b 1 
 #define d 1
-
 void controller_init(CONTROLLER *controller);
 void increase_p_value(CONTROLLER *controller);
 void decrease_p_value(CONTROLLER *controller);
-int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr);
 
 #endif // CONTROL_H__

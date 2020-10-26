@@ -42,7 +42,6 @@
 #include <assert.h>
 #include <stdbool.h> 
 
-
 #include "joystick.h"
 #include "../states.h"
 #include "../comm.h"
@@ -67,7 +66,6 @@
 #define YAW_LEFT 	0b10011001
 #define YAW_RIGHT 	0b01100110
  	
-
 // current axis and button readings
 int	axis[6];
 int	button[12];
@@ -381,7 +379,7 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 		rs232_putchar(message);
 	}
 	else if ( (js_type == 2) || (js_type == 130)) { // js axis (130 occurs at startup)
-		if( (current_time - last_js_send_time) >= PACKET_SEND_INTERVAL) {
+		if( (current_time - last_js_send_time) >= PACKET_SEND_INTERVAL) { // only send js axis packet at a certain rate
 			message = append_comm_type(message, JS_AXIS_COMM);
 			JOYSTICK_AXIS_t axis_number_from_js = js_number;
 			message = append_js_axis_type(message, axis_number_from_js);
@@ -406,29 +404,10 @@ void send_USB_check_message() {
 	rs232_putchar(message_encode(USB_CHECK_MESSAGE));
 }
 
-// Not using this function?
-unsigned int mon_time_ms(void){
-    unsigned int    ms;
-    struct timeval  tv;
-    struct timezone tz;
-    gettimeofday(&tv, &tz);
-    ms = 1000 * (tv.tv_sec % 65); // 65 sec wrap around
-    ms = ms + tv.tv_usec / 1000;
-    return ms;
-}
-
-// Not using this function?
-void mon_delay_ms(unsigned int ms){
-        struct timespec req, rem;
-        req.tv_sec = ms / 1000;
-        req.tv_nsec = 1000000 * (ms % 1000);
-        assert(nanosleep(&req,&rem) == 0);
-}
-
 /* 
-* Get time stamp.
-* "aruthor"
-*/
+ * Get time stamp.
+ * Zehang Wu
+ */
 uint32_t GetTimeStamp() {
     struct timeval tv;
     gettimeofday(&tv,NULL);
@@ -480,7 +459,6 @@ int main(int argc, char **argv)
 		current_time = GetTimeStamp();
 
 		if((current_time - last_USB_check_time) >= USB_SEND_CHECK_INTERVAL) {
-			//printf("PC: Time to send USB check message\n");
 			send_USB_check_message();
 			last_USB_check_time = current_time;
 		}
@@ -507,33 +485,16 @@ int main(int argc, char **argv)
 
 #ifdef ENABLE_JOYSTICK
 		current_time = GetTimeStamp();
-		
-		// if( (current_time - last_js_send_time) >= POLL_DELAY) {
-		// 	while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) { // TODO: might have to make this an 'if' statement instead
-		// 		//printf("PC: JS event: type %d, time %d, number %d, value %d\n", js.type, js.time, js.number, js.value);
-		// 			send_js_message(js.type, js.number, js.value);
-		// 	}
-		// 	if (errno != EAGAIN) {
-		// 		perror("\nPC: jstest: error reading\n");
-		// 		exit (1);
-		// 	}			
-		// 	last_js_send_time = current_time;
-		// } 
-
-		while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) { // TODO: might have to make this an 'if' statement instead
-			// if( (current_time - last_js_send_time) >= PACKET_SEND_INTERVAL) {
-				//printf("PC: JS event: type %d, time %d, number %d, value %d\n", js.type, js.time, js.number, js.value);
-				// printf("Packet sent!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! \n");
+		while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) {
 				send_js_message(js.type, js.number, js.value);
-			// }
 		}
 		if (errno != EAGAIN) {
 			perror("\nPC: jstest: error reading\n");
 			exit (1);
 		}			
 		last_js_send_time = current_time;
-
 #endif
+
 	counter++;	
 	}
 
