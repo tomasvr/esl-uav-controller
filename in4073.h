@@ -21,17 +21,39 @@
 #include "app_util_platform.h"
 #include <math.h>
 
-#define RED		22
+// custom includes
+#include "logging.h"
+#include "comm.h"
+#include "states.h"
+#include "control.h"
+
+#define RED			22
 #define YELLOW		24
 #define GREEN		28
 #define BLUE		30
 #define INT_PIN		5
 
+#define MOTOR_MAX_CHANGE 50
+#define MOTOR_UPPER_LIMIT 1000
+
+#define JS_AXIS_MID_VALUE 		127		// used to be 32767
+#define JS_AXIS_MAX_VALUE 		255		// used to be 65536
+#define JS_AXIS_DIVIDE_VALUE 	254 	// used to be 65535
+
 bool demo_done;
+STATE_t fcb_state;
+extern CONTROLLER *yaw_control_pointer;
+extern CONTROLLER *pitch_control_pointer;
+extern CONTROLLER *roll_control_pointer;
 
 // Control
-int16_t motor[4],ae[4];
+uint16_t motor_lift_level;
+int16_t motor[4],ae[4]; // should this be uint16_t or int16_t? why do we want negative values for motor
 void run_filters_and_control();
+
+// js values, receives 8 bit value but make it 16 to scale to 1000 (motor values)
+int8_t roll, pitch, yaw;
+uint8_t lift;
 
 // Timers
 #define TIMER_PERIOD	50 //50ms=20Hz (MAX 23bit, 4.6h)
@@ -75,6 +97,7 @@ int16_t phi, theta, psi;
 int16_t sp, sq, sr;
 int16_t sax, say, saz;
 uint8_t sensor_fifo_count;
+int16_t sr_calib;
 void imu_init(bool dmp, uint16_t interrupt_frequency); // if dmp is true, the interrupt frequency is 100Hz - otherwise 32Hz-8kHz
 void get_dmp_data(void);
 void get_raw_sensor_data(void);
