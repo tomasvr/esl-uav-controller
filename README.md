@@ -18,10 +18,6 @@
 	- enter panic mode on state mismatch
 	- pc should not enter switch mode when the js is not in a normal position
 
-- [Xinyun] Define a test plan
-	- Use different versions of the code in different branches to test right away
-	- Test trimming functions for offset
-
 - [Zehang] check USB interval value
 
 - Test p values (and change resolution e.g. p-value 1)
@@ -41,6 +37,10 @@
 
 - [Jiahao][DONE] Time the duration of control loops, needs to be under 10ms and important to optimize
 	- use current_time - start_time
+	
+- [Zehang][DONE] Define a test plan (See shared google drive folder)
+	- Use different versions of the code in different branches to test right away
+	- Test trimming functions for offset
 
 ## Lower priority
 
