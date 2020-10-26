@@ -41,6 +41,9 @@ $(abspath ../components/toolchain/system_nrf51.c) \
 $(abspath ../components/drivers_nrf/delay/nrf_delay.c) \
 $(abspath ./in4073.c) \
 $(abspath ./control.c) \
+$(abspath ./states.c) \
+$(abspath ./comm.c) \
+$(abspath ./logging.c) \
 $(abspath ./drivers/gpio.c) \
 $(abspath ./drivers/timers.c) \
 $(abspath ./drivers/uart.c) \
@@ -106,7 +109,8 @@ CFLAGS += -DS110
 CFLAGS += -DBLE_STACK_SUPPORT_REQD
 CFLAGS += -mcpu=cortex-m0
 CFLAGS += -mthumb -mabi=aapcs --std=gnu11 # abi=Application Binary Interface
-CFLAGS += -Wall -Werror -O3
+# CFLAGS += -Wall -Werror -O3
+CFLAGS += -Wall -O3
 CFLAGS += -mfloat-abi=soft # we don't want floats - no hardware fpu
 # keep every function in separate section. This will allow linker to dump unused functions
 CFLAGS += -ffunction-sections -fdata-sections -fno-strict-aliasing

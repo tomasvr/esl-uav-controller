@@ -13,14 +13,14 @@
 #include "in4073.h"
 
 static volatile bool sent = false;
-static volatile bool read = false;
+static volatile bool READ = false;
 
 bool i2c_read(uint8_t slave_addr, uint8_t reg_addr, uint8_t data_length, uint8_t *data)
 {
 	if (!data_length) return -1;
 
 	sent = false;
-	read = false;
+	READ = false;
 	NRF_TWI0->ADDRESS = slave_addr;
 	NRF_TWI0->TXD = reg_addr;
 	NRF_TWI0->SHORTS = 0;
@@ -36,8 +36,8 @@ bool i2c_read(uint8_t slave_addr, uint8_t reg_addr, uint8_t data_length, uint8_t
 
 	while (true)
 	{
-		while (!read);
-		read = false;
+		while (!READ);
+		READ = false;
 	
 		*data++ = NRF_TWI0->RXD;
 		if (--data_length == 1) NRF_TWI0->SHORTS = TWI_SHORTS_BB_STOP_Msk;
@@ -79,7 +79,7 @@ void SPI0_TWI0_IRQHandler(void)
 	{
 		NRF_TWI0->EVENTS_RXDREADY = 0;
 //		printf("\revent rxready\n");
-		read = true;
+		READ = true;
 	}
 
         if(NRF_TWI0->EVENTS_TXDSENT != 0)
