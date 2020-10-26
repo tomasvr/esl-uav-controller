@@ -141,10 +141,40 @@ void offset_remove() {
 	saz -= saz_calib;
 }
 
+// trim_step
 // variable declaration for control loop
 int16_t yaw_set_point = 0;
 int16_t roll_set_point = 0;
 int16_t pitch_set_point = 0;
+
+int16_t PITCH_TRIM = 0;
+int16_t ROLL_TRIM = 0;
+int16_t YAW_TRIM = 0;
+
+void keyboard_trimming(uint8_t motor_states) {
+	uint8_t step = STEP_SIZE >> 2;
+	switch(motor_states){
+		case PITCH_UP:
+			PITCH_TRIM += step;
+			break;
+		case PITCH_DOWN:
+			PITCH_TRIM -= step;
+			break;
+		case ROLL_RIGHT:
+			ROLL_TRIM += step;
+			break;
+		case ROLL_LEFT:
+			ROLL_TRIM -= step;
+			break;
+		case YAW_RIGHT:
+			YAW_TRIM += step;
+			break;
+		case YAW_LEFT:
+			YAW_TRIM -= step;
+			break;				
+	}
+	printf("key trimming: %d\n", motor_states);
+}
 
 /*
  * Initial the control struct.
@@ -255,8 +285,6 @@ uint32_t calculate_time_diff (uint32_t start_time) {
 }
 
 void run_filters_and_control() {
-	// fancy stuff here
-	// control loops and/or filters
 	switch(fcb_state) {
 		case SAFE_ST:
 			zero_motors();
@@ -269,7 +297,7 @@ void run_filters_and_control() {
 			calculate_motor_values(pitch, roll, yaw, lift);
 			break;
 		case CALIBRATION_ST:
-		sensor_calib();
+			sensor_calib();
 			fcb_state = SAFE_ST;
 			zero_motors();
 			break;
