@@ -374,16 +374,16 @@ void check_battery_volt(){
 * J. Cui
 */
 void print_log_in_ter() {
-	// printf("%10ld | ", get_time_us());
+	printf("%10ld | ", get_time_us());
 	printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
 	printf("%6d %6d %6d | ", phi, theta, psi);
 	printf("%6d %6d %6d | ", sp, sq, sr);
-	//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
-	printf("y_p_r: %2d r_p_r: %2d p_p_r: %2d", yaw_control.kp_rate, roll_control.kp_rate, pitch_control.kp_rate);
-	printf("r_p_a: %2d p_p_a: %2d", roll_control.kp_angle, pitch_control.kp_angle);
-	printf("setp: %4d sp: %4d err: %4d output: %4d ", roll_control.set_point, sp, roll_control.err, roll_control.output);
-	printf("%4d |", fcb_state - 1);
-	printf("%4d \n", ctrl_loop_time);
+	printf("%4d | %4ld | %6ld \n", bat_volt, temperature, pressure);
+	// printf("y_p_r: %2d r_p_r: %2d p_p_r: %2d", yaw_control.kp_rate, roll_control.kp_rate, pitch_control.kp_rate);
+	// printf("r_p_a: %2d p_p_a: %2d", roll_control.kp_angle, pitch_control.kp_angle);
+	// printf("setp: %4d sp: %4d err: %4d output: %4d ", roll_control.set_point, sp, roll_control.err, roll_control.output);
+	// printf("%4d |", fcb_state - 1);
+	// printf("%4d \n", ctrl_loop_time);
 	clear_timer_flag();
 	//printf("%4d \n", motor_lift_level);
 }
@@ -430,6 +430,8 @@ int main(void)
 			adc_request_sample();
 			read_baro();
 			print_log_in_ter();
+			// plot_info();
+			logging();	
 		}
 
 		if (check_sensor_int_flag()) {
