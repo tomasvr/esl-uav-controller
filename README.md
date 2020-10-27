@@ -22,8 +22,6 @@
 
 - Test p values (and change resolution e.g. p-value 1)
 	- experiment with p-value higher resolution
-	
-- KEYBOARD PRESS NOT RECOGNISED: 6, (message_encode)
 
 - Program can start running with none-zero throttle as well as entering manual mode, which may have high motor speed imediately enter manual mode, need fix!
 	
