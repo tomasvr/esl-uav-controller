@@ -117,7 +117,7 @@ void USB_comm_update_received() {
 
 void check_USB_connection_alive() {
 	current_time = get_time_us();
-	if (current_time - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: check for overflow? <- Need fix when operation time > 70 mins
+	if (current_time - usb_comm_last_received > (USB_COMM_INTERVAL_THRESHOLD + 1000)) { //TODO: check for overflow? <- Need fix when operation time > 70 mins
 		enter_panic_mode(true, "usb_check failed \n");
 	}
 }

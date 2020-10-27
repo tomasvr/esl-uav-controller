@@ -162,8 +162,8 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 	// yaw_control->set_point = yaw_set_point;
 	// yaw_control->err = yaw_control->set_point - sr;
 	// yaw_control->output = yaw_control->kp_rate * yaw_control->err;
-	int16_t output = (yaw_set_point - sr) >> 1;
-	return output;
+	int32_t output = yaw_control->kp_rate * (yaw_set_point - sr);
+	return (int16_t) output;
 }
 
 /* one step calculation for pitch control loop
@@ -174,20 +174,22 @@ int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, i
 	// pitch_control->err = pitch_control->set_point - sq;
 	// pitch_control->integral += pitch_control->err;
 	// pitch_control->output = pitch_control->kp_rate * pitch_control->err;
-	int16_t output = ((pitch_set_point - theta) * pitch_control->kp_angle - sq) * pitch_control->kp_rate;
-	return output;
+	int32_t output = ((pitch_set_point - theta) * pitch_control->kp_angle - sq) * pitch_control->kp_rate;
+	// output = output * 2 / 3;
+	return (int16_t) output;
 }
 
 /* one step calculation for roll control loop
  * Zehang Wu
  */
 int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int16_t sp, int16_t phi) {
-	roll_control->set_point = roll_set_point;
-	roll_control->err = roll_control->set_point - sp;
+	// roll_control->set_point = roll_set_point;
+	// roll_control->err = roll_control->set_point - sp;
 	// roll_control->integral += roll_control->err;
-	roll_control->output = roll_control->kp_rate * roll_control->err;
-	int16_t output = ((roll_set_point - phi) * roll_control->kp_angle - sp) * roll_control->kp_rate;
-	return output;
+	// roll_control->output = roll_control->kp_rate * roll_control->err;
+	int32_t output = ((roll_set_point - phi) * roll_control->kp_angle - sp) * roll_control->kp_rate;
+	// output = output * 2 / 3;
+	return (int16_t) output;
 }
 
 
@@ -268,10 +270,10 @@ void calculate_motor_values(int16_t pitch, int16_t roll, int16_t yaw, uint16_t l
 	// ae[2] = (lift << 2) - pitch - yaw;
 	// ae[3] = (lift << 2) + roll + yaw;
 
-	ae[0] = (lift << 1) + 150 + (pitch - yaw) * MAX_ALLOWED_DIFF_MOTOR / 32768;
-	ae[1] = (lift << 1) + 150 - (roll - yaw) * MAX_ALLOWED_DIFF_MOTOR / 98304;
-	ae[2] = (lift << 1) + 150 - (pitch + yaw) * MAX_ALLOWED_DIFF_MOTOR / 98304;
-	ae[3] = (lift << 1) + 150 + (roll + yaw) * MAX_ALLOWED_DIFF_MOTOR / 98304;
+	ae[0] = (lift << 1) + 150 + (pitch - yaw) * MAX_ALLOWED_DIFF_MOTOR / 65535;
+	ae[1] = (lift << 1) + 150 - (roll - yaw) * MAX_ALLOWED_DIFF_MOTOR / 65535;
+	ae[2] = (lift << 1) + 150 - (pitch + yaw) * MAX_ALLOWED_DIFF_MOTOR / 65535;
+	ae[3] = (lift << 1) + 150 + (roll + yaw) * MAX_ALLOWED_DIFF_MOTOR / 65535;
 }
 
 uint32_t calculate_time_diff (uint32_t start_time) {
@@ -288,7 +290,7 @@ void run_filters_and_control() {
 			enter_panic_mode(false, "PANIC STATE"); //enter panic mode for any reason other than cable
 			break;
 		case MANUAL_ST:
-			calculate_motor_values(pitch, roll, yaw, lift);
+			calculate_motor_values(pitch << 8, roll << 8, yaw << 8, lift);
 			break;
 		case CALIBRATION_ST:
 			sensor_calib();
@@ -297,7 +299,7 @@ void run_filters_and_control() {
 			break;
 		case YAWCONTROL_ST:
 			//todo
-			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw << 8, (sr)*-1 ), lift); // i think sr needs *-1 (reverse sign
+			calculate_motor_values(pitch << 8, roll << 8, yaw_control_calc(yaw_control_pointer, yaw << 8, (sr)*-1 ), lift); // i think sr needs *-1 (reverse sign
 			// printf("FCB: The control loop took %d us.\n", calculate_time_diff(enter_time));
 			break;
 		case FULLCONTROL_ST:
