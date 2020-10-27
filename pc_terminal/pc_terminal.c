@@ -148,7 +148,7 @@ void rs232_open(void){
   	int 		result;
   	struct termios	tty;
 
-       	fd_RS232 = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY);  // Hardcode your serial port here, or request it as an argument at runtime
+       	fd_RS232 = open("/dev/ttyUSB1", O_RDWR | O_NOCTTY);  // Hardcode your serial port here, or request it as an argument at runtime
 
 	assert(fd_RS232>=0);
 
@@ -353,7 +353,7 @@ uint32_t message_encode(int c){
 		default:
 			printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
 	}
-	print_packet(message, "PC: Send message: ");
+	// print_packet(message, "PC: Send message: ");
 	return message;
 }
 

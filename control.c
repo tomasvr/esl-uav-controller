@@ -159,20 +159,21 @@ void decrease_p_angle_value(CONTROLLER *controller) {
  * Zehang Wu
  */
 int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr) {
-	yaw_control->set_point = yaw_set_point;
-	yaw_control->err = yaw_control->set_point - sr;
-	yaw_control->output = yaw_control->kp_rate * yaw_control->err;
-	return yaw_control->output;
+	// yaw_control->set_point = yaw_set_point;
+	// yaw_control->err = yaw_control->set_point - sr;
+	// yaw_control->output = yaw_control->kp_rate * yaw_control->err;
+	int16_t output = (yaw_set_point - sr) >> 1;
+	return output;
 }
 
 /* one step calculation for pitch control loop
  * Zehang Wu
  */
 int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, int16_t sq, int16_t theta) {
-	pitch_control->set_point = pitch_set_point;
-	pitch_control->err = pitch_control->set_point - sq;
+	// pitch_control->set_point = pitch_set_point;
+	// pitch_control->err = pitch_control->set_point - sq;
 	// pitch_control->integral += pitch_control->err;
-	pitch_control->output = pitch_control->kp_rate * pitch_control->err;
+	// pitch_control->output = pitch_control->kp_rate * pitch_control->err;
 	int16_t output = ((pitch_set_point - theta) * pitch_control->kp_angle - sq) * pitch_control->kp_rate;
 	return output;
 }
@@ -267,10 +268,10 @@ void calculate_motor_values(int16_t pitch, int16_t roll, int16_t yaw, uint16_t l
 	// ae[2] = (lift << 2) - pitch - yaw;
 	// ae[3] = (lift << 2) + roll + yaw;
 
-	ae[0] = (lift << 1) + 150 + (pitch - yaw) * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[1] = (lift << 1) + 150 - (roll - yaw) * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[2] = (lift << 1) + 150 - (pitch + yaw) * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[3] = (lift << 1) + 150 + (roll + yaw) * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[0] = (lift << 1) + 150 + (pitch - yaw) * MAX_ALLOWED_DIFF_MOTOR / 32768;
+	ae[1] = (lift << 1) + 150 - (roll - yaw) * MAX_ALLOWED_DIFF_MOTOR / 98304;
+	ae[2] = (lift << 1) + 150 - (pitch + yaw) * MAX_ALLOWED_DIFF_MOTOR / 98304;
+	ae[3] = (lift << 1) + 150 + (roll + yaw) * MAX_ALLOWED_DIFF_MOTOR / 98304;
 }
 
 uint32_t calculate_time_diff (uint32_t start_time) {
