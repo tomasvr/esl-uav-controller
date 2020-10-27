@@ -119,12 +119,6 @@ void offset_remove() {
 	saz -= saz_calib;
 }
 
-// trim_step
-// variable declaration for control loop
-int16_t yaw_set_point = 0;
-int16_t roll_set_point = 0;
-int16_t pitch_set_point = 0;
-
 /*
  * Initialize the control struct.
  * Zehang Wu

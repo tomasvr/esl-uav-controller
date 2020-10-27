@@ -429,7 +429,8 @@ int main(void)
 			adc_request_sample();
 			read_baro();
 			print_log_in_ter();
-			data_logging();	
+			// plot_info();
+			logging();	
 		}
 
 		if (check_sensor_int_flag()) {

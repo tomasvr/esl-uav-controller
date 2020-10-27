@@ -11,125 +11,94 @@
 // 	return false;
 // };
 
-// uint32_t timestamp = get_time_us();
-// struct info_log info_logging = {timestamp, bat_volt};
+uint8_t address_init = START_ADDRESS;
+uint8_t address_current = START_ADDRESS;
+uint8_t address_readout = START_ADDRESS;
 
-uint8_t address_init = 0x000000;
-uint8_t address_counter = 0;
-// void data_logging()
-// {
-// struct sensor_log sensor_logging = {phi, theta, psi, sp , sq, sr};
-// if(flash_write_bytes(address_init + address_counter, (uint8_t*) &sensor_logging, 4))printf("+");
-// }
+bool flash_stuff()
+{
+	if(address_current < END_ADDRESS)
+		return true;
+	else
+		return false;
+}
+
+bool flash_read()
+{
+	if(address_readout < END_ADDRESS) 
+		return true;
+	else 
+		return false;
+}
 
 void data_logging()
 {
-	uint8_t counter = 0;
-	uint8_t restore_counter = 0;
-	uint8_t time_store[4] = {0};
-	uint32_t time_restore[1] = {0};// uint8_t time_counter = 0;// uint8_t time_restore_counter = 0;  
+	uint32_t timestamp = get_time_us();
+	struct tag_log tag_logging = {timestamp, bat_volt};//32 16
+	if(flash_write_bytes(address_current, (uint8_t*) &tag_logging, 12))return;
+	address_current += 12;
 
-	uint8_t  battery_store[2] = {0};
-	uint16_t battery_restore[1] = {0};// uint8_t battery_counter = 0;// uint8_t battery_restore_counter = 0;
+	struct js_log js_logging = {roll, pitch, yaw, lift};
+	if(flash_write_bytes(address_current, (uint8_t*) &js_logging, 4))return;
+	address_current += 4;
+
+	struct sensor_log sensor_logging = {phi, theta, psi, sp , sq, sr};//int16_t * 6
+	if(flash_write_bytes(address_current, (uint8_t*) &sensor_logging, 24))return;
+	address_current += 24;
+
+	struct motor_log motor_logging = {ae[0], ae[1], ae[2], ae[3]};
+	if(flash_write_bytes(address_current, (uint8_t*) &js_logging, 16))return;
+	address_current += 4;
+}
+
+void data_readout()
+{
+	uint32_t timestamp = get_time_us();
+	struct tag_log tag_logging = {timestamp, bat_volt};//32 16
+	if(flash_read_bytes(address_readout, (uint8_t*) &tag_logging, 12))return;
+	printf("log: %10ld %3d |", tag_logging.time, tag_logging.battery);
+	address_readout += 12;
+
+	struct js_log js_logging = {roll, pitch, yaw, lift};
+	if(flash_read_bytes(address_readout, (uint8_t*) &js_logging, 4))return;
+	// printf("%3d %3d %3d %3d  |", js_logging.roll_log, js_logging.pitch_log, js_logging.yaw_log, js_logging.lift_log);
+	address_readout += 4;
+
+	struct sensor_log sensor_logging = {phi, theta, psi, sp , sq, sr};//int16_t * 6
+	if(flash_read_bytes(address_readout, (uint8_t*) &sensor_logging, 24))return;
+		printf("%3d %3d %3d | %3d %3d %3d |", sensor_logging.roll, sensor_logging.pitch, sensor_logging.yaw, 
+	sensor_logging.gyro_x , sensor_logging.gyro_y, sensor_logging.gyro_z); 
+	address_readout += 24;
+
+	struct motor_log motor_logging = {ae[0], ae[1], ae[2], ae[3]};
+	if(flash_read_bytes(address_readout, (uint8_t*) &motor_logging, 16))return;
+	printf("%3d %3d %3d %3d\n", motor_logging.motor_0, motor_logging.motor_1, motor_logging.motor_2, motor_logging.motor_3);
+	address_readout += 4;
 	
-	uint8_t  phi_store[2] = {0};
-	uint16_t phi_restore[1] = {0};// uint8_t phi_counter = 0;// uint8_t phi_restore_counter = 0;
-	int16_t phi_d = 0;
 
-	uint8_t  theta_store[2] = {0};
-	uint16_t theta_restore[1] = {0};// uint8_t theta_counter = 0;// uint8_t theta_restore_counter = 0;
-	int16_t theta_d = 0;
+	
+}
 
-	uint8_t  psi_store[2] = {0};
-	uint16_t psi_restore[1] = {0};// uint8_t psi_counter = 0;// uint8_t psi_restore_counter = 0;
-	int16_t psi_d = 0;
-
-	uint8_t pressure_store[4] = {0};
-	uint32_t pressure_restore[1] = {0};// uint8_t pressure_counter = 0;// uint8_t pressure_restore_counter = 0;   
-
-	//time
-	time_store[counter] = (get_time_us() >> 24); time_store[counter+1] = (get_time_us() >> 16);
-	time_store[counter+2] = (get_time_us() >> 8); time_store[counter+3] = get_time_us();
-
-	if(flash_write_bytes(address_init + address_counter, &time_store[address_counter], 4))printf(" |");
-	if(flash_read_bytes(address_init + address_counter, &time_store[address_counter], 4))printf("|");
-
-	time_restore[restore_counter] = (time_store[counter] << 24) | (time_store[counter+1] << 16) 
-	| (time_store[counter+2] << 8) | (time_store[counter+3]);
-	printf("|%10ld ", time_restore[restore_counter]);
-	// time_restore_counter++; time_counter = time_counter + 4;
-	address_counter = address_counter + 4;
-
-	//Battery
-	battery_store[counter] = bat_volt >> 8; battery_store[counter+1] = bat_volt;
-
-	if(flash_write_bytes(address_init + address_counter, &battery_store[address_counter], 2))printf(" |");
-	if(flash_read_bytes(address_init + address_counter, &battery_store[address_counter], 2))printf("|");
-
-	battery_restore[restore_counter] = battery_store[counter] << 8 | battery_store[counter+1];
-	printf("|%4d ", battery_restore[restore_counter]);
-	// battery_restore_counter++; battery_counter = battery_counter + 2;
-	address_counter = address_counter + 2;
-
-	//phi
-	phi_store[counter] = phi >> 8; phi_store[counter+1] = phi;
-
-	if(flash_write_bytes(address_init + address_counter, &phi_store[address_counter], 2))printf(" |");
-	if(flash_read_bytes(address_init + address_counter, &phi_store[address_counter], 2))printf("|");
-
-	phi_restore[restore_counter] = phi_store[counter] << 8 | phi_store[counter + 1];
-	if(phi_restore[restore_counter] > 32768) {
-		phi_d = phi_restore[restore_counter] - 65536;
+void logging()
+{
+	if(flash_chip_erase() && flash_read()){
+		data_logging();
 	}
-	else
-		phi_d = phi_restore[restore_counter];
+	// if(flash_read()){
+	// 	data_readout();
+	// }
+}
 
-	printf("|%6d ", phi_d);
-	// phi_restore_counter++; phi_counter = phi_counter + 2;
-	address_counter = address_counter + 2;
 
-	//theta
-	theta_store[counter] = theta >> 8; theta_store[counter+1] = theta;
-
-	if(flash_write_bytes(address_init + address_counter, &theta_store[address_counter], 2))printf(" |");
-	if(flash_read_bytes(address_init + address_counter, &theta_store[address_counter], 2))printf("|");
-
-	theta_restore[restore_counter] = theta_store[counter] << 8 | theta_store[counter + 1];
-	if(theta_restore[restore_counter] > 32768) {
-		theta_d = theta_restore[restore_counter] - 65536;
-	}
-	else
-		theta_d = theta_restore[restore_counter];
-
-	printf("|%6d ", theta_d);
-	address_counter = address_counter + 2;
-
-	//psi
-	psi_store[counter] = psi >> 8; psi_store[counter+1] = psi;
-
-	if(flash_write_bytes(address_init + address_counter, &psi_store[address_counter], 2))printf(" |");
-	if(flash_read_bytes(address_init + address_counter, &psi_store[address_counter], 2))printf("|");
-
-	psi_restore[restore_counter] = psi_store[counter] << 8 | psi_store[counter + 1];
-	if(psi_restore[restore_counter] > 32768) {
-		psi_d = psi_restore[restore_counter] - 65536;
-	}
-	else
-		psi_d = psi_restore[restore_counter];
-
-	printf("|%6d ", psi_d);
-	address_counter = address_counter + 2;
-
-	//pressure
-	pressure_store[counter] = (pressure >> 24);pressure_store[counter+1] = (pressure >> 16);
-	pressure_store[counter+2] = (pressure >> 8);pressure_store[counter+3] = pressure;
-
-	if(flash_write_bytes(address_init + address_counter, &pressure_store[address_counter], 4))printf(" |");
-	if(flash_read_bytes(address_init + address_counter, &pressure_store[address_counter], 4))printf("|");
-
-	pressure_restore[restore_counter] = (pressure_store[counter] << 24) | (pressure_store[counter+1] << 16) 
-	| (pressure_store[counter+2] << 8) | (pressure_store[counter+3]);
-	printf("| %6ld\n", pressure_restore[restore_counter]);
-	//pressure_restore_counter++;pressure_counter = pressure_counter + 4;
-	address_counter = address_counter + 4;
+//delete when submit final version
+void plot_info()
+{
+	//system time | mode | roll(js) pitch(js) yaw(js) lift(js) | ae[0] ae[1] ae[2] ae[3] | phi theta psi | sp sq sr
+	printf("%10ld | ", get_time_us());
+	printf("%4d |", fcb_state - 1);
+	printf("%3d %3d %3d %3d  |", roll, pitch, yaw, lift);
+	printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
+	printf("%6d %6d %6d | ", phi, theta, psi);
+	printf("%6d %6d %6d\n", sp, sq, sr);	
+	clear_timer_flag();
 }
