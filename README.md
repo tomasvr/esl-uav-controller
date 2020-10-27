@@ -9,7 +9,7 @@
 	- enter panic mode on state mismatch
 	- pc should not enter switch mode when the js is not in a normal position
 	
-- [Xinyun] Trimming function using keyboard
+- [Xinyun][DONE] Trimming function using keyboard
 	- counteract external offsets (e.g. cable)
 	- offest value for setpoint of pitch, roll and yaw
 	
