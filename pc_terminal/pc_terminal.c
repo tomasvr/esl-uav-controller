@@ -43,8 +43,8 @@
 #include <stdbool.h> 
 
 #include "joystick.h"
-#include "../states.h"
-#include "../comm.h"
+#include "../common/states.h"
+#include "../common/comm.h"
 
 #define JS_DEV	"/dev/input/js0"
 

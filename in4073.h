@@ -23,8 +23,8 @@
 
 // custom includes
 #include "logging.h"
-#include "comm.h"
-#include "states.h"
+#include "common/comm.h"
+#include "common/states.h"
 #include "control.h"
 
 #define RED			22
