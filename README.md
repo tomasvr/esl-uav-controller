@@ -5,10 +5,6 @@
 - [Jiahao] Cornercases: check what happens when pitch or roll in maximzed (tilt mcu all the way to left or right or down or up)
 	- can be done with MCU, check motor values
 	
-- [Xinyun][DONE] Trimming function using keyboard
-	- counteract external offsets (e.g. cable)
-	- offest value for setpoint of pitch, roll and yaw
-	
 - [Zehang] Extensively check safety features
 	- panic mode: ESC button, js trigger, usb disconnect, battery value
 	- Cannot enter manual/control mode unless js is neutral
@@ -30,6 +26,10 @@
 	- use current_time - start_time
 	
 - [Jiahao][DONE] motor speed clip bug
+
+- [Xinyun][DONE] Trimming function using keyboard
+	- counteract external offsets (e.g. cable)
+	- offest value for setpoint of pitch, roll and yaw
 
 - [Zehang][DONE] Define maximum difference between counteracting motors (400 300 400 300) max diff: 50
 	- currently we divide by 320, but should use translate function instead
