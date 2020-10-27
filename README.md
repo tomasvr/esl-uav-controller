@@ -5,10 +5,6 @@
 - [Jiahao] Cornercases: check what happens when pitch or roll in maximzed (tilt mcu all the way to left or right or down or up)
 	- can be done with MCU, check motor values
 	
-- [Zehang] Fix state mismatch function
-	- enter panic mode on state mismatch
-	- pc should not enter switch mode when the js is not in a normal position
-	
 - [Xinyun][DONE] Trimming function using keyboard
 	- counteract external offsets (e.g. cable)
 	- offest value for setpoint of pitch, roll and yaw
@@ -44,6 +40,10 @@
 - [Zehang][DONE] Define a test plan (See shared google drive folder)
 	- Use different versions of the code in different branches to test right away
 	- Test trimming functions for offset
+	
+- [Zehang][DONE] Fix state mismatch function
+	- enter panic mode on state mismatch
+	- pc should not enter switch mode when the js is not in a normal position
 
 ## Lower priority
 
