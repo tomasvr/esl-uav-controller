@@ -40,6 +40,10 @@ extern CONTROLLER *yaw_control_pointer;
 extern CONTROLLER *pitch_control_pointer;
 extern CONTROLLER *roll_control_pointer;
 
+extern int8_t pitch_trim ;
+extern int8_t roll_trim;
+extern int8_t yaw_trim ;
+
 // Control
 uint16_t motor_lift_level;
 int16_t motor[4],ae[4]; // should this be uint16_t or int16_t? why do we want negative values for motor

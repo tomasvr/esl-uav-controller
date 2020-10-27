@@ -165,16 +165,40 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 	return yaw_control->output;
 }
 
+int16_t clip_control_output(int32_t value) {
+	if (value > 32767) {
+		return 32767;
+	}
+	if (value < -32768) {
+		return -32768;
+	}
+	return value;
+}
+
 /* one step calculation for pitch control loop
  * Zehang Wu
  */
 int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, int16_t sq, int16_t theta) {
-	pitch_control->set_point = pitch_set_point;
-	pitch_control->err = pitch_control->set_point - sq;
+	//pitch_control->set_point = pitch_set_point;
+	//pitch_control->err = pitch_control->set_point - sq;
 	// pitch_control->integral += pitch_control->err;
-	pitch_control->output = pitch_control->kp_rate * pitch_control->err;
-	int16_t output = ((pitch_set_point - theta) * pitch_control->kp_angle - sq) * pitch_control->kp_rate;
-	return output;
+// 	pitch_control->output = pitch_control->kp_rate * pitch_control->err;
+// 	int16_t output = ((pitch_set_point - theta) * pitch_control->kp_angle - sq) * pitch_control->kp_rate;
+// 	return output;
+	//pitch_control->output = pitch_control->kp_rate * pitch_control->err;
+	pitch_set_point = pitch_set_point >> 2; // set setpoint range to [-8192 ... 8191]
+
+	int16_t error = clip_control_output(pitch_set_point - theta); // will be in range [-16xxx ... 16xxx]
+	int16_t output_angle = clip_control_output(error * pitch_control->kp_angle - sq);
+	int32_t pitch_output = output_angle * pitch_control->kp_rate;
+	pitch_control->output = pitch_output;
+	// printf("setpoint: %ld, theta: %ld, error: %ld | ", pitch_set_point, theta, error);
+	// printf("sq: %ld, output_angle: %ld | ", sq, output_angle);
+	//printf("pitch_output: %ld\n", pitch_output);	
+
+	//printf("pitch output: %ld\n", pitch_output);
+	//printf("pitch output clipped: %ld\n", clip_control_output(pitch_output));
+	return pitch_output >> 8;
 }
 
 /* one step calculation for roll control loop
@@ -185,6 +209,7 @@ int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int1
 	roll_control->err = roll_control->set_point - sp;
 	// roll_control->integral += roll_control->err;
 	roll_control->output = roll_control->kp_rate * roll_control->err;
+
 	int16_t output = ((roll_set_point - phi) * roll_control->kp_angle - sp) * roll_control->kp_rate;
 	return output;
 }
@@ -255,7 +280,7 @@ void update_motors(void)
 /* calculate actuator values(ae[*]) from pitch, roll, paw and lift
  * 'Author'
  */
-void calculate_motor_values(int16_t pitch, int16_t roll, int16_t yaw, uint16_t lift) { //TODO: add min throttle (around 170) and max throttle (1000)
+void calculate_motor_values(int16_t pitch_final, int16_t roll_final, int16_t yaw_final, uint16_t lift_final) { //TODO: add min throttle (around 170) and max throttle (1000)
 	// ae[0] = operating_motor_bounds((lift << 2) + (pitch /320 - yaw/320));
 	// ae[1] = operating_motor_bounds((lift << 2) - (roll/320  + yaw/320));
 	// ae[2] = operating_motor_bounds((lift << 2) - (pitch/320 - yaw/320));
@@ -266,11 +291,12 @@ void calculate_motor_values(int16_t pitch, int16_t roll, int16_t yaw, uint16_t l
 	// ae[1] = (lift << 2) - roll + yaw;
 	// ae[2] = (lift << 2) - pitch - yaw;
 	// ae[3] = (lift << 2) + roll + yaw;
+	// 
 
-	ae[0] = (lift << 1) + 150 + (pitch - yaw) * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[1] = (lift << 1) + 150 - (roll - yaw) * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[2] = (lift << 1) + 150 - (pitch + yaw) * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[3] = (lift << 1) + 150 + (roll + yaw) * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[0] = (lift_final << 2) + 150 + (pitch_final - yaw_final); //* MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[1] = (lift_final << 2) + 150 - (roll_final  - yaw_final); // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[2] = (lift_final << 2) + 150 - (pitch_final + yaw_final); // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[3] = (lift_final << 2) + 150 + (roll_final  + yaw_final); // * MAX_ALLOWED_DIFF_MOTOR / 256;
 }
 
 uint32_t calculate_time_diff (uint32_t start_time) {
@@ -301,9 +327,9 @@ void run_filters_and_control() {
 			break;
 		case FULLCONTROL_ST:
 			calculate_motor_values(
-				pitch_control_calc(pitch_control_pointer, pitch << 8, (sq), (theta)), 
-				roll_control_calc(roll_control_pointer, roll << 8, (sp), (phi)), 
-				yaw_control_calc(yaw_control_pointer, yaw << 8, (sr)*-1 ),  // i think sr needs *-1 (reverse sign)
+				pitch_control_calc(pitch_control_pointer, (pitch + pitch_trim) << 8, (sq), (theta)), 
+				roll, //roll_control_calc(roll_control_pointer, roll << 8, (sp), (phi)), 
+				yaw, //yaw_control_calc(yaw_control_pointer, yaw << 8, (sr)*-1 ),  // i think sr needs *-1 (reverse sign)
 				lift);
 			//printf("roll: %d sp: %d phi: %d\n", roll << 8, sp, phi);			
 			break;
