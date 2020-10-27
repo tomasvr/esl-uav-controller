@@ -5,7 +5,7 @@
 - [Jiahao] Cornercases: check what happens when pitch or roll in maximzed (tilt mcu all the way to left or right or down or up)
 	- can be done with MCU, check motor values
 	
-- [Jiahao] Fix state mismatch function
+- [Zehang] Fix state mismatch function
 	- enter panic mode on state mismatch
 	- pc should not enter switch mode when the js is not in a normal position
 	
