@@ -23,6 +23,7 @@
 
 // custom includes
 #include "logging.h"
+#include "common/configuration.h"
 #include "common/comm.h"
 #include "common/states.h"
 #include "control.h"
@@ -32,13 +33,6 @@
 #define GREEN		28
 #define BLUE		30
 #define INT_PIN		5
-
-#define MOTOR_MAX_CHANGE 50
-#define MOTOR_UPPER_LIMIT 1000
-
-#define JS_AXIS_MID_VALUE 		127		// used to be 32767
-#define JS_AXIS_MAX_VALUE 		255		// used to be 65536
-#define JS_AXIS_DIVIDE_VALUE 	254 	// used to be 65535
 
 bool demo_done;
 STATE_t fcb_state;

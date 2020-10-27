@@ -8,11 +8,10 @@
 
 #ifndef STATES_H__
 #define STATES_H__
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
-
-//#include "in4073.h"
 
 #define NUMBER_OF_JS_AXIS 4 // there are 4 axis (pitch, roll, yaw, throttle)
 
@@ -30,7 +29,7 @@ typedef enum {
 } STATE_t ;
 
 // is_allowed[state][to_state] == 1 -> is allowed to switch from 'state' to 'to_state', 0 -> not allowed
-static uint8_t is_allowed[7][7] = {
+static const uint8_t is_allowed[7][7] = {
     {0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 1, 1, 1, 1},
     {0, 0, 0, 0, 0, 0, 0},

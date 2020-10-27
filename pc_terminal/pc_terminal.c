@@ -43,18 +43,9 @@
 #include <stdbool.h> 
 
 #include "joystick.h"
+#include "../common/configuration.h"    
 #include "../common/states.h"
 #include "../common/comm.h"
-
-#define JS_DEV	"/dev/input/js0"
-
-#define USB_SEND_CHECK_INTERVAL 1000000 // Control how often USB check messages are send
-#define USB_CHECK_MESSAGE 0 // Message ID for check USB type message (no need to change)
-
-#define PACKET_LENGTH 3 //in bytes
-#define PACKET_SEND_INTERVAL 20000
-
-#define ENABLE_JOYSTICK
 
 /* Used for keyboard control */
 #define LIFT_UP 	0b01010101
