@@ -118,7 +118,7 @@ void USB_comm_update_received() {
 void check_USB_connection_alive() {
 	current_time = get_time_us();
 	if (current_time - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: check for overflow? <- Need fix when operation time > 70 mins
-		enter_panic_mode(true, "usb_check failed");
+		enter_panic_mode(true, "usb_check failed \n");
 	}
 }
 
@@ -308,6 +308,7 @@ void messg_decode(uint8_t message_byte){
 				case USB_CHECK_COMM:
 			 		if (check_mode_sync(message_byte, fcb_state)) {
 		 				printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", message_byte, fcb_state);
+		 				enter_panic_mode(false, 'State mismatch');
 		 			}						
 		 			break;
 				default:

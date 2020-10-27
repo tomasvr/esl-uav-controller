@@ -174,7 +174,6 @@ int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, i
 	// pitch_control->integral += pitch_control->err;
 	pitch_control->output = pitch_control->kp_rate * pitch_control->err;
 	int16_t output = ((pitch_set_point - theta) * pitch_control->kp_angle - sq) * pitch_control->kp_rate;
-
 	return output;
 }
 
@@ -186,7 +185,6 @@ int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int1
 	roll_control->err = roll_control->set_point - sp;
 	// roll_control->integral += roll_control->err;
 	roll_control->output = roll_control->kp_rate * roll_control->err;
-
 	int16_t output = ((roll_set_point - phi) * roll_control->kp_angle - sp) * roll_control->kp_rate;
 	return output;
 }
@@ -298,7 +296,7 @@ void run_filters_and_control() {
 			break;
 		case YAWCONTROL_ST:
 			//todo
-			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw << 8, (sr 	)*-1 ), lift); // i think sr needs *-1 (reverse sign
+			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw << 8, (sr)*-1 ), lift); // i think sr needs *-1 (reverse sign
 			// printf("FCB: The control loop took %d us.\n", calculate_time_diff(enter_time));
 			break;
 		case FULLCONTROL_ST:
