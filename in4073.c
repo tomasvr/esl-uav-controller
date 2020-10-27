@@ -147,7 +147,11 @@ uint8_t translate_throttle(uint8_t throttle) {
 	return throttle;
 }
 
-void keyboard_adjust_motors(uint8_t motor_states) {
+int16_t pitch_trim = 0;
+int16_t roll_trim = 0;
+int16_t yaw_trim = 0;
+
+void keyboard_trimming(uint8_t motor_states) {
 	uint8_t step = STEP_SIZE >> 2;
 	switch(motor_states){
 		case LIFT_UP:
@@ -160,25 +164,26 @@ void keyboard_adjust_motors(uint8_t motor_states) {
 			lift = clip_motor_value(lift << 2) / 4;
 			break;
 		case PITCH_UP:
-			pitch += step;
+			pitch_trim += step;
 			break;
 		case PITCH_DOWN:
-			pitch -= step;
+			pitch_trim -= step;
 			break;
 		case ROLL_RIGHT:
-			roll += step;
+			roll_trim += step;
 			break;
 		case ROLL_LEFT:
-			roll -= step;
+			roll_trim -= step;
 			break;
 		case YAW_RIGHT:
-			yaw += step;
+			yaw_trim += step;
 			break;
 		case YAW_LEFT:
-			yaw -= step;
+			yaw_trim -= step;
 			break;				
 	}
-	printf("key adjust: %d\n", motor_states);
+	printf("key trimming: %d\n", motor_states);
+	printf("pitch trim:%d  roll trim: %d yaw trim %d\n", pitch_trim, roll_trim, yaw_trim);
 }
 
 /*
@@ -219,7 +224,7 @@ void messg_decode(uint8_t message_byte){
 						//keyboard_ctrl_action();
 						/* If 'a' or 'z' was pressed, adjust motor_lift_level */
 						uint8_t motor_states = retrieve_keyboard_motor_control(message_byte);
-						keyboard_adjust_motors(motor_states);
+						keyboard_trimming(motor_states);
 						// printf("FCB: motor states: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(motor_states));
 					} else {
 						printf("Cannot control keyboard motor in current mode: %d \n", fcb_state);						
@@ -236,12 +241,15 @@ void messg_decode(uint8_t message_byte){
 					switch (js_axis_type) {
 						case ROLL_AXIS:
 							roll = (int8_t) message_byte;
+							roll += roll_trim;
 							break;
 						case PITCH_AXIS:
 							pitch = (int8_t) message_byte;
+							pitch += pitch_trim;
 							break;
 						case YAW_AXIS:
 							yaw = (int8_t) message_byte;
+							yaw += yaw_trim;
 							break;
 						case LIFT_THROTTLE:
 							message_byte = translate_throttle(message_byte);

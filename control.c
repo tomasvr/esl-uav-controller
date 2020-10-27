@@ -147,35 +147,6 @@ int16_t yaw_set_point = 0;
 int16_t roll_set_point = 0;
 int16_t pitch_set_point = 0;
 
-int16_t PITCH_TRIM = 0;
-int16_t ROLL_TRIM = 0;
-int16_t YAW_TRIM = 0;
-
-void keyboard_trimming(uint8_t motor_states) {
-	uint8_t step = STEP_SIZE >> 2;
-	switch(motor_states){
-		case PITCH_UP:
-			PITCH_TRIM += step;
-			break;
-		case PITCH_DOWN:
-			PITCH_TRIM -= step;
-			break;
-		case ROLL_RIGHT:
-			ROLL_TRIM += step;
-			break;
-		case ROLL_LEFT:
-			ROLL_TRIM -= step;
-			break;
-		case YAW_RIGHT:
-			YAW_TRIM += step;
-			break;
-		case YAW_LEFT:
-			YAW_TRIM -= step;
-			break;				
-	}
-	printf("key trimming: %d\n", motor_states);
-}
-
 /*
  * Initialize the control struct.
  * Zehang Wu
