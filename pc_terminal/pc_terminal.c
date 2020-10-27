@@ -363,13 +363,13 @@ uint32_t message_encode(int c){
 */
 void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	uint32_t message = 0b00000000000000000000000001010101; // base message
-	if (js_type == 1) { // js buttons
+	if (js_type == JS_EVENT_BUTTON) { // js buttons
 		if (js_number == 0) message = append_comm_type(message, ESC_COMM);
 		STATE_t to_state = js_number; // The button number indicates which state (see states.h)
 		message = handle_mode_switch(message, to_state);
 		rs232_putchar(message);
 	}
-	else if ( (js_type == 2) || (js_type == 130)) { // js axis (130 occurs at startup)
+	else if ( (js_type == JS_EVENT_AXIS) || (js_type == 130)) { // js axis (130 occurs at startup)
 		if( (current_time - last_js_send_time) >= PACKET_SEND_INTERVAL) { // only send js axis packet at a certain rate
 			message = append_comm_type(message, JS_AXIS_COMM);
 			JOYSTICK_AXIS_t axis_number_from_js = js_number;
