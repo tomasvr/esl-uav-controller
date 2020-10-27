@@ -8,16 +8,16 @@
 #include "comm.h"
 #include <unistd.h>
 
-// #define BYTE_0_START 0
-// #define BYTE_1_START 8
-// #define BYTE_2_START 16
-
-#define BIT_LOCATION_COMM_TYPE 		8 //TODO: use these defines instead of number in append and retrieve functions below
-#define BIT_LOCATION_MODE			16 // (depending where we want to put it) //TODO: CHANGE THIS TO 12?
+#define BIT_LOCATION_COMM_TYPE 		8 
+#define BIT_LOCATION_MODE			16 
 #define BIT_LOCATION_JS_AXIS		14
 #define BIT_LOCATION_MOTOR_STATES	16
 #define BIT_LOCATION_PARAM			16
 
+/* 
+* Check whether pc and drone is in the same state.
+* J. Cui 
+*/
 int check_mode_sync (uint8_t pc_state, STATE_t fcb_state){
 	if (pc_state == fcb_state) {
 		return 0;
@@ -25,8 +25,10 @@ int check_mode_sync (uint8_t pc_state, STATE_t fcb_state){
 	return 1;
 }
 
-/* Append functions (PC side) */
-
+/*  
+* Append functions, append required bits for a message. (PC side)
+* "aruthor"
+*/
 uint32_t append_keyboard_motor_control (uint32_t message, uint8_t motor_states){
 	message |= motor_states << BIT_LOCATION_MOTOR_STATES;
 	return message;
@@ -45,8 +47,8 @@ uint32_t append_comm_type(uint32_t message, COMM_TYPE comm_type){
 }
 
 uint32_t append_mode(uint32_t message, STATE_t mode){ 
-	uint32_t mode_uint32 = mode; 	// put the enum mode into a 32 bit number
-	message |= mode_uint32 << BIT_LOCATION_MODE;			// Shift the number left until it lines up with the location of the mode in the message
+	uint32_t mode_uint32 = mode; 	
+	message |= mode_uint32 << BIT_LOCATION_MODE;			
 	return message;
 }
 
@@ -56,8 +58,10 @@ uint32_t append_parameter_change(uint32_t message, PID_PARAMETER_CHANGE_t parame
 	return message;
 }
 
-/* Retrieve functions (FCB side) */
-
+/* 
+* Retrieve required info from a message. (Drone side) 
+* "aruthor"
+*/
 uint8_t retrieve_keyboard_motor_control (uint8_t message_byte){ //TODO: change message to pointer for better performancee
 	//todo
 	return message_byte;

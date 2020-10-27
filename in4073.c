@@ -13,29 +13,30 @@
  *------------------------------------------------------------------
  */
 
+// TODO: delete the macros after debug
 /* --- PRINTF_BYTE_TO_BINARY macro's --- */
-#define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
-#define PRINTF_BYTE_TO_BINARY_INT8(i)    \
-    (((i) & 0x80ll) ? '1' : '0'), \
-    (((i) & 0x40ll) ? '1' : '0'), \
-    (((i) & 0x20ll) ? '1' : '0'), \
-    (((i) & 0x10ll) ? '1' : '0'), \
-    (((i) & 0x08ll) ? '1' : '0'), \
-    (((i) & 0x04ll) ? '1' : '0'), \
-    (((i) & 0x02ll) ? '1' : '0'), \
-    (((i) & 0x01ll) ? '1' : '0')
-#define PRINTF_BINARY_PATTERN_INT16 \
-    PRINTF_BINARY_PATTERN_INT8              PRINTF_BINARY_PATTERN_INT8
-#define PRINTF_BYTE_TO_BINARY_INT16(i) \
-    PRINTF_BYTE_TO_BINARY_INT8((i) >> 8),   PRINTF_BYTE_TO_BINARY_INT8(i)
-#define PRINTF_BINARY_PATTERN_INT32 \
-    PRINTF_BINARY_PATTERN_INT16             PRINTF_BINARY_PATTERN_INT16
-#define PRINTF_BYTE_TO_BINARY_INT32(i) \
-    PRINTF_BYTE_TO_BINARY_INT16((i) >> 16), PRINTF_BYTE_TO_BINARY_INT16(i)
-#define PRINTF_BINARY_PATTERN_INT64    \
-    PRINTF_BINARY_PATTERN_INT32             PRINTF_BINARY_PATTERN_INT32
-#define PRINTF_BYTE_TO_BINARY_INT64(i) \
-    PRINTF_BYTE_TO_BINARY_INT32((i) >> 32), PRINTF_BYTE_TO_BINARY_INT32(i)
+// #define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
+// #define PRINTF_BYTE_TO_BINARY_INT8(i)    \
+//     (((i) & 0x80ll) ? '1' : '0'), \
+//     (((i) & 0x40ll) ? '1' : '0'), \
+//     (((i) & 0x20ll) ? '1' : '0'), \
+//     (((i) & 0x10ll) ? '1' : '0'), \
+//     (((i) & 0x08ll) ? '1' : '0'), \
+//     (((i) & 0x04ll) ? '1' : '0'), \
+//     (((i) & 0x02ll) ? '1' : '0'), \
+//     (((i) & 0x01ll) ? '1' : '0')
+// #define PRINTF_BINARY_PATTERN_INT16 \
+//     PRINTF_BINARY_PATTERN_INT8              PRINTF_BINARY_PATTERN_INT8
+// #define PRINTF_BYTE_TO_BINARY_INT16(i) \
+//     PRINTF_BYTE_TO_BINARY_INT8((i) >> 8),   PRINTF_BYTE_TO_BINARY_INT8(i)
+// #define PRINTF_BINARY_PATTERN_INT32 \
+//     PRINTF_BINARY_PATTERN_INT16             PRINTF_BINARY_PATTERN_INT16
+// #define PRINTF_BYTE_TO_BINARY_INT32(i) \
+//     PRINTF_BYTE_TO_BINARY_INT16((i) >> 16), PRINTF_BYTE_TO_BINARY_INT16(i)
+// #define PRINTF_BINARY_PATTERN_INT64    \
+//     PRINTF_BINARY_PATTERN_INT32             PRINTF_BINARY_PATTERN_INT32
+// #define PRINTF_BYTE_TO_BINARY_INT64(i) \
+//     PRINTF_BYTE_TO_BINARY_INT32((i) >> 32), PRINTF_BYTE_TO_BINARY_INT32(i)
 /* --- end macros --- */
 
 
@@ -47,6 +48,7 @@
 
 uint32_t usb_comm_last_received;
 uint32_t current_time;
+uint32_t ctrl_loop_time;
 
 // each packet includes 3 fragments
 uint8_t FRAG_COUNT = 0;
@@ -58,17 +60,15 @@ STATE_t fcb_dest_state = UNKNOWN_ST;
 // Communication variables initalization
 COMM_TYPE g_current_comm_type = UNKNOWN_COMM;
 
-// Keep track of current js_axis_type
+// Keep track of current js_axis_type & value
 JOYSTICK_AXIS_t js_axis_type;
+uint8_t js_total_value;
 
 // Motor variables initalization
 MOTOR_CTRL g_current_m0_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m2_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m3_state = MOTOR_REMAIN;
-
-JOYSTICK_AXIS_t joystick_axis;
-uint8_t js_total_value;
 
 // controller object declaration
 CONTROLLER yaw_control;
@@ -95,7 +95,7 @@ void enter_panic_mode(bool cable_detached, char caller[]){
 		ae[2] = motor_speed;
 		ae[3] = motor_speed;
 		printf("motor speed: %d\n", motor_speed);
-		update_motors(); //or run filters_and_control() ?
+		update_motors(); //or run filters_and_control() ? <- enter panic mode does not need control, so update_motors() is enough
 		nrf_delay_ms(100);
 	}
 	lift = 0; //reset motor_lift_level
@@ -117,13 +117,24 @@ void USB_comm_update_received() {
 
 void check_USB_connection_alive() {
 	current_time = get_time_us();
-	if (current_time - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: check for overflow? <--(Need fix when operation time > 70 mins)
+	if (current_time - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: check for overflow? <- Need fix when operation time > 70 mins
 		enter_panic_mode(true, "usb_check failed");
 	}
 }
 
 void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint8_t js_total_value) {
 	joystick_axis_stored_values[joystick_axis] = js_total_value;
+}
+
+
+int16_t clip_motor_value(int16_t value) { 
+	if (value > 1000) {
+		return 1000;
+	}
+	else if (value < 0) {
+		return 0;
+	}
+	return value;
 }
 
 /* Translate js axis to range: 0-255 instead of 0 in the middle */
@@ -142,9 +153,12 @@ void keyboard_adjust_motors(uint8_t motor_states) {
 	switch(motor_states){
 		case LIFT_UP:
 			lift += step;
+			lift = clip_motor_value(lift << 2) / 4;
 			break;
 		case LIFT_DOWN:
-			lift -= step;
+			if (lift != 0) 
+				lift -= step;
+			lift = clip_motor_value(lift << 2) / 4;
 			break;
 		case PITCH_UP:
 			pitch += step;
@@ -167,13 +181,14 @@ void keyboard_adjust_motors(uint8_t motor_states) {
 	}
 	printf("key adjust: %d\n", motor_states);
 }
-/*------------------------------------------------------------------
- * messg_decode -- decode messages
- *------------------------------------------------------------------
+
+/*
+ * Decode messages
+ * "aruthor"
  */
 void messg_decode(uint8_t message_byte){
 
-
+	// TODO: delete the printf() after debug
 	//printf("FCB: FRAG_COUNT: %d \n", FRAG_COUNT);
 	//printf("FCB: message byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(message_byte));
 
@@ -200,14 +215,13 @@ void messg_decode(uint8_t message_byte){
 				case CTRL_COMM:
 					;	// C requires this semicolon here
 
-
 					/* only change motors if in appropriate mode */ //todo: move this logic to a central place
 					if (fcb_state == MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
 						//keyboard_ctrl_action();
 						/* If 'a' or 'z' was pressed, adjust motor_lift_level */
 						uint8_t motor_states = retrieve_keyboard_motor_control(message_byte);
 						keyboard_adjust_motors(motor_states);
-						printf("FCB: motor states: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(motor_states));
+						// printf("FCB: motor states: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(motor_states));
 					} else {
 						printf("Cannot control keyboard motor in current mode: %d \n", fcb_state);						
 					}
@@ -219,7 +233,6 @@ void messg_decode(uint8_t message_byte){
 					fcb_dest_state = UNKNOWN_ST;					
 					break;
 				case JS_AXIS_COMM:
-	 				//joystick_axis = retrieve_js_axis(message_byte);
 					//printf("axis: %d value: %d \n", js_axis_type, message_byte);						
 					switch (js_axis_type) {
 						case ROLL_AXIS:
@@ -287,7 +300,7 @@ void messg_decode(uint8_t message_byte){
 			}	
 			/* Reset all message variables to prepare for next message */
 			g_current_comm_type = UNKNOWN_COMM;
-	 	break;
+	 		break;
 
 		default:
 		    printf("ERROR (messg_decode): UNKNOWN FRAG COUNT: %d \n", FRAG_COUNT);
@@ -295,12 +308,12 @@ void messg_decode(uint8_t message_byte){
 	}
 }
 
-/*------------------------------------------------------------------
- * process_key -- process command keys
- *------------------------------------------------------------------
+/*
+ * Process the received packet.
+ * J. Cui
  */
-void process_key(uint8_t c){	
-	if (c == 0x55 && FRAG_COUNT == 0 && fcb_state != PANIC_ST) { // '0x55': 0b01010101(start byte)
+void process_packet(uint8_t c){	
+	if (c == 0x55 && FRAG_COUNT == 0 && fcb_state != PANIC_ST) {
 		FRAG_COUNT = 2;
 		return;
 	}
@@ -312,10 +325,14 @@ void process_key(uint8_t c){
 	}
 }
 
+// TODO: change placement?
 uint32_t last_time_battery;
 uint32_t current_time_battery;
 
-
+/*
+ * Check battery voltage.
+ * "aruthor"
+ */
 void check_battery_volt(){
 	current_time_battery = get_time_us();
 	if(current_time_battery - last_time_battery > BATTERY_CHECK_INTERVAL_THRESHOLD){
@@ -333,6 +350,25 @@ void check_battery_volt(){
 		}
 	last_time_battery = current_time_battery;
 	}
+}
+
+/*
+* Print info in the terminal.
+* J. Cui
+*/
+void print_log_in_ter() {
+	// printf("%10ld | ", get_time_us());
+	printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
+	//printf("%6d %6d %6d | ", phi, theta, psi);
+	printf("%6d %6d %6d | ", sp, sq, sr);
+	//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
+	printf("y_p_r: %2d r_p_r: %2d p_p_r: %2d", yaw_control.kp_rate, roll_control.kp_rate, pitch_control.kp_rate);
+	printf("r_p_a: %2d p_p_a: %2d", roll_control.kp_angle, pitch_control.kp_angle);
+	printf("setp: %4d sp: %4d err: %4d output: %4d ", roll_control.set_point, sp, roll_control.err, roll_control.output);
+	printf("%4d |", fcb_state - 1);
+	printf("%4d \n", ctrl_loop_time);
+	clear_timer_flag();
+	//printf("%4d \n", motor_lift_level);
 }
 
 /*------------------------------------------------------------------
@@ -362,47 +398,28 @@ int main(void)
 	controller_init(roll_control_pointer);
 	controller_init(pitch_control_pointer);
 
-	// printf('N_needed = %d \n', N_needed);
-
-	printf(" AE0 AE1 AE2 AE3  | MODE \n");
+	// printf(" AE0 AE1 AE2 AE3  | MODE \n");
 	while (!demo_done)
 	{
-		if (rx_queue.count) process_key( dequeue(&rx_queue) );
+		if (rx_queue.count) process_packet( dequeue(&rx_queue) );
 
 		if (counter % 100 == 0) check_USB_connection_alive();
-
 		//check_battery_volt();//enable panic mode when connect to drone
 
-		if (check_timer_flag()) 
-		{
-		
-			if (counter % 20 == 0) 
-			{
+		if (check_timer_flag()) {
+			if (counter % 20 == 0) {
 				nrf_gpio_pin_toggle(BLUE);
-				// printf("p yaw param: %4d \n", yaw_control_pointer->kp);
-				// printf("p yaw output: %4d \n", yaw_control_pointer->output);
-				// printf("p yaw error: %4d \n", yaw_control_pointer->err);	
  			}
 			adc_request_sample();
 			read_baro();
-
-			// printf("%10ld | ", get_time_us());
-			printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
-			//printf("%6d %6d %6d | ", phi, theta, psi);
-			printf("%6d %6d %6d | ", sp, sq, sr);
-			//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
-			printf("y_p_r: %2d r_p_r: %2d p_p_r: %2d", yaw_control.kp_rate, roll_control.kp_rate, pitch_control.kp_rate);
-			printf("r_p_a: %2d p_p_a: %2d", roll_control.kp_angle, pitch_control.kp_angle);
-			printf("setp: %4d sp: %4d err: %4d output: %4d \n", roll_control.set_point, sp, roll_control.err, roll_control.output);
-			printf("%4d \n", fcb_state - 1);
-			clear_timer_flag();
-			//printf("%4d \n", motor_lift_level);
+			print_log_in_ter();
 		}
 
-		if (check_sensor_int_flag()) 
-		{
+		if (check_sensor_int_flag()) {
 			get_dmp_data();
+			ctrl_loop_time = get_time_us();
 			run_filters_and_control();
+			ctrl_loop_time = get_time_us() - ctrl_loop_time;
 		}
 
 		// Execute commands that need to be handled in all modes
@@ -410,39 +427,6 @@ int main(void)
 			demo_done = true;
 			g_current_comm_type = UNKNOWN_COMM;
 			enter_panic_mode(false, "ESC pressed");
-		}
-		// if (g_current_comm_type == CTRL_COMM){
-		// 	keyboard_ctrl_action();
-		// }
-
-
-		// Execute commands  that only need to be handled in certain mode
-		if (fcb_state == PANIC_ST)
-		{
-			enter_panic_mode(false, "PANIC STATE"); //enter panic mode for any reason other than cable
-		}
-		// if(fcb_state == MANUAL_ST)
-		// {
-		// 	process_js_axis_cmd(joystick_axis, js_total_value);
-		// }
-		if (fcb_state == CALIBRATION_ST) 
-		{
-			sensor_calib();
-			//offset_remove();
-			fcb_state = SAFE_ST;
-		}
-		// if (fcb_state == YAWCONTROL_ST)
-		// {
-		// 	// N_needed = yaw_control_calc(yaw_control_pointer, yaw_set_point, sr-sr_calib);
-		// 	N_needed = yaw_control_calc(yaw_control_pointer, 10, 0);
-
-		// 	// printf('N_needed = %d \n', N_needed);
-			
-		// 	actuate(0, 0, 0, N_needed); // only N_needed in yay control mode
-		// }
-		if (fcb_state == FULLCONTROL_ST)
-		{
-			// TODO: do full controller things
 		}
 		counter++;
 	}
