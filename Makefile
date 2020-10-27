@@ -41,8 +41,8 @@ $(abspath ../components/toolchain/system_nrf51.c) \
 $(abspath ../components/drivers_nrf/delay/nrf_delay.c) \
 $(abspath ./in4073.c) \
 $(abspath ./control.c) \
-$(abspath ./states.c) \
-$(abspath ./comm.c) \
+$(abspath ./common/states.c) \
+$(abspath ./common/comm.c) \
 $(abspath ./logging.c) \
 $(abspath ./drivers/gpio.c) \
 $(abspath ./drivers/timers.c) \
@@ -93,6 +93,7 @@ INC_PATHS += -I$(abspath ../components/drivers_nrf/common)
 INC_PATHS += -I$(abspath ../components/ble/ble_advertising)
 INC_PATHS += -I$(abspath ../components/libraries/trace)
 INC_PATHS += -I$(abspath ../components/softdevice/common/softdevice_handler)
+
 
 
 OBJECT_DIRECTORY = _build

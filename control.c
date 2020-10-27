@@ -27,28 +27,6 @@ void switch_led(int color) {
 	if (color != -1) nrf_gpio_pin_clear(color);
 }
 
-/*
-* Limit the motors' speed in [170, 450].
-* "aruthor"
-*/
-void clip_motors() {
-	for (int i = 0; i < 4; i++) {
-		if (ae[i] > MAX_ALLOWED_SPEED) 	ae[i] = MAX_ALLOWED_SPEED;
-		if (ae[i] < MIN_ALLOWED_SPEED) 	ae[i] = MIN_ALLOWED_SPEED;
-		if (ae[i] < 0)					ae[i] = 0;		
-	}
-}
-
-/*
-* Set all motor speed to 0.
-* "aruthor"
-*/
-void zero_motors() {
-	ae[0] = 0;
-	ae[1] = 0;
-	ae[2] = 0;
-	ae[3] = 0;	
-}
 
 // variable declaration for Calibration
 bool DMP = true;
@@ -141,21 +119,22 @@ void offset_remove() {
 	saz -= saz_calib;
 }
 
+// trim_step
 // variable declaration for control loop
 int16_t yaw_set_point = 0;
 int16_t roll_set_point = 0;
 int16_t pitch_set_point = 0;
 
 /*
- * Initial the control struct.
+ * Initialize the control struct.
  * Zehang Wu
  */
 void controller_init(CONTROLLER *controller) {
 	controller->set_point = 0;
 	controller->sensor_value = 0;
 	controller->err = 0;
-	controller->kp_rate = 5;
-	controller->kp_angle = 5;
+	controller->kp_rate = 1;
+	controller->kp_angle = 1;
 	controller->ki = 1;
 	controller->integral = 0;
 	controller->output = 0;
@@ -181,6 +160,7 @@ void decrease_p_angle_value(CONTROLLER *controller) {
 		controller->kp_angle-= CONTROLLER_P_STEP_SIZE;
 }
 
+
 /* one step calculation for yaw control loop
  * Zehang Wu
  */
@@ -199,7 +179,8 @@ int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, i
 	pitch_control->err = pitch_control->set_point - sq;
 	// pitch_control->integral += pitch_control->err;
 	pitch_control->output = pitch_control->kp_rate * pitch_control->err;
-	int16_t output = ((pitch_set_point-theta) * pitch_control->kp_angle - sq) * pitch_control->kp_rate;
+	int16_t output = ((pitch_set_point - theta) * pitch_control->kp_angle - sq) * pitch_control->kp_rate;
+
 	return output;
 }
 
@@ -211,9 +192,55 @@ int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int1
 	roll_control->err = roll_control->set_point - sp;
 	// roll_control->integral += roll_control->err;
 	roll_control->output = roll_control->kp_rate * roll_control->err;
-	int16_t output = ((roll_set_point-phi) * roll_control->kp_angle - sp) * roll_control->kp_rate;
+
+	int16_t output = ((roll_set_point - phi) * roll_control->kp_angle - sp) * roll_control->kp_rate;
 	return output;
 }
+
+
+/*
+* Limit the motors' speed in [170, 450].
+* "aruthor"
+*/
+void clip_motors() {
+	for (int i = 0; i < 4; i++) {
+		if (ae[i] > MAX_ALLOWED_SPEED) 	ae[i] = MAX_ALLOWED_SPEED;
+		if (ae[i] < MIN_ALLOWED_SPEED) 	ae[i] = MIN_ALLOWED_SPEED;
+		if (ae[i] < 0)					ae[i] = 0;		
+	}
+}
+
+/*
+* Set all motor speed to 0.
+* "aruthor"
+*/
+void zero_motors() {
+	ae[0] = 0;
+	ae[1] = 0;
+	ae[2] = 0;
+	ae[3] = 0;	
+}
+
+/* for safety */
+// int16_t clip_motor_value(int16_t value) {
+// 	if (value < 0) {
+// 		return 0;
+// 	}
+// 	if (value > MAX_ALLOWED_SPEED) {
+// 		return MAX_ALLOWED_SPEED;
+// 	}
+// 	return value;
+// }
+
+// int16_t operating_motor_bounds(int16_t value) {
+// 	if (value < 0) {
+// 		return 0;
+// 	}
+// 	if (value > MAX_ALLOWED_SPEED) {
+// 		return MAX_ALLOWED_SPEED;
+// 	}
+// 	return value;
+// }
 
 void update_motors(void)
 {					
@@ -237,6 +264,10 @@ void update_motors(void)
  * 'Author'
  */
 void calculate_motor_values(int16_t pitch, int16_t roll, int16_t yaw, uint16_t lift) { //TODO: add min throttle (around 170) and max throttle (1000)
+	// ae[0] = operating_motor_bounds((lift << 2) + (pitch /320 - yaw/320));
+	// ae[1] = operating_motor_bounds((lift << 2) - (roll/320  + yaw/320));
+	// ae[2] = operating_motor_bounds((lift << 2) - (pitch/320 - yaw/320));
+	// ae[3] = operating_motor_bounds((lift << 2) + (roll/320  + yaw /320));
 	// printf("the lift is : %d", lift);
 	// printf("the pitch is : %d \n", pitch);
 	// ae[0] = (lift << 2) + pitch - yaw;
@@ -255,8 +286,6 @@ uint32_t calculate_time_diff (uint32_t start_time) {
 }
 
 void run_filters_and_control() {
-	// fancy stuff here
-	// control loops and/or filters
 	switch(fcb_state) {
 		case SAFE_ST:
 			zero_motors();
@@ -269,21 +298,22 @@ void run_filters_and_control() {
 			calculate_motor_values(pitch, roll, yaw, lift);
 			break;
 		case CALIBRATION_ST:
-		sensor_calib();
+			sensor_calib();
 			fcb_state = SAFE_ST;
 			zero_motors();
 			break;
 		case YAWCONTROL_ST:
 			//todo
-			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr>> 8)*-1 ), lift); // i think sr needs *-1 (reverse sign
+			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw << 8, (sr 	)*-1 ), lift); // i think sr needs *-1 (reverse sign
 			// printf("FCB: The control loop took %d us.\n", calculate_time_diff(enter_time));
 			break;
 		case FULLCONTROL_ST:
 			calculate_motor_values(
-				pitch_control_calc(pitch_control_pointer, pitch, (sq >> 8), (theta >> 8)), 
-				roll_control_calc(roll_control_pointer, roll, (sp >> 8), (phi >> 8)), 
-				yaw_control_calc(yaw_control_pointer, yaw, (sr >> 8)*-1 ),  // i think sr needs *-1 (reverse sign)
+				pitch_control_calc(pitch_control_pointer, pitch << 8, (sq), (theta)), 
+				roll_control_calc(roll_control_pointer, roll << 8, (sp), (phi)), 
+				yaw_control_calc(yaw_control_pointer, yaw << 8, (sr)*-1 ),  // i think sr needs *-1 (reverse sign)
 				lift);
+			//printf("roll: %d sp: %d phi: %d\n", roll << 8, sp, phi);			
 			break;
 		case UNKNOWN_ST:	
 			zero_motors();
@@ -291,6 +321,5 @@ void run_filters_and_control() {
 			printf("ERROR run_filters_and_control - unknown fcb_state: %d", fcb_state);
 			break;
 	}
-
 	update_motors();
 }

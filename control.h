@@ -5,18 +5,6 @@
 #ifndef CONTROL_H__
 #define CONTROL_H__
 
-#define DEBUG_LED
-#define STEP_SIZE 10
-#define UPPER_LIMIT 1000
-
-#define CONTROLLER_P_STEP_SIZE 1
-#define CONTROLLER_P_UPPER_LIMIT 50
-#define CONTROLLER_P_LOWER_LIMIT 1 
-
-#define MAX_ALLOWED_SPEED 1000
-#define MIN_ALLOWED_SPEED 0
-#define MAX_ALLOWED_DIFF_MOTOR 50
-
 // the states that a motor has
 typedef enum {
 		MOTOR_REMAIN,
