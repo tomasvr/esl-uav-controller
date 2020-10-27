@@ -1,6 +1,3 @@
-
-
-
 // TODO: remove this macros after debug
 /* --- PRINTF_BYTE_TO_BINARY macro's --- */
 #define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
@@ -43,18 +40,9 @@
 #include <stdbool.h> 
 
 #include "joystick.h"
-#include "../states.h"
-#include "../comm.h"
-
-#define JS_DEV	"/dev/input/js0"
-
-#define USB_SEND_CHECK_INTERVAL 1000000 // Control how often USB check messages are send
-#define USB_CHECK_MESSAGE 0 // Message ID for check USB type message (no need to change)
-
-#define PACKET_LENGTH 3 //in bytes
-#define PACKET_SEND_INTERVAL 20000
-
-// #define ENABLE_JOYSTICK
+#include "../common/configuration.h"    
+#include "../common/states.h"
+#include "../common/comm.h"
 
 /* Used for keyboard control */
 #define LIFT_UP 	0b01010101
@@ -242,7 +230,7 @@ int rs232_putchar(int c){ // change char to uint32_t
 uint32_t handle_mode_switch(uint32_t message, STATE_t to_state) {
 	message = append_comm_type(message, MODE_SW_COMM);
 	message = append_mode(message, to_state); 
-	pc_state = mode_sw_action("TERM", pc_state, to_state);
+	pc_state = mode_sw_action("TERM", pc_state, to_state); // TODO: check js position before update pc_state
 	// printf('The TRM state is: %d\n', pc_state);
 	g_dest_state = UNKNOWN_ST;
 	if (pc_state == CALIBRATION_ST) pc_state = SAFE_ST;
@@ -372,13 +360,13 @@ uint32_t message_encode(int c){
 */
 void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	uint32_t message = 0b00000000000000000000000001010101; // base message
-	if (js_type == 1) { // js buttons
+	if (js_type == JS_EVENT_BUTTON) { // js buttons
 		if (js_number == 0) message = append_comm_type(message, ESC_COMM);
 		STATE_t to_state = js_number; // The button number indicates which state (see states.h)
 		message = handle_mode_switch(message, to_state);
 		rs232_putchar(message);
 	}
-	else if ( (js_type == 2) || (js_type == 130)) { // js axis (130 occurs at startup)
+	else if ( (js_type == JS_EVENT_AXIS) || (js_type == 130)) { // js axis (130 occurs at startup)
 		if( (current_time - last_js_send_time) >= PACKET_SEND_INTERVAL) { // only send js axis packet at a certain rate
 			message = append_comm_type(message, JS_AXIS_COMM);
 			JOYSTICK_AXIS_t axis_number_from_js = js_number;

@@ -3,8 +3,8 @@ CC=gcc
 CFLAGS = -g -Wall -lm
 EXEC = ./pc-terminal 
 C_SOURCE_FILES += \
-$(abspath ../states.c) \
-$(abspath ../comm.c) \
+$(abspath ../common/states.c) \
+$(abspath ../common/comm.c) \
 $(abspath ./joystick.c) \
 
 all:

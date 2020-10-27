@@ -177,7 +177,7 @@ void keyboard_trimming(uint8_t motor_states) {
 }
 
 /*
- * Initial the control struct.
+ * Initialize the control struct.
  * Zehang Wu
  */
 void controller_init(CONTROLLER *controller) {

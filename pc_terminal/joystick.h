@@ -34,7 +34,7 @@
 #include <inttypes.h>
 #include <stdbool.h> 
 
-#include "../states.h"
+#include "../common/states.h"
 
 extern STATE_t g_current_state;
 extern STATE_t g_dest_state;
