@@ -148,7 +148,11 @@ uint8_t translate_throttle(uint8_t throttle) {
 	return throttle;
 }
 
-void keyboard_adjust_motors(uint8_t motor_states) {
+int8_t pitch_trim = 0;
+int8_t roll_trim = 0;
+int8_t yaw_trim = 0;
+
+void keyboard_trimming(uint8_t motor_states) {
 	uint8_t step = STEP_SIZE >> 2;
 	switch(motor_states){
 		case LIFT_UP:
@@ -160,25 +164,26 @@ void keyboard_adjust_motors(uint8_t motor_states) {
 			//lift = clip_motor_value(lift << 2) / 4;
 			break;
 		case PITCH_UP:
-			pitch += step;
+			pitch_trim += step;
 			break;
 		case PITCH_DOWN:
-			pitch -= step;
+			pitch_trim -= step;
 			break;
 		case ROLL_RIGHT:
-			roll += step;
+			roll_trim += step;
 			break;
 		case ROLL_LEFT:
-			roll -= step;
+			roll_trim -= step;
 			break;
 		case YAW_RIGHT:
-			yaw += step;
+			yaw_trim += step;
 			break;
 		case YAW_LEFT:
-			yaw -= step;
+			yaw_trim -= step;
 			break;				
 	}
-	printf("key adjust: %d\n", motor_states);
+	printf("key trimming: %d\n", motor_states);
+	printf("pitch trim:%d  roll trim: %d yaw trim %d\n", pitch_trim, roll_trim, yaw_trim);
 }
 
 /*
@@ -215,16 +220,28 @@ void messg_decode(uint8_t message_byte){
 					;	// C requires this semicolon here
 
 					/* only change motors if in appropriate mode */ //todo: move this logic to a central place
-					if (fcb_state == MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
+					// if (fcb_state == MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
 						//keyboard_ctrl_action();
 						/* If 'a' or 'z' was pressed, adjust motor_lift_level */
-						uint8_t motor_states = retrieve_keyboard_motor_control(message_byte);
-						keyboard_adjust_motors(motor_states);
+						if(fcb_state == MANUAL_ST){
+							uint8_t motor_states = retrieve_keyboard_motor_control(message_byte);
+							keyboard_trimming(motor_states);
+							roll = roll_trim;
+							pitch = pitch_trim;
+							yaw = yaw_trim;
+						}
+						else if(fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST){
+							uint8_t motor_states = retrieve_keyboard_motor_control(message_byte);
+							keyboard_trimming(motor_states);
+							roll += roll_trim;
+							pitch += pitch_trim;
+							yaw += yaw_trim;
+						}
 						// printf("FCB: motor states: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(motor_states));
-					} else {
+						else {
 						printf("Cannot control keyboard motor in current mode: %d \n", fcb_state);						
-					}
-					break;
+						}
+						break;
 				case MODE_SW_COMM:
 			 		fcb_dest_state = retrieve_mode(message_byte);
 			 		//printf("Comm type: %d, State: %d \n", g_current_comm_type, fcb_dest_state);
@@ -358,7 +375,7 @@ void check_battery_volt(){
 void print_log_in_ter() {
 	// printf("%10ld | ", get_time_us());
 	printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
-	//printf("%6d %6d %6d | ", phi, theta, psi);
+	printf("%6d %6d %6d | ", phi, theta, psi);
 	printf("%6d %6d %6d | ", sp, sq, sr);
 	//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 	printf("y_p_r: %2d r_p_r: %2d p_p_r: %2d", yaw_control.kp_rate, roll_control.kp_rate, pitch_control.kp_rate);

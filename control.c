@@ -119,6 +119,7 @@ void offset_remove() {
 	saz -= saz_calib;
 }
 
+// trim_step
 // variable declaration for control loop
 int16_t yaw_set_point = 0;
 int16_t roll_set_point = 0;
@@ -285,8 +286,6 @@ uint32_t calculate_time_diff (uint32_t start_time) {
 }
 
 void run_filters_and_control() {
-	// fancy stuff here
-	// control loops and/or filters
 	switch(fcb_state) {
 		case SAFE_ST:
 			zero_motors();
@@ -299,7 +298,7 @@ void run_filters_and_control() {
 			calculate_motor_values(pitch, roll, yaw, lift);
 			break;
 		case CALIBRATION_ST:
-		sensor_calib();
+			sensor_calib();
 			fcb_state = SAFE_ST;
 			zero_motors();
 			break;

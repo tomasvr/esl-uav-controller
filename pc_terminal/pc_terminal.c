@@ -1,6 +1,3 @@
-
-
-
 // TODO: remove this macros after debug
 /* --- PRINTF_BYTE_TO_BINARY macro's --- */
 #define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c%c%c%c%c"

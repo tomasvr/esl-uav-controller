@@ -91,7 +91,6 @@ int16_t phi, theta, psi;
 int16_t sp, sq, sr;
 int16_t sax, say, saz;
 uint8_t sensor_fifo_count;
-int16_t sr_calib;
 void imu_init(bool dmp, uint16_t interrupt_frequency); // if dmp is true, the interrupt frequency is 100Hz - otherwise 32Hz-8kHz
 void get_dmp_data(void);
 void get_raw_sensor_data(void);
