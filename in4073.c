@@ -308,6 +308,7 @@ void messg_decode(uint8_t message_byte){
 				case USB_CHECK_COMM:
 			 		if (check_mode_sync(message_byte, fcb_state)) {
 		 				printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", message_byte, fcb_state);
+		 				enter_panic_mode(false, 'State mismatch');
 		 			}						
 		 			break;
 				default:
