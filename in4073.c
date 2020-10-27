@@ -358,7 +358,7 @@ void check_battery_volt(){
 void print_log_in_ter() {
 	// printf("%10ld | ", get_time_us());
 	printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
-	//printf("%6d %6d %6d | ", phi, theta, psi);
+	printf("%6d %6d %6d | ", phi, theta, psi);
 	printf("%6d %6d %6d | ", sp, sq, sr);
 	//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 	printf("y_p_r: %2d r_p_r: %2d p_p_r: %2d", yaw_control.kp_rate, roll_control.kp_rate, pitch_control.kp_rate);
