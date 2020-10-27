@@ -27,28 +27,6 @@ void switch_led(int color) {
 	if (color != -1) nrf_gpio_pin_clear(color);
 }
 
-/*
-* Limit the motors' speed in [170, 450].
-* "aruthor"
-*/
-void clip_motors() {
-	for (int i = 0; i < 4; i++) {
-		if (ae[i] > MAX_ALLOWED_SPEED) 	ae[i] = MAX_ALLOWED_SPEED;
-		if (ae[i] < MIN_ALLOWED_SPEED) 	ae[i] = MIN_ALLOWED_SPEED;
-		if (ae[i] < 0)					ae[i] = 0;		
-	}
-}
-
-/*
-* Set all motor speed to 0.
-* "aruthor"
-*/
-void zero_motors() {
-	ae[0] = 0;
-	ae[1] = 0;
-	ae[2] = 0;
-	ae[3] = 0;	
-}
 
 // variable declaration for Calibration
 bool DMP = true;
@@ -218,35 +196,50 @@ int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int1
 	return output;
 }
 
+
+/*
+* Limit the motors' speed in [170, 450].
+* "aruthor"
+*/
+void clip_motors() {
+	for (int i = 0; i < 4; i++) {
+		if (ae[i] > MAX_ALLOWED_SPEED) 	ae[i] = MAX_ALLOWED_SPEED;
+		if (ae[i] < MIN_ALLOWED_SPEED) 	ae[i] = MIN_ALLOWED_SPEED;
+		if (ae[i] < 0)					ae[i] = 0;		
+	}
+}
+
+/*
+* Set all motor speed to 0.
+* "aruthor"
+*/
+void zero_motors() {
+	ae[0] = 0;
+	ae[1] = 0;
+	ae[2] = 0;
+	ae[3] = 0;	
+}
+
 /* for safety */
-int16_t clip_motor_value(int16_t value) {
-	if (value < 0) {
-		return 0;
-	}
-	if (value > MAX_ALLOWED_SPEED) {
-		return MAX_ALLOWED_SPEED;
-	}
-	return value;
-}
+// int16_t clip_motor_value(int16_t value) {
+// 	if (value < 0) {
+// 		return 0;
+// 	}
+// 	if (value > MAX_ALLOWED_SPEED) {
+// 		return MAX_ALLOWED_SPEED;
+// 	}
+// 	return value;
+// }
 
-int16_t operating_motor_bounds(int16_t value) {
-	if (value < 0) {
-		return 0;
-	}
-	if (value > MAX_ALLOWED_SPEED) {
-		return MAX_ALLOWED_SPEED;
-	}
-	return value;
-}
-
-void update_motors(void)
-{					
-		motor[0] = clip_motor_value(ae[0]);
-		motor[1] = clip_motor_value(ae[1]);
-		motor[2] = clip_motor_value(ae[2]);
-		motor[3] = clip_motor_value(ae[3]);
-
-}
+// int16_t operating_motor_bounds(int16_t value) {
+// 	if (value < 0) {
+// 		return 0;
+// 	}
+// 	if (value > MAX_ALLOWED_SPEED) {
+// 		return MAX_ALLOWED_SPEED;
+// 	}
+// 	return value;
+// }
 
 void update_motors(void)
 {					
@@ -312,7 +305,7 @@ void run_filters_and_control() {
 			break;
 		case YAWCONTROL_ST:
 			//todo
-			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr 8)*-1 ), lift); // i think sr needs *-1 (reverse sign
+			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw, (sr 	)*-1 ), lift); // i think sr needs *-1 (reverse sign
 			// printf("FCB: The control loop took %d us.\n", calculate_time_diff(enter_time));
 			break;
 		case FULLCONTROL_ST:

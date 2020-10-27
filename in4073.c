@@ -127,15 +127,15 @@ void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint8_t js_total_valu
 }
 
 
-int16_t clip_motor_value(int16_t value) { 
-	if (value > 1000) {
-		return 1000;
-	}
-	else if (value < 0) {
-		return 0;
-	}
-	return value;
-}
+// int16_t clip_motor_value(int16_t value) { 
+// 	if (value > 1000) {
+// 		return 1000;
+// 	}
+// 	else if (value < 0) {
+// 		return 0;
+// 	}
+// 	return value;
+// }
 
 /* Translate js axis to range: 0-255 instead of 0 in the middle */
 uint8_t translate_throttle(uint8_t throttle) {
@@ -153,12 +153,11 @@ void keyboard_adjust_motors(uint8_t motor_states) {
 	switch(motor_states){
 		case LIFT_UP:
 			lift += step;
-			lift = clip_motor_value(lift << 2) / 4;
+			//lift = clip_motor_value(lift << 2) / 4;
 			break;
 		case LIFT_DOWN:
-			if (lift != 0) 
-				lift -= step;
-			lift = clip_motor_value(lift << 2) / 4;
+			lift -= step;
+			//lift = clip_motor_value(lift << 2) / 4;
 			break;
 		case PITCH_UP:
 			pitch += step;
