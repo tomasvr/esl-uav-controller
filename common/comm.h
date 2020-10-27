@@ -2,11 +2,12 @@
  *	comm.h - header file for communication between PC and FCB
  */
 
-#include "states.h"
-#include <inttypes.h>
-
 #ifndef COMM_H__
 #define COMM_H__
+
+#include "configuration.h"
+#include "states.h"
+#include <inttypes.h>
 
 #define BASE_MESSAGE_PACKET_BITS 0b00000000000000000000000001010101
 

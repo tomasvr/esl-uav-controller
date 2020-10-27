@@ -6,7 +6,6 @@
 
 #include "states.h"
 
-
 int js_axis_values_zeroed() {
 	int all_values_are_zero = 1;
 	for (int i = 0; i < NUMBER_OF_JS_AXIS; i++) {
