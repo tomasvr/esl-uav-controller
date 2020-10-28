@@ -429,9 +429,12 @@ int main(void)
  			}
 			adc_request_sample();
 			read_baro();
-			print_log_in_ter();
+			// print_log_in_ter();
 			// plot_info();
-			logging();	
+			if (counter % 20 == 0) {
+			logging();
+			// readout();
+			}	
 		}
 
 		if (check_sensor_int_flag()) {
