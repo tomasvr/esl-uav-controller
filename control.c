@@ -162,7 +162,7 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 	yaw_control->set_point = yaw_set_point;
 	yaw_control->err = yaw_control->set_point - sr;
 	yaw_control->output = yaw_control->kp_rate * yaw_control->err;
-	return yaw_control->output >> 8;
+	return yaw_control->output >> CONTROL_OUTPUT_SHIFT_VALUE;
 }
 
 // int16_t clip_control_output(int32_t value) {
@@ -192,7 +192,7 @@ int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, i
 	//printf("sq: %ld, output_angle: %ld | ", sq, output_angle);
 	//printf("pitch_output: %ld\n", pitch_output >> 8);	
 
-	return pitch_output >> 8; // divide by a lot to give sensible value
+	return pitch_output >> CONTROL_OUTPUT_SHIFT_VALUE; // divide by a lot to give sensible value
 }
 
 /* one step calculation for roll control loop
@@ -206,7 +206,7 @@ int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int1
 	int32_t output_angle = (error * roll_control->kp_angle - p_sp);
 	int32_t roll_output = output_angle * roll_control->kp_rate;
 	roll_control->output = roll_output;
-	return roll_output >> 8;
+	return roll_output >> CONTROL_OUTPUT_SHIFT_VALUE;
 }
 
 
@@ -288,17 +288,18 @@ void calculate_motor_values(int16_t pitch_final, int16_t roll_final, int16_t yaw
 	// ae[3] = (lift << 2) + roll + yaw;
 	// 
 
-	if (pitch_final < -150) pitch_final = -150; 
-	if (pitch_final >  150) pitch_final =  150; 
-	if (roll_final 	< -150) roll_final  = -150; 
-	if (roll_final 	>  150) roll_final  =  150; 
-	if (yaw_final 	< -150) yaw_final 	= -150; 
-	if (yaw_final 	>  150) yaw_final 	=  150; 
+	// clip values
+	if (pitch_final < -MAX_DIFF_VALUE) pitch_final  = -MAX_DIFF_VALUE; 
+	if (pitch_final >  MAX_DIFF_VALUE) pitch_final  =  MAX_DIFF_VALUE; 
+	if (roll_final 	< -MAX_DIFF_VALUE) roll_final   = -MAX_DIFF_VALUE; 
+	if (roll_final 	>  MAX_DIFF_VALUE) roll_final   =  MAX_DIFF_VALUE; 
+	if (yaw_final 	< -MAX_DIFF_VALUE) yaw_final 	= -MAX_DIFF_VALUE; 
+	if (yaw_final 	>  MAX_DIFF_VALUE) yaw_final 	=  MAX_DIFF_VALUE; 
 
-	ae[0] = (lift_final << 2) + 150 + pitch_final - yaw_final; //* MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[1] = (lift_final << 2) + 150 - roll_final  - yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[2] = (lift_final << 2) + 150 - pitch_final + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[3] = (lift_final << 2) + 150 + roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[0] = (lift_final << 1) + 150 + pitch_final - yaw_final; //* MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[1] = (lift_final << 1) + 150 - roll_final  - yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[2] = (lift_final << 1) + 150 - pitch_final + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[3] = (lift_final << 1) + 150 + roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
 }
 
 uint32_t calculate_time_diff (uint32_t start_time) {
