@@ -95,7 +95,7 @@ void plot_info()
 {
 	//system time | mode | roll(js) pitch(js) yaw(js) lift(js) | ae[0] ae[1] ae[2] ae[3] | phi theta psi | sp sq sr
 	printf("%10ld | ", get_time_us());
-	printf("%4d |", fcb_state - 1);
+	printf("%4d |", fcb_state);
 	printf("%3d %3d %3d %3d  |", roll, pitch, yaw, lift);
 	printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
 	printf("%6d %6d %6d | ", phi, theta, psi);

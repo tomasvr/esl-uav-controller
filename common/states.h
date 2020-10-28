@@ -19,24 +19,26 @@
 uint8_t joystick_axis_stored_values[NUMBER_OF_JS_AXIS];
 
 typedef enum {
-	UNKNOWN_ST,
 	SAFE_ST, 
 	PANIC_ST,
 	MANUAL_ST,
 	CALIBRATION_ST,
 	YAWCONTROL_ST,
-	FULLCONTROL_ST
+	FULLCONTROL_ST,
+	UNKNOWN_ST
 } STATE_t ;
 
 // is_allowed[state][to_state] == 1 -> is allowed to switch from 'state' to 'to_state', 0 -> not allowed
 static const uint8_t is_allowed[7][7] = {
-    {0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 1, 1, 1, 1},
-    {0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 1, 0, 1, 1, 1},
-    {0, 0, 1, 0, 0, 0, 0},
-    {0, 0, 1, 1, 1, 0, 1},
-    {0, 0, 1, 1, 1, 1, 0}
+
+/* 	 from\to  safe    panic   calib   manual  yaw_c   full_c  unknown
+  /* safe   */ {0, 	    0,      1,      1,      1,      1,      0}, 
+  /* panic  */ {0, 	    0,      0,      0,      0,      0,      0}, 
+  /* calib  */ {0, 	    1,      0, 	    1,      1,      1,      0}, 
+  /* manual */ {0, 	    1,      0, 	    0,      0,      0,      0}, 
+  /* yaw c  */ {0, 	    1,      0, 	    0,      0,      0,      0}, 
+  /* full c */ {0, 	    1,      0, 	    0,      0,      0,      0}, 
+  /* unknown*/ {0, 	    0,      0,      0,      0,      0,      0}, 
 };
 
 /*

@@ -250,8 +250,8 @@ void update_motors(void)
 #ifdef DEBUG_LED
 		// The 4 LEDS represent motor speed, blue = max speed, red = minimal speed
 		if (motor[0] == 0) switch_led(-1);
-		else if (motor[0] < 350) switch_led(RED);
-		else if (motor[0] >= 350 && motor[0] < 700) switch_led(YELLOW);
+		else if (motor[0] < 200) switch_led(RED);
+		else if (motor[0] >= 200 && motor[0] < 400) switch_led(YELLOW);
 		else switch_led(GREEN);
 #endif
 }
@@ -299,8 +299,11 @@ void run_filters_and_control() {
 			zero_motors();
 			break;
 		case PANIC_ST:
-			//todo
-			enter_panic_mode(false, "PANIC STATE"); //enter panic mode for any reason other than cable
+			calculate_motor_values(
+				pitch_control_calc(pitch_control_pointer, clip_to_int8_values(PANIC_MODE_LIFT  + pitch_trim) << 6, sq, theta), 
+				 roll_control_calc(roll_control_pointer,  clip_to_int8_values(PANIC_MODE_LIFT  + roll_trim)  << 6, sp, phi), 
+				  yaw_control_calc(yaw_control_pointer,   clip_to_int8_values(PANIC_MODE_LIFT  + yaw_trim)   << 8, sr*-1 ),  // i think sr needs *-1 (reverse sign)
+				lift);
 			break;
 		case MANUAL_ST:
 			calculate_motor_values(pitch, roll, yaw, lift);

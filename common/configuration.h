@@ -20,11 +20,15 @@
 
 /* --- FCB SETTINGS (in4073) --- */
 
+//#define ENABLE_BATT_CHECK //enables the battery check
+
 #define USB_COMM_INTERVAL_THRESHOLD 2000000 // in us (1000000 = 1 second) 
 #define BATTERY_CHECK_INTERVAL_THRESHOLD 5000000 
 
-#define MOTOR_MAX_CHANGE 50
+#define PANIC_MODE_LIFT 500 // BASE_LIFT will be added and then the sum is divided by 2 for final lift level
+#define PANIC_DURATION 6000000//(in us)
 
+#define MOTOR_MAX_CHANGE 50
 #define TRIM_STEP_SIZE 1
 
 #define JS_AXIS_MID_VALUE 		127		// used to be 32767
