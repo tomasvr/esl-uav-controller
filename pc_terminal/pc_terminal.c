@@ -351,9 +351,10 @@ uint32_t message_encode(int c){
 			message = handle_mode_switch(message, FULLCONTROL_ST);
 			break;		
 		default:
-			printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
+			;
+			//printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
 	}
-	print_packet(message, "PC: Send message: ");
+	//print_packet(message, "PC: Send message: ");
 	return message;
 }
 

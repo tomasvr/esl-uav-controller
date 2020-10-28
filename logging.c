@@ -99,6 +99,8 @@ void readout(){
 void plot_info()
 {
 	//system time | mode | roll(js) pitch(js) yaw(js) lift(js) | ae[0] ae[1] ae[2] ae[3] | phi theta psi | sp sq sr
+	printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
+	printf("Py: %2d Pr: %2d Pa: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle);
 	printf("%10ld | ", get_time_us());
 	printf("%4d |", fcb_state - 1);
 	printf("%3d %3d %3d %3d  |", roll, pitch, yaw, lift);

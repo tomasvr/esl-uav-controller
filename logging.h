@@ -47,4 +47,5 @@ struct motor_log {
 void logging(void);
 void plot_info(void);
 
+
 #endif // logging_H__
