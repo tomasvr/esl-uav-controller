@@ -273,10 +273,10 @@ void calculate_motor_values(int16_t pitch_final, int16_t roll_final, int16_t yaw
 	if (yaw_final 	< -MAX_DIFF_VALUE) yaw_final 	= -MAX_DIFF_VALUE; 
 	if (yaw_final 	>  MAX_DIFF_VALUE) yaw_final 	=  MAX_DIFF_VALUE; 
 
-	ae[0] = (lift_final << 1) + 150 + pitch_final - yaw_final; //* MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[1] = (lift_final << 1) + 150 - roll_final  - yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[2] = (lift_final << 1) + 150 - pitch_final + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[3] = (lift_final << 1) + 150 + roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[0] = BASE_LIFT + (lift_final << 1) + pitch_final - yaw_final; //* MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[1] = BASE_LIFT + (lift_final << 1) - roll_final  - yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[2] = BASE_LIFT + (lift_final << 1) - pitch_final + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[3] = BASE_LIFT + (lift_final << 1) + roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
 }
 
 uint32_t calculate_time_diff (uint32_t start_time) {

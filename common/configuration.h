@@ -14,7 +14,7 @@
 #define PACKET_SEND_INTERVAL 20000 // (in us)
 
 // defines whether joystick is plugged in
-// #define ENABLE_JOYSTICK
+#define ENABLE_JOYSTICK
 // defines joystick USB port (can be found using 'findusb' script)
 #define JS_DEV	"/dev/input/js0"
 
@@ -24,7 +24,6 @@
 #define BATTERY_CHECK_INTERVAL_THRESHOLD 5000000 
 
 #define MOTOR_MAX_CHANGE 50
-#define MOTOR_UPPER_LIMIT 1000
 
 #define TRIM_STEP_SIZE 1
 
@@ -39,7 +38,7 @@
 #define MAX_DIFF_VALUE 200
 
 #define DEBUG_LED
-#define UPPER_LIMIT 1000
+#define BASE_LIFT 	150
 
 #define CONTROLLER_P_STEP_SIZE 1
 #define CONTROLLER_P_UPPER_LIMIT 15

@@ -82,8 +82,7 @@ void enter_panic_mode(bool cable_detached, char caller[]){
 		return; // if in safe mode then you do not need to go to panic mode
 	}
 	printf("FCB: QR: Entered PANIC MODE called by: %s", caller);
-	uint16_t temp = lift;
-	uint16_t motor_speed = (temp << 2);
+	uint16_t motor_speed = (lift << 1) + BASE_LIFT;
 	while (motor_speed > 0) {
 		motor_speed = motor_speed - 10; 
 		if (motor_speed < 10) {
@@ -155,12 +154,14 @@ int8_t yaw_trim = 0;
 void keyboard_trimming(uint8_t motor_states) {
 	switch(motor_states){
 		case LIFT_UP:
-			lift = clip_motor_value(lift + TRIM_STEP_SIZE);
-			//lift = clip_motor_value(lift << 2) / 4;
+			if (lift + TRIM_STEP_SIZE < 0) {
+				lift = lift - TRIM_STEP_SIZE;
+			}
 			break;
 		case LIFT_DOWN:
-			lift = clip_motor_value(lift - TRIM_STEP_SIZE);
-			//lift = clip_motor_value(lift << 2) / 4;
+			if (lift - TRIM_STEP_SIZE > 0) {
+				lift = lift - TRIM_STEP_SIZE;
+			}
 			break;
 		case PITCH_UP:
 			pitch_trim += TRIM_STEP_SIZE;
