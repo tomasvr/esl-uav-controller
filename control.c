@@ -302,7 +302,7 @@ void run_filters_and_control() {
 			calculate_motor_values(
 				pitch_control_calc(pitch_control_pointer, clip_to_int8_values(PANIC_MODE_LIFT  + pitch_trim) << 6, sq, theta), 
 				 roll_control_calc(roll_control_pointer,  clip_to_int8_values(PANIC_MODE_LIFT  + roll_trim)  << 6, sp, phi), 
-				  yaw_control_calc(yaw_control_pointer,   clip_to_int8_values(PANIC_MODE_LIFT  + yaw_trim)   << 8, sr*-1 ),  // i think sr needs *-1 (reverse sign)
+				  0,  // i think sr needs *-1 (reverse sign)
 				lift);
 			break;
 		case MANUAL_ST:
@@ -317,6 +317,7 @@ void run_filters_and_control() {
 			//todo
 			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw << 8, (sr)*-1 ), lift); // i think sr needs *-1 (reverse sign
 			break;
+		case FULLCONTROL_ST:
 			calculate_motor_values(
 				pitch_control_calc(pitch_control_pointer, clip_to_int8_values(pitch + pitch_trim) << 6, sq, theta), 
 				 roll_control_calc(roll_control_pointer,  clip_to_int8_values(roll  + roll_trim)  << 6, sp, phi), 
