@@ -375,6 +375,7 @@ void print_log_in_ter() {
 	printf("%6d %6d %6d | ", phi, theta, psi);
 	printf("%6d %6d %6d | ", sp, sq, sr);
 	//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
+
 	printf("Py: %2d Pr: %2d Pa: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle);
 	printf("pitch: %4d ", pitch);
 	printf("setp: %4d sp: %4d err: %4d output: %4d ", pitch_control.set_point, sp, pitch_control.err, pitch_control.output);
@@ -425,7 +426,10 @@ int main(void)
  			}
 			adc_request_sample();
 			read_baro();
-			print_log_in_ter();
+			printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
+			printf("Py: %2d Pr: %2d Pa: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle);
+			plot_info();
+			//print_log_in_ter();
 		}
 
 		if (check_sensor_int_flag()) {
