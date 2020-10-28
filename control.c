@@ -185,7 +185,7 @@ int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, i
 	
 	// setpoint is in range [-8192 ... 8191] to match desired theta range
 	int16_t error = (pitch_set_point - p_theta); // will be in range [-16xxx ... 16xxx]
-	int16_t output_angle = (error * pitch_control->kp_angle - p_sq);
+	int32_t output_angle = (error * pitch_control->kp_angle - p_sq);
 	int32_t pitch_output = output_angle * pitch_control->kp_rate;
 	pitch_control->output = pitch_output;
 	//printf("setpoint: %ld, theta: %ld, error: %ld | ", pitch_set_point, theta, error);
@@ -203,7 +203,7 @@ int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int1
 	// int16_t output = ((roll_set_point - phi) * roll_control->kp_angle - sp) * roll_control->kp_rate;
 
 	int16_t error = (roll_set_point - p_phi); // will be in range [-16xxx ... 16xxx]
-	int16_t output_angle = (error * roll_control->kp_angle - p_sp);
+	int32_t output_angle = (error * roll_control->kp_angle - p_sp);
 	int32_t roll_output = output_angle * roll_control->kp_rate;
 	roll_control->output = roll_output;
 	return roll_output >> 8;
