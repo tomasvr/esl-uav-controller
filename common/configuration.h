@@ -20,10 +20,13 @@
 
 /* --- FCB SETTINGS (in4073) --- */
 
+#define USB_COMM_INTERVAL_THRESHOLD 2000000 // in us (1000000 = 1 second) 
+#define BATTERY_CHECK_INTERVAL_THRESHOLD 5000000 
+
 #define MOTOR_MAX_CHANGE 50
 #define MOTOR_UPPER_LIMIT 1000
 
-#define TRIM_STEP_SIZE 2
+#define TRIM_STEP_SIZE 1
 
 #define JS_AXIS_MID_VALUE 		127		// used to be 32767
 #define JS_AXIS_MAX_VALUE 		255		// used to be 65536

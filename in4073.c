@@ -43,8 +43,7 @@
 #include "in4073.h"
 #include <assert.h>
 
-#define USB_COMM_INTERVAL_THRESHOLD 2000000 // in us (1000000 = 1 second) 
-#define BATTERY_CHECK_INTERVAL_THRESHOLD 5000000   
+  
 
 uint32_t usb_comm_last_received;
 uint32_t current_time;
@@ -138,7 +137,8 @@ int16_t clip_motor_value(int16_t value) {
 }
 
 /* Translate js axis to range: 0-255 instead of 0 in the middle */
-uint8_t translate_throttle(uint8_t throttle) {
+uint8_t translate_throttle(int8_t throttle) {
+	printf("throttle %d\n", throttle);
 	if(throttle <= JS_AXIS_MID_VALUE){
 		throttle = JS_AXIS_MID_VALUE - throttle;
 	}
@@ -184,6 +184,16 @@ void keyboard_trimming(uint8_t motor_states) {
 	printf("key trimming: %d\n", motor_states);
 	printf("pitch trim:%d  roll trim: %d yaw trim %d\n", pitch_trim, roll_trim, yaw_trim);
 }
+
+int8_t translate_unsigned_to_signed(uint8_t value) {
+	int8_t signed_valued;
+	if (value <= 127) {
+		signed_valued = value;
+		return signed_valued;
+	}
+	signed_valued = value - 255;
+	return signed_valued;
+} 
 
 /*
  * Decode messages
@@ -235,16 +245,16 @@ void messg_decode(uint8_t message_byte){
 					fcb_dest_state = UNKNOWN_ST;					
 					break;
 				case JS_AXIS_COMM:
-					//printf("axis: %d value: %d \n", js_axis_type, message_byte);						
+					//printf("axis: %d value: %d \n", (uint8_t)js_axis_type, message_byte);						
 					switch (js_axis_type) {
 						case ROLL_AXIS:
-							roll  = (int16_t) message_byte;
+							roll  = translate_unsigned_to_signed(message_byte);
 							break;
 						case PITCH_AXIS:
-							pitch = (int16_t) message_byte;
+							pitch = translate_unsigned_to_signed(message_byte);
 							break;
 						case YAW_AXIS:
-							yaw   = (int16_t) message_byte;
+							yaw   = translate_unsigned_to_signed(message_byte);
 							break;
 						case LIFT_THROTTLE:
 							message_byte = translate_throttle(message_byte);
@@ -366,6 +376,7 @@ void print_log_in_ter() {
 	printf("%6d %6d %6d | ", sp, sq, sr);
 	//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
 	printf("Py: %2d Pr: %2d Pa: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle);
+	printf("pitch: %4d ", pitch);
 	printf("setp: %4d sp: %4d err: %4d output: %4d ", pitch_control.set_point, sp, pitch_control.err, pitch_control.output);
 	printf("%4d |", fcb_state - 1);
 	printf("%4d \n", ctrl_loop_time);
