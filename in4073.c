@@ -43,8 +43,7 @@
 #include "in4073.h"
 #include <assert.h>
 
-#define USB_COMM_INTERVAL_THRESHOLD 2000000 // in us (1000000 = 1 second) 
-#define BATTERY_CHECK_INTERVAL_THRESHOLD 5000000   
+  
 
 uint32_t usb_comm_last_received;
 uint32_t current_time;
@@ -127,18 +126,19 @@ void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint8_t js_total_valu
 }
 
 
-// int16_t clip_motor_value(int16_t value) { 
-// 	if (value > 1000) {
-// 		return 1000;
-// 	}
-// 	else if (value < 0) {
-// 		return 0;
-// 	}
-// 	return value;
-// }
+int16_t clip_motor_value(int16_t value) { 
+	if (value > 1000) {
+		return 1000;
+	}
+	else if (value < 0) {
+		return 0;
+	}
+	return value;
+}
 
 /* Translate js axis to range: 0-255 instead of 0 in the middle */
-uint8_t translate_throttle(uint8_t throttle) {
+uint8_t translate_throttle(int8_t throttle) {
+	printf("throttle %d\n", throttle);
 	if(throttle <= JS_AXIS_MID_VALUE){
 		throttle = JS_AXIS_MID_VALUE - throttle;
 	}
@@ -153,38 +153,47 @@ int8_t roll_trim = 0;
 int8_t yaw_trim = 0;
 
 void keyboard_trimming(uint8_t motor_states) {
-	uint8_t step = STEP_SIZE >> 2;
 	switch(motor_states){
 		case LIFT_UP:
-			lift += step;
+			lift = clip_motor_value(lift + TRIM_STEP_SIZE);
 			//lift = clip_motor_value(lift << 2) / 4;
 			break;
 		case LIFT_DOWN:
-			lift -= step;
+			lift = clip_motor_value(lift - TRIM_STEP_SIZE);
 			//lift = clip_motor_value(lift << 2) / 4;
 			break;
 		case PITCH_UP:
-			pitch_trim += step;
+			pitch_trim += TRIM_STEP_SIZE;
 			break;
 		case PITCH_DOWN:
-			pitch_trim -= step;
+			pitch_trim -= TRIM_STEP_SIZE;
 			break;
 		case ROLL_RIGHT:
-			roll_trim += step;
+			roll_trim += TRIM_STEP_SIZE;
 			break;
 		case ROLL_LEFT:
-			roll_trim -= step;
+			roll_trim -= TRIM_STEP_SIZE;
 			break;
 		case YAW_RIGHT:
-			yaw_trim += step;
+			yaw_trim += TRIM_STEP_SIZE;
 			break;
 		case YAW_LEFT:
-			yaw_trim -= step;
+			yaw_trim -= TRIM_STEP_SIZE;
 			break;				
 	}
 	printf("key trimming: %d\n", motor_states);
 	printf("pitch trim:%d  roll trim: %d yaw trim %d\n", pitch_trim, roll_trim, yaw_trim);
 }
+
+int8_t translate_unsigned_to_signed(uint8_t value) {
+	int8_t signed_valued;
+	if (value <= 127) {
+		signed_valued = value;
+		return signed_valued;
+	}
+	signed_valued = value - 255;
+	return signed_valued;
+} 
 
 /*
  * Decode messages
@@ -218,24 +227,11 @@ void messg_decode(uint8_t message_byte){
 					return;
 				case CTRL_COMM:
 					;	// C requires this semicolon here
-
 					/* only change motors if in appropriate mode */ //todo: move this logic to a central place
 					// if (fcb_state == MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
-						//keyboard_ctrl_action();
-						/* If 'a' or 'z' was pressed, adjust motor_lift_level */
-						if(fcb_state == MANUAL_ST){
+						if (fcb_state == MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
 							uint8_t motor_states = retrieve_keyboard_motor_control(message_byte);
 							keyboard_trimming(motor_states);
-							roll = roll_trim;
-							pitch = pitch_trim;
-							yaw = yaw_trim;
-						}
-						else if(fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST){
-							uint8_t motor_states = retrieve_keyboard_motor_control(message_byte);
-							keyboard_trimming(motor_states);
-							roll += roll_trim;
-							pitch += pitch_trim;
-							yaw += yaw_trim;
 						}
 						// printf("FCB: motor states: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(motor_states));
 						else {
@@ -249,16 +245,16 @@ void messg_decode(uint8_t message_byte){
 					fcb_dest_state = UNKNOWN_ST;					
 					break;
 				case JS_AXIS_COMM:
-					//printf("axis: %d value: %d \n", js_axis_type, message_byte);						
+					//printf("axis: %d value: %d \n", (uint8_t)js_axis_type, message_byte);						
 					switch (js_axis_type) {
 						case ROLL_AXIS:
-							roll = (int16_t) message_byte;
+							roll  = translate_unsigned_to_signed(message_byte);
 							break;
 						case PITCH_AXIS:
-							pitch = (int16_t) message_byte;
+							pitch = translate_unsigned_to_signed(message_byte);
 							break;
 						case YAW_AXIS:
-							yaw = (int16_t) message_byte;
+							yaw   = translate_unsigned_to_signed(message_byte);
 							break;
 						case LIFT_THROTTLE:
 							message_byte = translate_throttle(message_byte);
@@ -378,12 +374,13 @@ void print_log_in_ter() {
 	printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
 	printf("%6d %6d %6d | ", phi, theta, psi);
 	printf("%6d %6d %6d | ", sp, sq, sr);
-	printf("%4d | %4ld | %6ld \n", bat_volt, temperature, pressure);
-	// printf("y_p_r: %2d r_p_r: %2d p_p_r: %2d", yaw_control.kp_rate, roll_control.kp_rate, pitch_control.kp_rate);
-	// printf("r_p_a: %2d p_p_a: %2d", roll_control.kp_angle, pitch_control.kp_angle);
-	// printf("setp: %4d sp: %4d err: %4d output: %4d ", roll_control.set_point, sp, roll_control.err, roll_control.output);
-	// printf("%4d |", fcb_state - 1);
-	// printf("%4d \n", ctrl_loop_time);
+	//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
+
+	printf("Py: %2d Pr: %2d Pa: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle);
+	printf("pitch: %4d ", pitch);
+	printf("setp: %4d sp: %4d err: %4d output: %4d ", pitch_control.set_point, sp, pitch_control.err, pitch_control.output);
+	printf("%4d |", fcb_state - 1);
+	printf("%4d \n", ctrl_loop_time);
 	clear_timer_flag();
 	//printf("%4d \n", motor_lift_level);
 }
@@ -429,9 +426,11 @@ int main(void)
  			}
 			adc_request_sample();
 			read_baro();
-			print_log_in_ter();
-			// plot_info();
-			logging();	
+
+			printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
+			printf("Py: %2d Pr: %2d Pa: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle);
+			plot_info();
+			//print_log_in_ter();
 		}
 
 		if (check_sensor_int_flag()) {
