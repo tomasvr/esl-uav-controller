@@ -323,6 +323,16 @@ uint32_t message_encode(int c){
 			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_ANGLE_PITCHROLL_DEC);
 			break;
+		case 'y':
+			// keyboard 'l' pressed, decrease P2 roll/pitch control
+			message = append_comm_type(message, CHANGE_P_COMM); 
+			message = append_parameter_change(message, P_SHIFT_RIGHT_VALUE_INC);
+			break;
+		case 'h':
+			// keyboard 'l' pressed, decrease P2 roll/pitch control
+			message = append_comm_type(message, CHANGE_P_COMM); 
+			message = append_parameter_change(message, P_SHIFT_RIGHT_VALUE_DEC);
+			break;
 		case 27: 
 			// keyboard 'ESC' pressed, SWITCH TO PANIC MODE
 			message = append_comm_type(message, ESC_COMM);

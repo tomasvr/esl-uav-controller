@@ -14,6 +14,10 @@
 #include "in4073.h"
 #include "control.h"
 
+
+// initalize 
+uint8_t output_shift_value = OUTPUT_SHIFT_START_VALUE;
+
 /*This funciton is used for debugging
 * if color == -1, then all leds are turned off
 * gpio_pin_set TURNS OFF led
@@ -133,6 +137,7 @@ void controller_init(CONTROLLER *controller) {
 	controller->output = 0;
 }
 
+
 void  increase_p_rate_value(CONTROLLER *controller) {
 	if (controller->kp_rate < CONTROLLER_P_UPPER_LIMIT) 
 		controller->kp_rate += CONTROLLER_P_STEP_SIZE;
@@ -153,6 +158,18 @@ void decrease_p_angle_value(CONTROLLER *controller) {
 		controller->kp_angle-= CONTROLLER_P_STEP_SIZE;
 }
 
+void increase_shift_value() {
+	if (output_shift_value < OUTPUT_SHIFT_UPPER_LIMIT) {
+		output_shift_value += 1;
+	}
+}
+
+void decrease_shift_value() {
+	if (output_shift_value > OUTPUT_SHIFT_LOWER_LIMIT) {
+		output_shift_value -= 1;
+	}
+}
+
 
 /* one step calculation for yaw control loop
  * Zehang Wu
@@ -163,7 +180,7 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 	int16_t error = (yaw_set_point - sr);
 	int32_t yaw_output = error * yaw_control->kp_rate;
 	yaw_control->output = yaw_control->kp_rate * error;
-	return yaw_output >> CONTROL_OUTPUT_SHIFT_VALUE;
+	return yaw_output >> output_shift_value;
 }
 
 /* one step calculation for pitch control loop
@@ -176,7 +193,7 @@ int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, i
 	int32_t pitch_output = output_angle * pitch_control->kp_rate;
 	pitch_control->output = pitch_output;
 	//printf("pitch_output: %ld\n", pitch_output >> 8);	
-	return pitch_output >> CONTROL_OUTPUT_SHIFT_VALUE; // divide by a lot to give sensible value
+	return pitch_output >> output_shift_value; // divide by a lot to give sensible value
 }
 
 /* one step calculation for roll control loop
@@ -188,7 +205,7 @@ int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int1
 	int32_t output_angle = (error * roll_control->kp_angle - p_sp);
 	int32_t roll_output = output_angle * roll_control->kp_rate;
 	roll_control->output = roll_output;
-	return roll_output >> CONTROL_OUTPUT_SHIFT_VALUE;
+	return roll_output >> output_shift_value;
 }
 
 

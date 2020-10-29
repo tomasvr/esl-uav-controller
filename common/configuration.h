@@ -38,7 +38,11 @@
 /* CONTROL.H SETTINGS */
 
 // values to test with
-#define CONTROL_OUTPUT_SHIFT_VALUE 10
+//#define CONTROL_OUTPUT_SHIFT_VALUE 10
+#define OUTPUT_SHIFT_START_VALUE 10
+#define OUTPUT_SHIFT_UPPER_LIMIT 15
+#define OUTPUT_SHIFT_LOWER_LIMIT 0 // never less than 0
+
 #define MAX_DIFF_VALUE 200
 
 #define DEBUG_LED

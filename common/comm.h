@@ -48,6 +48,8 @@ typedef enum {
 		P_ANGLE_PITCHROLL_DEC,
 		P_RATE_PITCHROLL_INC,
 		P_RATE_PITCHROLL_DEC,
+		P_SHIFT_RIGHT_VALUE_INC,
+		P_SHIFT_RIGHT_VALUE_DEC
 } PID_PARAMETER_CHANGE_t;
 
 int check_mode_sync (uint8_t state, STATE_t fcb_state);

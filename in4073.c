@@ -246,8 +246,17 @@ void messg_decode(uint8_t message_byte){
 			 				decrease_p_rate_value(pitch_control_pointer);
 			 				decrease_p_rate_value(roll_control_pointer);
 			 				break;
+			 			case P_SHIFT_RIGHT_VALUE_INC:
+				 			printf("FCB: P SHIFT VALUE UP\n");
+			 				increase_shift_value(pitch_control_pointer);
+			 				break; 
+			 			case P_SHIFT_RIGHT_VALUE_DEC:
+				 			printf("FCB: P SHIFT VALUE DOWN\n");
+			 				decrease_shift_value(pitch_control_pointer);
+			 				break;				 			
 			 			default: 
 				 			printf("FCB: UKNOWN CHANGE P VALUE: \n", message_byte);
+				 			//break;
 					}					
 				 	break;
 				case BAT_INFO_COMM:
@@ -363,7 +372,6 @@ int main(void)
 	controller_init(yaw_control_pointer);
 	controller_init(roll_control_pointer);
 	controller_init(pitch_control_pointer);
-
 	// printf(" AE0 AE1 AE2 AE3  | MODE \n");
 	while (!demo_done)
 	{
@@ -390,7 +398,7 @@ int main(void)
 			read_baro();
 
 			printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
-			printf("Py: %2d Pr: %2d Pa: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle);
+			printf("Py: %2d Pr: %2d Pa: %2d Ps: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle, output_shift_value);
 			//plot_info();
 			print_log_in_ter();
 		}
