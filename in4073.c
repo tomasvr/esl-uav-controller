@@ -52,6 +52,7 @@ void enter_panic_mode(bool remain_off, char caller[]){
 	if (fcb_state == SAFE_ST) {
 		return; // if in safe mode then you do not need to go to panic mode
 	}
+	fcb_state = PANIC_ST; // make sure system is in panic state;
 	printf("FCB: QR: Entered PANIC MODE called by: %s", caller);
 	uint32_t panic_start_time = get_time_us();
 	uint32_t panic_elapsed_time = get_time_us() - panic_start_time;
@@ -75,6 +76,7 @@ void enter_panic_mode(bool remain_off, char caller[]){
 			ae[2] = 0;
 			ae[3] = 0;
 			update_motors();
+			demo_done = true;
 		}
 	}
 }
@@ -175,8 +177,7 @@ void messg_decode(uint8_t message_byte){
 		case 1: // Data
 			switch(g_current_comm_type) {
 				case ESC_COMM:
-					demo_done = false;
-					return;
+					enter_panic_mode(true, "ESC pressed");
 				case CTRL_COMM:
 					;	// C requires this semicolon here
 					/* only change motors if in appropriate mode */ //todo: move this logic to a central place
@@ -256,7 +257,7 @@ void messg_decode(uint8_t message_byte){
 				case USB_CHECK_COMM:
 			 		if (check_mode_sync(message_byte, fcb_state)) {
 		 				printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", message_byte, fcb_state);
-		 				enter_panic_mode(false, 'State mismatch');
+		 				enter_panic_mode(false, "State mismatch");
 		 			}						
 		 			break;
 				default:
@@ -332,9 +333,10 @@ void print_log_in_ter() {
 	printf("Py: %2d Pr: %2d Pa: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle);
 	printf("pitch: %4d ", pitch);
 	//printf("setp: %4d sp: %4d err: %4d output: %4d ", pitch_control.set_point, sp, pitch_control.err, pitch_control.output);
-	printf("%4d |", fcb_state);
-	printf("%4d \n", ctrl_loop_time);
-	clear_timer_flag();
+
+	//printf("%4ld", ctrl_loop_time);
+	printf("%4d | \n", fcb_state);
+		clear_timer_flag();
 }
 
 /*------------------------------------------------------------------
@@ -368,11 +370,9 @@ int main(void)
 		if (rx_queue.count) process_packet( dequeue(&rx_queue) );
 
 		// Execute commands that need to be handled in all modes
-		if (g_current_comm_type == ESC_COMM){ // terminate program
-			demo_done = true;
-			g_current_comm_type = UNKNOWN_COMM;
-			enter_panic_mode(false, "ESC pressed");
-		}
+		// if (g_current_comm_type == ESC_COMM){ // terminate program
+		// 	enter_panic_mode(true, "ESC pressed");
+		// }
 
 		if (fcb_state == PANIC_ST) {
 			enter_panic_mode(false, "FCB IN PANIC_ST");

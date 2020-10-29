@@ -22,7 +22,7 @@ STATE_t mode_sw_action(char caller[], STATE_t state, STATE_t to_state) {
 
 	if(is_allowed[state][to_state])
 	{
-		if(to_state == PANIC_ST) return to_state;
+		if(to_state == PANIC_ST || to_state == SAFE_ST) return to_state;
 		else if(js_axis_values_zeroed() == 0)
 		{
 			printf("%s: MODE_SWITCH_ERROR: cannot switch mode when js not at neutral position \n", caller);

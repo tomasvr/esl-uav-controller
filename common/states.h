@@ -31,7 +31,7 @@ typedef enum {
 // is_allowed[state][to_state] == 1 -> is allowed to switch from 'state' to 'to_state', 0 -> not allowed
 static const uint8_t is_allowed[7][7] = {
 
-/* 	 from\to  safe    panic   calib   manual  yaw_c   full_c  unknown
+/* 	 from\to  safe    panic   calib   manual  yaw_c   full_c  unknown */
   /* safe   */ {0, 	    0,      1,      1,      1,      1,      0}, 
   /* panic  */ {0, 	    0,      0,      0,      0,      0,      0}, 
   /* calib  */ {0, 	    1,      0, 	    1,      1,      1,      0}, 

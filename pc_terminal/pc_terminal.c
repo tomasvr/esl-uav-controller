@@ -354,7 +354,7 @@ uint32_t message_encode(int c){
 			;
 			printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
 	}
-	//print_packet(message, "PC: Send message: ");
+	print_packet(message, "PC: Send message: ");
 	return message;
 }
 
@@ -368,9 +368,13 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 		return;
 	}
 	if (js_type == JS_EVENT_BUTTON) { // js buttons
-		if (js_number == 0) message = append_comm_type(message, ESC_COMM);
-		STATE_t to_state = js_number; // The button number indicates which state (see states.h)
-		message = handle_mode_switch(message, to_state);
+		if (js_number == 0) {
+			message = append_comm_type(message, ESC_COMM);
+		} else {
+			STATE_t to_state = js_number; // The button number indicates which state (see states.h)
+			message = handle_mode_switch(message, to_state);			
+		}
+		print_packet(message, "PC: Send message: ");
 		rs232_putchar(message);
 	}
 	else if ( (js_type == JS_EVENT_AXIS) || (js_type == 130)) { // js axis (130 occurs at startup)
