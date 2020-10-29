@@ -274,8 +274,8 @@ void calculate_motor_values(int16_t pitch_final, int16_t roll_final, int16_t yaw
 	if (yaw_final 	>  MAX_DIFF_VALUE) yaw_final 	=  MAX_DIFF_VALUE; 
 
 	ae[0] = BASE_LIFT + (lift_final) + pitch_final - yaw_final; //* MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[1] = BASE_LIFT + (lift_final) - roll_final  - yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[2] = BASE_LIFT + (lift_final) - pitch_final + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[1] = BASE_LIFT + (lift_final) - roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[2] = BASE_LIFT + (lift_final) - pitch_final - yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
 	ae[3] = BASE_LIFT + (lift_final) + roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
 }
 
@@ -318,7 +318,7 @@ void run_filters_and_control() {
 			break;
 		case YAWCONTROL_ST:
 			//todo
-			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw << 8, (sr)*-1 ), adjusted_lift); // i think sr needs *-1 (reverse sign
+			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, clip_to_int8_values(yaw + yaw_trim) << 8, (sr)*-1 ), adjusted_lift); // i think sr needs *-1 (reverse sign
 			break;
 		case FULLCONTROL_ST:
 			calculate_motor_values(

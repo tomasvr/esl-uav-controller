@@ -331,7 +331,7 @@ void print_log_in_ter() {
 
 	printf("Py: %2d Pr: %2d Pa: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle);
 	printf("pitch: %4d ", pitch);
-	printf("setp: %4d sp: %4d err: %4d output: %4d ", pitch_control.set_point, sp, pitch_control.err, pitch_control.output);
+	//printf("setp: %4d sp: %4d err: %4d output: %4d ", pitch_control.set_point, sp, pitch_control.err, pitch_control.output);
 	printf("%4d |", fcb_state);
 	printf("%4d \n", ctrl_loop_time);
 	clear_timer_flag();
