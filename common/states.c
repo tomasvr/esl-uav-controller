@@ -9,10 +9,10 @@
 int js_axis_values_zeroed() {
 	int all_values_are_zero = 1;
 	for (int i = 0; i < NUMBER_OF_JS_AXIS; i++) {
-		if(joystick_axis_stored_values[i] > 1) { //IMPORTANT: AT STARTUP JS AXIS IS RANDOMLY 1 WHILE IN NEUTRAL, SO: > 1
+		if(joystick_axis_stored_values[i] > 3) { //IMPORTANT: AT STARTUP JS AXIS IS RANDOMLY 1 WHILE IN NEUTRAL, SO: > 3
 			all_values_are_zero = 0;
 		}
-		printf(" %d: %ld ", i, joystick_axis_stored_values[i]);
+		printf(" %d: %d ", i, joystick_axis_stored_values[i]);
 	}
 	return all_values_are_zero;
 }

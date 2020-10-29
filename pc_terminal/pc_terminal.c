@@ -383,6 +383,12 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 			//printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value_smaller);
 			last_js_axis_send_time = current_time;
 			rs232_putchar(message);
+			// store js value to check neutral position on pc side
+			if (axis_number_from_js == LIFT_THROTTLE) {
+				joystick_axis_stored_values[axis_number_from_js] = translate_throttle(js_value_smaller);
+			} else {
+				joystick_axis_stored_values[axis_number_from_js] = translate_axis(js_value_smaller);
+			}
 		}
 	} 
 	else {
@@ -408,7 +414,7 @@ uint32_t GetTimeStamp() {
     gettimeofday(&tv,NULL);
     return tv.tv_sec*(uint32_t)1000000+tv.tv_usec; //TODO: check for overflow? <-- (32 bit allows for about 70 minutes before overflow, fix this later?)
 }
-
+ 
 /*----------------------------------------------------------------
  * main -- execute terminal
  *----------------------------------------------------------------

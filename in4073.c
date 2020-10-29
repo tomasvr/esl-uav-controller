@@ -56,6 +56,9 @@ void enter_panic_mode(bool remain_off, char caller[]){
 	uint32_t panic_start_time = get_time_us();
 	uint32_t panic_elapsed_time = get_time_us() - panic_start_time;
 	while(panic_elapsed_time < PANIC_DURATION) {
+		if (check_sensor_int_flag()) {
+			get_dmp_data();
+		}
 		run_filters_and_control();
 		printf("ae0  %d\n", ae[0]);
 		printf("ae1  %d\n", ae[1]);
@@ -103,17 +106,7 @@ int16_t clip_motor_value(int16_t value) {
 	return value;
 }
 
-/* Translate js axis to range: 0-255 instead of 0 in the middle */
-uint8_t translate_throttle(int8_t throttle) {
-	printf("throttle %d\n", throttle);
-	if(throttle <= JS_AXIS_MID_VALUE){
-		throttle = JS_AXIS_MID_VALUE - throttle;
-	}
-	else {
-		throttle = JS_AXIS_MAX_VALUE - throttle + JS_AXIS_MID_VALUE;
-	}
-	return throttle;
-}
+
 
 int8_t pitch_trim = 0;
 int8_t roll_trim = 0;
@@ -153,16 +146,6 @@ void keyboard_trimming(uint8_t motor_states) {
 	printf("key trimming: %d\n", motor_states);
 	printf("pitch trim:%d  roll trim: %d yaw trim %d\n", pitch_trim, roll_trim, yaw_trim);
 }
-
-int8_t translate_unsigned_to_signed(uint8_t value) {
-	int8_t signed_valued;
-	if (value <= 127) {
-		signed_valued = value;
-		return signed_valued;
-	}
-	signed_valued = value - 255;
-	return signed_valued;
-} 
 
 /*
  * Decode messages
@@ -217,13 +200,13 @@ void messg_decode(uint8_t message_byte){
 					//printf("axis: %d value: %d \n", (uint8_t)js_axis_type, message_byte);						
 					switch (js_axis_type) {
 						case ROLL_AXIS:
-							roll  = translate_unsigned_to_signed(message_byte);
+							roll  = translate_axis(message_byte);
 							break;
 						case PITCH_AXIS:
-							pitch = translate_unsigned_to_signed(message_byte);
+							pitch = translate_axis(message_byte);
 							break;
 						case YAW_AXIS:
-							yaw   = translate_unsigned_to_signed(message_byte);
+							yaw   = translate_axis(message_byte);
 							break;
 						case LIFT_THROTTLE:
 							message_byte = translate_throttle(message_byte);

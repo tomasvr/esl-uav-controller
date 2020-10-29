@@ -52,6 +52,9 @@ typedef enum {
 
 int check_mode_sync (uint8_t state, STATE_t fcb_state);
 
+int8_t translate_axis(uint8_t value); 
+uint8_t translate_throttle(int8_t throttle);
+
 uint32_t append_mode(uint32_t message, STATE_t mode);
 
 #endif 
