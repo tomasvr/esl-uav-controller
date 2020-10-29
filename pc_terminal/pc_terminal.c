@@ -364,7 +364,7 @@ uint32_t message_encode(int c){
 			;
 			printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
 	}
-	print_packet(message, "PC: Send message: ");
+	//print_packet(message, "PC: Send message: ");
 	return message;
 }
 

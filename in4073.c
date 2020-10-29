@@ -332,20 +332,16 @@ void check_battery_volt(){
 * Print info in the terminal.
 * J. Cui
 */
-void print_log_in_ter() {
+void print_info_testing() {
 	printf("%10ld | ", get_time_us());
 	printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
-	printf("%6d %6d %6d | ", phi, theta, psi);
-	printf("%6d %6d %6d | ", sp, sq, sr);
+	//printf("%6d %6d %6d | ", phi, theta, psi);
+	//printf("%6d %6d %6d | ", sp, sq, sr);
 	//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
-
 	printf("Py: %2d Pr: %2d Pa: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle);
-	printf("pitch: %4d ", pitch);
 	//printf("setp: %4d sp: %4d err: %4d output: %4d ", pitch_control.set_point, sp, pitch_control.err, pitch_control.output);
-
 	//printf("%4ld", ctrl_loop_time);
 	printf("%4d | \n", fcb_state);
-		clear_timer_flag();
 }
 
 /*------------------------------------------------------------------
@@ -400,7 +396,8 @@ int main(void)
 			printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
 			printf("Py: %2d Pr: %2d Pa: %2d Ps: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle, output_shift_value);
 			//plot_info();
-			print_log_in_ter();
+			print_info_testing();
+			clear_timer_flag();
 		}
 
 		if (check_sensor_int_flag()) {
