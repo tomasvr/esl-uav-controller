@@ -159,10 +159,15 @@ void decrease_p_angle_value(CONTROLLER *controller) {
  * Zehang Wu
  */
 int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr) {
-	yaw_control->set_point = yaw_set_point;
-	yaw_control->err = yaw_control->set_point - sr;
-	yaw_control->output = yaw_control->kp_rate * yaw_control->err;
-	return yaw_control->output >> CONTROL_OUTPUT_SHIFT_VALUE;
+	// yaw_control->set_point = yaw_set_point;
+	// yaw_control->err = yaw_control->set_point - sr;
+
+	int16_t error = (yaw_set_point - sr);
+	int32_t yaw_output = error * yaw_control->kp_rate;
+
+	yaw_control->output = yaw_control->kp_rate * error;
+
+	return yaw_output >> CONTROL_OUTPUT_SHIFT_VALUE;
 }
 
 /* one step calculation for pitch control loop
@@ -318,13 +323,13 @@ void run_filters_and_control() {
 			break;
 		case YAWCONTROL_ST:
 			//todo
-			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, clip_to_int8_values(yaw + yaw_trim) << 8, (sr)*-1 ), adjusted_lift); // i think sr needs *-1 (reverse sign
+			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, clip_to_int8_values(yaw + yaw_trim) << 6, (sr)*-1 ), adjusted_lift); // i think sr needs *-1 (reverse sign
 			break;
 		case FULLCONTROL_ST:
 			calculate_motor_values(
 				pitch_control_calc(pitch_control_pointer, clip_to_int8_values(pitch + pitch_trim) << 6, sq, theta), 
 				 roll_control_calc(roll_control_pointer,  clip_to_int8_values(roll  + roll_trim)  << 6, sp, phi), 
-				  yaw_control_calc(yaw_control_pointer,   clip_to_int8_values(yaw   + yaw_trim)   << 8, sr*-1 ),  // i think sr needs *-1 (reverse sign)
+				  yaw_control_calc(yaw_control_pointer,   clip_to_int8_values(yaw   + yaw_trim)   << 6, sr*-1 ),  // i think sr needs *-1 (reverse sign)
 				adjusted_lift);
 			break;
 		case UNKNOWN_ST:	
