@@ -307,7 +307,7 @@ void run_filters_and_control() {
 				panic_lift_level);
 			break;
 		case MANUAL_ST:
-			calculate_motor_values(pitch, roll, yaw, adjusted_lift);
+			calculate_motor_values(pitch >> 1, roll >> 1, yaw >> 1, adjusted_lift);
 			break;
 		case CALIBRATION_ST:
 			sensor_calib();
