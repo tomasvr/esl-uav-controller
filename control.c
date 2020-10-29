@@ -273,10 +273,10 @@ void calculate_motor_values(int16_t pitch_final, int16_t roll_final, int16_t yaw
 	if (yaw_final 	< -MAX_DIFF_VALUE) yaw_final 	= -MAX_DIFF_VALUE; 
 	if (yaw_final 	>  MAX_DIFF_VALUE) yaw_final 	=  MAX_DIFF_VALUE; 
 
-	ae[0] = BASE_LIFT + (lift_final << 1) + pitch_final - yaw_final; //* MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[1] = BASE_LIFT + (lift_final << 1) - roll_final  - yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[2] = BASE_LIFT + (lift_final << 1) - pitch_final + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[3] = BASE_LIFT + (lift_final << 1) + roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[0] = BASE_LIFT + (lift_final) + pitch_final - yaw_final; //* MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[1] = BASE_LIFT + (lift_final) - roll_final  - yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[2] = BASE_LIFT + (lift_final) - pitch_final + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[3] = BASE_LIFT + (lift_final) + roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
 }
 
 uint32_t calculate_time_diff (uint32_t start_time) {
@@ -294,19 +294,22 @@ int16_t clip_to_int8_values(int16_t value) {
 }
 
 void run_filters_and_control() {
+	uint16_t adjusted_lift = lift << 1; // translate range to [0-512]
 	switch(fcb_state) {
 		case SAFE_ST:
 			zero_motors();
 			break;
 		case PANIC_ST:
+			;
+			uint16_t panic_lift_level = (adjusted_lift < PANIC_MODE_LIFT) ? (adjusted_lift) : PANIC_MODE_LIFT;
 			calculate_motor_values(
-				pitch_control_calc(pitch_control_pointer, clip_to_int8_values(PANIC_MODE_LIFT  + pitch_trim) << 6, sq, theta), 
-				 roll_control_calc(roll_control_pointer,  clip_to_int8_values(PANIC_MODE_LIFT  + roll_trim)  << 6, sp, phi), 
+				pitch_control_calc(pitch_control_pointer, clip_to_int8_values(0  + pitch_trim) << 6, sq, theta), 
+				 roll_control_calc(roll_control_pointer,  clip_to_int8_values(0  + roll_trim)  << 6, sp, phi), 
 				  0,  // i think sr needs *-1 (reverse sign)
-				lift);
+				panic_lift_level);
 			break;
 		case MANUAL_ST:
-			calculate_motor_values(pitch, roll, yaw, lift);
+			calculate_motor_values(pitch, roll, yaw, adjusted_lift);
 			break;
 		case CALIBRATION_ST:
 			sensor_calib();
@@ -315,14 +318,14 @@ void run_filters_and_control() {
 			break;
 		case YAWCONTROL_ST:
 			//todo
-			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw << 8, (sr)*-1 ), lift); // i think sr needs *-1 (reverse sign
+			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw << 8, (sr)*-1 ), adjusted_lift); // i think sr needs *-1 (reverse sign
 			break;
 		case FULLCONTROL_ST:
 			calculate_motor_values(
 				pitch_control_calc(pitch_control_pointer, clip_to_int8_values(pitch + pitch_trim) << 6, sq, theta), 
 				 roll_control_calc(roll_control_pointer,  clip_to_int8_values(roll  + roll_trim)  << 6, sp, phi), 
 				  yaw_control_calc(yaw_control_pointer,   clip_to_int8_values(yaw   + yaw_trim)   << 8, sr*-1 ),  // i think sr needs *-1 (reverse sign)
-				lift);
+				adjusted_lift);
 			break;
 		case UNKNOWN_ST:	
 			zero_motors();

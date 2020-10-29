@@ -53,7 +53,6 @@ void enter_panic_mode(bool remain_off, char caller[]){
 		return; // if in safe mode then you do not need to go to panic mode
 	}
 	printf("FCB: QR: Entered PANIC MODE called by: %s", caller);
-	//uint16_t motor_speed = (lift << 1) + BASE_LIFT;
 	uint32_t panic_start_time = get_time_us();
 	uint32_t panic_elapsed_time = get_time_us() - panic_start_time;
 	while(get_time_us() - panic_start_time < PANIC_DURATION) {
@@ -353,7 +352,6 @@ void print_log_in_ter() {
 	printf("%4d |", fcb_state);
 	printf("%4d \n", ctrl_loop_time);
 	clear_timer_flag();
-	//printf("%4d \n", motor_lift_level);
 }
 
 /*------------------------------------------------------------------
@@ -376,8 +374,6 @@ int main(void)
 	int counter = 0;
 
 	usb_comm_last_received = get_time_us();
-	
-	motor_lift_level = 0;
 	
 	controller_init(yaw_control_pointer);
 	controller_init(roll_control_pointer);
@@ -412,8 +408,8 @@ int main(void)
 
 			printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
 			printf("Py: %2d Pr: %2d Pa: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle);
-			plot_info();
-			//print_log_in_ter();
+			//plot_info();
+			print_log_in_ter();
 		}
 
 		if (check_sensor_int_flag()) {
