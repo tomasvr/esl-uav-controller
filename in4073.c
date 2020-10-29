@@ -431,8 +431,9 @@ int main(void)
 			logging();
 			// readout();
 			}
+			printf("trim p: %2d r: %2d y: %2d | ", pitch_trim, roll_trim, yaw_trim);
+			printf("Py: %2d Pr: %2d Pa: %2d | ", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle);
 			plot_info();
-			//print_log_in_ter();
 		}
 
 		if (check_sensor_int_flag()) {
