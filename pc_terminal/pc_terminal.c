@@ -335,7 +335,7 @@ uint32_t message_encode(int c){
 			break;
 		case 27: 
 			// keyboard 'ESC' pressed, SWITCH TO PANIC MODE
-			message = append_comm_type(message, ESC_COMM);
+			message = handle_mode_switch(message, PANIC_ST);
 		case 48: 
 			// keyboard '0' pressed, SWITCH TO PANIC MODE
 			message = handle_mode_switch(message, SAFE_ST);
@@ -379,7 +379,7 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	}
 	if (js_type == JS_EVENT_BUTTON) { // js buttons
 		if (js_number == 0) {
-			message = append_comm_type(message, ESC_COMM);
+			message = handle_mode_switch(message, PANIC_ST);
 		} else {
 			STATE_t to_state = js_number; // The button number indicates which state (see states.h)
 			message = handle_mode_switch(message, to_state);			

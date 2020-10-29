@@ -281,12 +281,12 @@ void calculate_motor_values(int16_t pitch_final, int16_t roll_final, int16_t yaw
 	// ae[3] = operating_motor_bounds((lift << 2) + (roll/320  + yaw /320));
 
 	// clip values
-	if (pitch_final < -MAX_DIFF_VALUE) pitch_final  = -MAX_DIFF_VALUE; 
-	if (pitch_final >  MAX_DIFF_VALUE) pitch_final  =  MAX_DIFF_VALUE; 
-	if (roll_final 	< -MAX_DIFF_VALUE) roll_final   = -MAX_DIFF_VALUE; 
-	if (roll_final 	>  MAX_DIFF_VALUE) roll_final   =  MAX_DIFF_VALUE; 
-	if (yaw_final 	< -MAX_DIFF_VALUE) yaw_final 	= -MAX_DIFF_VALUE; 
-	if (yaw_final 	>  MAX_DIFF_VALUE) yaw_final 	=  MAX_DIFF_VALUE; 
+	// if (pitch_final < -MAX_DIFF_VALUE) pitch_final  = -MAX_DIFF_VALUE; 
+	// if (pitch_final >  MAX_DIFF_VALUE) pitch_final  =  MAX_DIFF_VALUE; 
+	// if (roll_final 	< -MAX_DIFF_VALUE) roll_final   = -MAX_DIFF_VALUE; 
+	// if (roll_final 	>  MAX_DIFF_VALUE) roll_final   =  MAX_DIFF_VALUE; 
+	// if (yaw_final 	< -MAX_DIFF_VALUE) yaw_final 	= -MAX_DIFF_VALUE; 
+	// if (yaw_final 	>  MAX_DIFF_VALUE) yaw_final 	=  MAX_DIFF_VALUE; 
 
 	ae[0] = BASE_LIFT + (lift_final) + pitch_final - yaw_final; //* MAX_ALLOWED_DIFF_MOTOR / 256;
 	ae[1] = BASE_LIFT + (lift_final) - roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
