@@ -48,6 +48,33 @@ CONTROLLER *roll_control_pointer = &roll_control;
 CONTROLLER pitch_control;
 CONTROLLER *pitch_control_pointer = &pitch_control;
 
+const char * state_to_str(STATE_t p_state) {
+	switch(p_state) {
+		case SAFE_ST:
+			return "SAFE_ST";	
+			break;
+		case PANIC_ST:
+			return "PANIC_ST";	
+			break;
+		case MANUAL_ST:
+			return "MANUAL_ST";	
+			break;
+		case CALIBRATION_ST:
+			return "CALIBRATION_ST";	
+			break;
+		case YAWCONTROL_ST:
+			return "YAWCONTROL_ST";	
+			break;
+		case FULLCONTROL_ST:
+			return "FULLCONTROL_ST";	
+			break;
+		case UNKNOWN_ST:
+			return "UNKNOWN_ST";	
+			break;		
+	}
+
+}
+
 void enter_panic_mode(bool remain_off, char caller[]){
 	if (fcb_state == SAFE_ST) {
 		return; // if in safe mode then you do not need to go to panic mode
@@ -193,7 +220,7 @@ void messg_decode(uint8_t message_byte){
 						break;
 				case MODE_SW_COMM:
 			 		fcb_dest_state = retrieve_mode(message_byte);
-			 		printf("Comm type: %d, State: %d \n", g_current_comm_type, fcb_dest_state);
+			 		//printf("Comm type: %d, State: %d \n", g_current_comm_type, fcb_dest_state);
 					fcb_state = mode_sw_action("FCB", fcb_state, fcb_dest_state);
 					fcb_dest_state = UNKNOWN_ST;					
 					break;
@@ -341,7 +368,7 @@ void print_info_testing() {
 	printf("Py: %2d Pr: %2d Pa: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle);
 	//printf("setp: %4d sp: %4d err: %4d output: %4d ", pitch_control.set_point, sp, pitch_control.err, pitch_control.output);
 	//printf("%4ld", ctrl_loop_time);
-	printf("%4d | \n", fcb_state);
+	printf(" mode: %s | \n", state_to_str(fcb_state));
 }
 
 /*------------------------------------------------------------------
