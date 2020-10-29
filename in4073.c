@@ -79,8 +79,8 @@ void enter_panic_mode(bool remain_off, char caller[]){
 	if (fcb_state == SAFE_ST) {
 		return; // if in safe mode then you do not need to go to panic mode
 	}
+	printf("FCB: Entered PANIC MODE"); // called by: %s", caller);
 	fcb_state = PANIC_ST; // make sure system is in panic state;
-	printf("FCB: QR: Entered PANIC MODE called by: %s", caller);
 	uint32_t panic_start_time = get_time_us();
 	uint32_t panic_elapsed_time = get_time_us() - panic_start_time;
 	while(panic_elapsed_time < PANIC_DURATION) {
@@ -88,7 +88,7 @@ void enter_panic_mode(bool remain_off, char caller[]){
 			get_dmp_data();
 		}
 		run_filters_and_control();
-		printf("ae0  %d\n", ae[0]);
+		//printf("ae0  %d\n", ae[0]);
 		//printf("ae1  %d\n", ae[1]);
 		//printf("ae2  %d\n", ae[2]);
 		//printf("ae3  %d\n", ae[3]);
