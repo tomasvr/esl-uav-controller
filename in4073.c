@@ -62,9 +62,9 @@ void enter_panic_mode(bool remain_off, char caller[]){
 		}
 		run_filters_and_control();
 		printf("ae0  %d\n", ae[0]);
-		printf("ae1  %d\n", ae[1]);
-		printf("ae2  %d\n", ae[2]);
-		printf("ae3  %d\n", ae[3]);
+		//printf("ae1  %d\n", ae[1]);
+		//printf("ae2  %d\n", ae[2]);
+		//printf("ae3  %d\n", ae[3]);
 		panic_elapsed_time = get_time_us() - panic_start_time;
 	}
 	lift = 0; //reset motor_lift_level

@@ -18,7 +18,6 @@
 * if color == -1, then all leds are turned off
 * gpio_pin_set TURNS OFF led
 * gpio_pin_clear TURNS ON led
-* "aruthor"
 */
 void switch_led(int color) {
 	nrf_gpio_pin_set(GREEN);
@@ -161,12 +160,9 @@ void decrease_p_angle_value(CONTROLLER *controller) {
 int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr) {
 	// yaw_control->set_point = yaw_set_point;
 	// yaw_control->err = yaw_control->set_point - sr;
-
 	int16_t error = (yaw_set_point - sr);
 	int32_t yaw_output = error * yaw_control->kp_rate;
-
 	yaw_control->output = yaw_control->kp_rate * error;
-
 	return yaw_output >> CONTROL_OUTPUT_SHIFT_VALUE;
 }
 
@@ -179,8 +175,6 @@ int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, i
 	int32_t output_angle = (error * pitch_control->kp_angle - p_sq);
 	int32_t pitch_output = output_angle * pitch_control->kp_rate;
 	pitch_control->output = pitch_output;
-	//printf("setpoint: %ld, theta: %ld, error: %ld | ", pitch_set_point, theta, error);
-	//printf("sq: %ld, output_angle: %ld | ", sq, output_angle);
 	//printf("pitch_output: %ld\n", pitch_output >> 8);	
 	return pitch_output >> CONTROL_OUTPUT_SHIFT_VALUE; // divide by a lot to give sensible value
 }
@@ -189,7 +183,6 @@ int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, i
  * Zehang Wu
  */
 int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int16_t p_sp, int16_t p_phi) {
-	// old way
 	// int16_t output = ((roll_set_point - phi) * roll_control->kp_angle - sp) * roll_control->kp_rate;
 	int16_t error = (roll_set_point - p_phi); // will be in range [-16xxx ... 16xxx]
 	int32_t output_angle = (error * roll_control->kp_angle - p_sp);
