@@ -34,8 +34,8 @@ static const uint8_t is_allowed[7][7] = {
 /* 	 from\to  safe    panic   calib   manual  yaw_c   full_c  unknown */
   /* safe   */ {0, 	    0,      1,      1,      1,      1,      0}, 
   /* panic  */ {0, 	    0,      0,      0,      0,      0,      0}, 
-  /* calib  */ {0, 	    1,      0, 	    1,      1,      1,      0}, 
   /* manual */ {0, 	    1,      0, 	    0,      0,      0,      0}, 
+  /* calib  */ {0, 	    1,      0, 	    0,      0,      0,      0}, 
   /* yaw c  */ {0, 	    1,      0, 	    0,      0,      0,      0}, 
   /* full c */ {0, 	    1,      0, 	    0,      0,      0,      0}, 
   /* unknown*/ {0, 	    0,      0,      0,      0,      0,      0}, 

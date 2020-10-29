@@ -144,8 +144,8 @@ int8_t yaw_trim = 0;
 void keyboard_trimming(uint8_t motor_states) {
 	switch(motor_states){
 		case LIFT_UP:
-			if (lift + TRIM_STEP_SIZE < 0) {
-				lift = lift - TRIM_STEP_SIZE;
+			if (lift + TRIM_STEP_SIZE < 255) {
+				lift = lift + TRIM_STEP_SIZE;
 			}
 			break;
 		case LIFT_DOWN:
