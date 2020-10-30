@@ -82,11 +82,10 @@ const char * state_to_str(STATE_t p_state) {
 		case FULLCONTROL_ST:
 			return "FULLCONTROL_ST";	
 			break;
-		case UNKNOWN_ST:
+		default:
 			return "UNKNOWN_ST";	
 			break;		
 	}
-
 }
 
 /**
@@ -275,7 +274,7 @@ void process_packet(uint8_t c){
 		messg_decode(c);
 		FRAG_COUNT--;
 	} else {
-		printf("process key called but FRAG_COUNT < 0, FRAG_COUNT: \n", FRAG_COUNT);
+		printf("process key called but FRAG_COUNT < 0, FRAG_COUNT: %d \n", FRAG_COUNT);
 	}
 }
 

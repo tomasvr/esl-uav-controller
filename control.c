@@ -142,6 +142,13 @@ void controller_init(CONTROLLER *controller) {
 	controller->output = 0;
 }
 
+/**
+ * @brief      Adjust parameter value based on byte form packet
+ *
+ * @param[in]  message_byte  The message byte to be procssed
+ * 
+ * @author     T. van Rietbergen
+ */
 void adjust_parameter_value(uint8_t message_byte) {
 	switch(message_byte) {
 		case P_RATE_YAW_INC:
@@ -173,7 +180,7 @@ void adjust_parameter_value(uint8_t message_byte) {
 				change_shift_value(false);
 				break;				 			
 			default: 
-				printf("FCB: UKNOWN CHANGE P VALUE: \n", message_byte);
+				printf("FCB: UKNOWN PARAM_CHANGE_t: %d \n", message_byte);
 				break;
 	}		
 }
@@ -344,7 +351,6 @@ void calculate_motor_values(int16_t p_pitch, int16_t p_roll, int16_t p_yaw, uint
 uint32_t calculate_time_diff (uint32_t start_time) {
 	return get_time_us() - start_time;
 }
-
 
 /**
  * @brief      Ensure that attidute setpoint values do not exceed allowed range

@@ -381,7 +381,6 @@ uint32_t message_encode(int c){
  * 
  * @author     T. van Rietbergen
  */
-
 void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	uint32_t message = BASE_MESSAGE_PACKET_BITS;
 	if (js_type == 129) { // button startup state (not used)
