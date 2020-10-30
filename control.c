@@ -308,7 +308,7 @@ void update_motors(void)
  * @param[in]  p_pitch  The pitch final
  * @param[in]  p_roll   The roll final
  * @param[in]  p_yaw    The yaw final
- * @param[in]  lift_final   The lift final
+ * @param[in]  p_lift   The lift final
  * 
  * @author     Zehang Wu
  */
@@ -322,10 +322,10 @@ void calculate_motor_values(int16_t p_pitch, int16_t p_roll, int16_t p_yaw, uint
 	if (p_yaw 	< -MAX_DIFF_VALUE) p_yaw 	= -MAX_DIFF_VALUE; 
 	if (p_yaw 	>  MAX_DIFF_VALUE) p_yaw 	=  MAX_DIFF_VALUE; 
 
-	ae[0] = BASE_LIFT + (lift_final) + p_pitch - p_yaw;
-	ae[1] = BASE_LIFT + (lift_final) - p_roll  + p_yaw;
-	ae[2] = BASE_LIFT + (lift_final) - p_pitch - p_yaw; 
-	ae[3] = BASE_LIFT + (lift_final) + p_roll  + p_yaw; 
+	ae[0] = BASE_LIFT + (p_lift) + p_pitch - p_yaw;
+	ae[1] = BASE_LIFT + (p_lift) - p_roll  + p_yaw;
+	ae[2] = BASE_LIFT + (p_lift) - p_pitch - p_yaw; 
+	ae[3] = BASE_LIFT + (p_lift) + p_roll  + p_yaw; 
 
 }
 

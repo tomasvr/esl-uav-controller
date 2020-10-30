@@ -14,11 +14,8 @@
 #define PACKET_SEND_INTERVAL 20000 // (in us)
 
 // defines whether joystick is plugged in
-<<<<<<< HEAD
 //#define ENABLE_JOYSTICK
-=======
-// #define ENABLE_JOYSTICK
->>>>>>> master
+
 // defines joystick USB port (can be found using 'findusb' script)
 #define JS_DEV	"/dev/input/js0"
 

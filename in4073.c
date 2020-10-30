@@ -395,3 +395,4 @@ int main(void)
 	printf("\n\t Goodbye \n\n");
 	nrf_delay_ms(100);
 	NVIC_SystemReset();
+}
