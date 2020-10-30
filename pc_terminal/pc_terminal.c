@@ -479,7 +479,7 @@ int main(int argc, char **argv)
 		if ((c = term_getchar_nb()) != -1){
 			// distinguish the keyboard characters and arrows
 			if (c == '\033') { 
-			    //term_getchar_nb(); 
+			    term_getchar_nb(); 
 			    c = term_getchar_nb();
 			    if (c!='A' && c!='B' && c!='C' && c!='D') {
 			    	rs232_putchar(message_encode(27));
