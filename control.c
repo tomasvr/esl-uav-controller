@@ -174,25 +174,23 @@ void decrease_shift_value() {
 /* one step calculation for yaw control loop
  * Zehang Wu
  */
-int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr) {
-	// yaw_control->set_point = yaw_set_point;
-	// yaw_control->err = yaw_control->set_point - sr;
+int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr) 
+{
 	int16_t error = (yaw_set_point - sr);
 	int32_t yaw_output = error * yaw_control->kp_rate;
-	yaw_control->output = yaw_control->kp_rate * error;
 	return yaw_output >> (output_shift_value - 4);
 }
 
 /* one step calculation for pitch control loop
  * Zehang Wu
  */
-int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, int16_t p_sq, int16_t p_theta) {
+int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, int16_t p_sq, int16_t p_theta) 
+{
 	// setpoint is in range [-8192 ... 8191] to match desired theta range
 	int16_t error = (pitch_set_point - p_theta); // will be in range [-16xxx ... 16xxx]
 	int32_t output_angle = (error * pitch_control->kp_angle - p_sq);
 	int32_t pitch_output = output_angle * pitch_control->kp_rate;
-	pitch_control->output = pitch_output;
-	//printf("pitch_output: %ld\n", pitch_output >> 8);	
+	// printf("pitch_output: %ld\n", pitch_output >> 8);	
 	return pitch_output >> output_shift_value; // divide by a lot to give sensible value
 }
 
@@ -200,11 +198,9 @@ int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, i
  * Zehang Wu
  */
 int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int16_t p_sp, int16_t p_phi) {
-	// int16_t output = ((roll_set_point - phi) * roll_control->kp_angle - sp) * roll_control->kp_rate;
 	int16_t error = (roll_set_point - p_phi); // will be in range [-16xxx ... 16xxx]
 	int32_t output_angle = (error * roll_control->kp_angle - p_sp);
 	int32_t roll_output = output_angle * roll_control->kp_rate;
-	roll_control->output = roll_output;
 	return roll_output >> output_shift_value;
 }
 
@@ -272,9 +268,10 @@ void update_motors(void)
 }
 
 /* calculate actuator values(ae[*]) from pitch, roll, paw and lift
- * 'Author'
+ * 'Zehang Wu'
  */
-void calculate_motor_values(int16_t pitch_final, int16_t roll_final, int16_t yaw_final, uint16_t lift_final) { //TODO: add min throttle (around 170) and max throttle (1000)
+void calculate_motor_values(int16_t pitch_final, int16_t roll_final, int16_t yaw_final, uint16_t lift_final) 
+{
 	// ae[0] = operating_motor_bounds((lift << 2) + (pitch /320 - yaw/320));
 	// ae[1] = operating_motor_bounds((lift << 2) - (roll/320  + yaw/320));
 	// ae[2] = operating_motor_bounds((lift << 2) - (pitch/320 - yaw/320));
