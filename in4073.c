@@ -418,11 +418,13 @@ int main(void)
 			adc_request_sample();
 			read_baro();
 
+			if (counter % 20 == 0) {
+			logging();
+			}
 			printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
 			printf("Py: %2d Pr: %2d Pa: %2d Ps: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle, output_shift_value);
-			//plot_info();
+			plot_info();
 			print_info_testing();
-			clear_timer_flag();
 		}
 
 		if (check_sensor_int_flag()) {
