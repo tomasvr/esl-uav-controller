@@ -45,7 +45,7 @@ struct motor_log {
 };//16bytes
 
 void logging(void);
-void plot_info(void);
+void readout(void);
 
 
 #endif // logging_H__

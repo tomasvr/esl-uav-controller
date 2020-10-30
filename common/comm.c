@@ -62,6 +62,7 @@ uint8_t translate_throttle(int8_t throttle_value) {
 	return throttle_value;
 }
 
+<<<<<<< HEAD
 /**
  * @brief      Appends a keyboard motor control command to packet.
  *
@@ -75,6 +76,15 @@ uint8_t translate_throttle(int8_t throttle_value) {
 uint32_t append_keyboard_motor_control (uint32_t packet, uint8_t motor_state_changes){
 	packet |= motor_state_changes << BIT_LOCATION_MOTOR_STATES;
 	return packet;
+=======
+/*  
+* Append functions, append required bits for a message. (PC side)
+* " "
+*/
+uint32_t append_keyboard_motor_control (uint32_t message, uint8_t motor_states){
+	message |= motor_states << BIT_LOCATION_MOTOR_STATES;
+	return message;
+>>>>>>> master
 }
 
 /**
@@ -141,6 +151,7 @@ uint32_t append_parameter_change(uint32_t packet, PARAM_CHANGE_t parameter){
 	return packet;
 }
 
+<<<<<<< HEAD
 /**
  * @brief      Retrieves a keyboard motor control command from packet.
  *
@@ -152,6 +163,15 @@ uint32_t append_parameter_change(uint32_t packet, PARAM_CHANGE_t parameter){
  */
 uint8_t retrieve_keyboard_motor_control (uint8_t packet_byte){
 	return packet_byte;
+=======
+/* 
+* Retrieve required info from a message. (Drone side) 
+* " "
+*/
+uint8_t retrieve_keyboard_motor_control (uint8_t message_byte){ //TODO: change message to pointer for better performancee
+	//todo
+	return message_byte;
+>>>>>>> master
 }
 
 /**

@@ -136,7 +136,7 @@ void check_USB_connection_alive() {
  *
  * @param[in]  trim_command  The trim command
  * 
- * @author     T. van Rietbergen
+ * @author     Xinyun Xu
  */
 void keyboard_trimming(uint8_t trim_command) {
 	switch(trim_command){
@@ -285,6 +285,10 @@ void process_packet(uint8_t c){
 	}
 }
 
+/*
+ * Check battery voltage.
+ * Xinyun Xu
+ */
 void check_battery_volt(){
 	current_time_battery = get_time_us();
 	if(current_time_battery - last_time_battery > BATTERY_CHECK_INTERVAL_THRESHOLD){
@@ -391,4 +395,3 @@ int main(void)
 	printf("\n\t Goodbye \n\n");
 	nrf_delay_ms(100);
 	NVIC_SystemReset();
-}

@@ -23,7 +23,7 @@ extern MOTOR_CTRL g_current_m1_state;
 extern MOTOR_CTRL g_current_m2_state;
 extern MOTOR_CTRL g_current_m3_state;
 
-typedef struct // TODO: should use float?
+typedef struct
 {
 	int16_t set_point;
 	int16_t sensor_value;

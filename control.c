@@ -32,7 +32,6 @@ void switch_led(int color) {
 
 
 // variable declaration for Calibration
-bool DMP = true;
 bool calib_done = false;
 int16_t sensor_sum 	= 0;
 uint8_t calib_counter 	= 0;
@@ -44,8 +43,9 @@ int16_t sp_calib = 0, 	sq_calib = 0, 	sr_calib = 0;
 int16_t sax_calib = 0, 	say_calib = 0, 	saz_calib = 0;
 
 /*
-*
-*/
+ * Sensor calibration process.
+ * Xinyun Xu
+ */
 void sensor_calc(uint8_t num) {
 	do{
 		angle_calib[0] 	+= phi; 
@@ -100,16 +100,19 @@ void sensor_calc(uint8_t num) {
 	else calib_done = false; // not calibrated yet
 }
 
+/*
+ * Sensor calibration num operation.
+ * Xinyun Xu
+ */
 void sensor_calib() {
-	sensor_calc(100); 
+	sensor_calc(CALIBRATION_NUM); 
 	if (calib_done) printf("\n CALIB DONE!\n");
-	
-	if(DMP){
-		dmp_set_gyro_bias(gyro_calib);
-		dmp_set_accel_bias(acce_calib);
-	}
 }
 
+/*
+ * Sensor offset remove.
+ * Xinyun Xu
+ */
 void offset_remove() {
 	phi 	-= phi_calib; 
 	theta 	-= theta_calib; 
@@ -228,25 +231,23 @@ void change_shift_value(bool increase) {
 /* one step calculation for yaw control loop
  * Zehang Wu
  */
-int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr) {
-	// yaw_control->set_point = yaw_set_point;
-	// yaw_control->err = yaw_control->set_point - sr;
+int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr) 
+{
 	int16_t error = (yaw_set_point - sr);
 	int32_t yaw_output = error * yaw_control->kp_rate;
-	yaw_control->output = yaw_control->kp_rate * error;
 	return yaw_output >> (output_shift_value - 4);
 }
 
 /* one step calculation for pitch control loop
  * Zehang Wu
  */
-int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, int16_t p_sq, int16_t p_theta) {
+int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, int16_t p_sq, int16_t p_theta) 
+{
 	// setpoint is in range [-8192 ... 8191] to match desired theta range
 	int16_t error = (pitch_set_point - p_theta); // will be in range [-16xxx ... 16xxx]
 	int32_t output_angle = (error * pitch_control->kp_angle - p_sq);
 	int32_t pitch_output = output_angle * pitch_control->kp_rate;
-	pitch_control->output = pitch_output;
-	//printf("pitch_output: %ld\n", pitch_output >> 8);	
+	// printf("pitch_output: %ld\n", pitch_output >> 8);	
 	return pitch_output >> output_shift_value; // divide by a lot to give sensible value
 }
 
@@ -254,18 +255,16 @@ int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, i
  * Zehang Wu
  */
 int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int16_t p_sp, int16_t p_phi) {
-	// int16_t output = ((roll_set_point - phi) * roll_control->kp_angle - sp) * roll_control->kp_rate;
 	int16_t error = (roll_set_point - p_phi); // will be in range [-16xxx ... 16xxx]
 	int32_t output_angle = (error * roll_control->kp_angle - p_sp);
 	int32_t roll_output = output_angle * roll_control->kp_rate;
-	roll_control->output = roll_output;
 	return roll_output >> output_shift_value;
 }
 
 
 /*
 * Limit the motors' speed in [170, 450].
-* "aruthor"
+* " "
 */
 void clip_motors() {
 	for (int i = 0; i < 4; i++) {
@@ -278,7 +277,6 @@ void clip_motors() {
 /**
  * @brief      Zero all the engine values
  * 
- * @author     T. van rietbergen
  */
 void zero_motors() {
 	ae[0] = 0;
@@ -312,7 +310,7 @@ void update_motors(void)
  * @param[in]  p_yaw    The yaw final
  * @param[in]  lift_final   The lift final
  * 
- * @author     T. van Rietbergen
+ * @author     Zehang Wu
  */
 void calculate_motor_values(int16_t p_pitch, int16_t p_roll, int16_t p_yaw, uint16_t p_lift) { //TODO: add min throttle (around 170) and max throttle (1000)
 
@@ -328,8 +326,13 @@ void calculate_motor_values(int16_t p_pitch, int16_t p_roll, int16_t p_yaw, uint
 	ae[1] = BASE_LIFT + (lift_final) - p_roll  + p_yaw;
 	ae[2] = BASE_LIFT + (lift_final) - p_pitch - p_yaw; 
 	ae[3] = BASE_LIFT + (lift_final) + p_roll  + p_yaw; 
+
 }
 
+/*
+* Calculate the time duration(T = current_time - start_time)
+* J. Cui 
+*/
 uint32_t calculate_time_diff (uint32_t start_time) {
 	return get_time_us() - start_time;
 }

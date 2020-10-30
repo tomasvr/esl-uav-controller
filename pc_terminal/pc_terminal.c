@@ -381,6 +381,7 @@ uint32_t message_encode(int c){
  * 
  * @author     T. van Rietbergen
  */
+
 void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	uint32_t message = BASE_MESSAGE_PACKET_BITS;
 	if (js_type == 129) { // button startup state (not used)
@@ -426,7 +427,7 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 uint32_t GetTimeStamp() {
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    return tv.tv_sec*(uint32_t)1000000+tv.tv_usec; //TODO: check for overflow? <-- (32 bit allows for about 70 minutes before overflow, fix this later?)
+    return tv.tv_sec*(uint32_t)1000000+tv.tv_usec;
 }
  
 /*----------------------------------------------------------------
