@@ -7,5 +7,5 @@ This repository contains all the source files for the drone control application 
 
 - Tomas van Rietbergen
 - Zehang Wu
-- Jiaho Cui
+- Jiahao Cui
 - Xinyun Xu
