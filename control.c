@@ -140,39 +140,93 @@ void controller_init(CONTROLLER *controller) {
 	controller->output = 0;
 }
 
-
-void  increase_p_rate_value(CONTROLLER *controller) {
-	if (controller->kp_rate < CONTROLLER_P_UPPER_LIMIT) 
-		controller->kp_rate += CONTROLLER_P_STEP_SIZE;
+void adjust_parameter_value(uint8_t message_byte) {
+	switch(message_byte) {
+		case P_RATE_YAW_INC:
+				change_p_value(yaw_control_pointer, RATE, true);
+				break;
+			case P_RATE_YAW_DEC:
+				change_p_value(yaw_control_pointer, RATE, false);
+				break;
+			case P_ANGLE_PITCHROLL_INC:
+				change_p_value(pitch_control_pointer, ANGLE, true);
+				change_p_value(roll_control_pointer, ANGLE, true);
+				break;
+			case P_ANGLE_PITCHROLL_DEC:
+				change_p_value(pitch_control_pointer, ANGLE, false);
+				change_p_value(roll_control_pointer, ANGLE, false);
+				break;
+			case P_RATE_PITCHROLL_INC:
+				change_p_value(pitch_control_pointer, RATE, true);
+				change_p_value(roll_control_pointer, RATE, true);
+				break;
+			case P_RATE_PITCHROLL_DEC:
+				change_p_value(pitch_control_pointer, RATE, false);
+				change_p_value(roll_control_pointer, RATE, false);
+				break;
+			case P_SHIFT_RIGHT_VALUE_INC:
+				change_shift_value(true);
+				break; 
+			case P_SHIFT_RIGHT_VALUE_DEC:
+				change_shift_value(false);
+				break;				 			
+			default: 
+				printf("FCB: UKNOWN CHANGE P VALUE: \n", message_byte);
+				break;
+	}		
 }
 
-void decrease_p_rate_value(CONTROLLER *controller) {
-	if (controller->kp_rate > CONTROLLER_P_LOWER_LIMIT) 
-		controller->kp_rate -= CONTROLLER_P_STEP_SIZE;
+/**
+ * @brief      Change a P paramter for the P-controller
+ *
+ * @param      controller  The controller whose P parameter to be changed
+ * @param[in]  param       The parameter to be changed (rate or angle)
+ * @param[in]  increase    Wheter parameter should be increased (1) or decreased (0)
+ * 
+ * @author     T. van Rietbergem=n
+ */
+void  change_p_value(CONTROLLER *controller, P_PARAM param, bool increase) {
+	if 	((param == RATE) && increase) {
+		if (controller->kp_rate < CONTROLLER_P_UPPER_LIMIT) 
+			controller->kp_rate += CONTROLLER_P_STEP_SIZE;
+	} 
+	else if ((param == RATE) && !increase) {
+		if (controller->kp_rate > CONTROLLER_P_LOWER_LIMIT) 
+			controller->kp_rate -= CONTROLLER_P_STEP_SIZE;
+	} 
+	else if ((param == ANGLE) && increase) {
+		if (controller->kp_angle < CONTROLLER_P_UPPER_LIMIT) 
+			controller->kp_angle += CONTROLLER_P_STEP_SIZE;
+	} 
+	else if ((param == ANGLE) && !increase) {
+		if (controller->kp_angle > CONTROLLER_P_LOWER_LIMIT)
+			controller->kp_angle-= CONTROLLER_P_STEP_SIZE;
+	} 	
+	else {
+		printf("ERROR - UNKOWN PARAM CHANGE (change_p_value)\n");
+	}	
 }
 
-void  increase_p_angle_value(CONTROLLER *controller) {
-	if (controller->kp_angle < CONTROLLER_P_UPPER_LIMIT) 
-		controller->kp_angle += CONTROLLER_P_STEP_SIZE;
-}
-
-void decrease_p_angle_value(CONTROLLER *controller) {
-	if (controller->kp_angle > CONTROLLER_P_LOWER_LIMIT)
-		controller->kp_angle-= CONTROLLER_P_STEP_SIZE;
-}
-
-void increase_shift_value() {
-	if (output_shift_value < OUTPUT_SHIFT_UPPER_LIMIT) {
-		output_shift_value += 1;
+/**
+ * @brief      Change the shift-right paramter which decreased control output
+ *
+ * @param[in]  increase  Whether shift-right parameter should be increased or decreased
+ * 
+ * @author     T. van Rietbergen
+ */
+void change_shift_value(bool increase) {
+	if (increase) {
+		if (output_shift_value < OUTPUT_SHIFT_UPPER_LIMIT) {
+			output_shift_value += 1;
+		}		
 	}
-}
-
-void decrease_shift_value() {
-	if (output_shift_value > OUTPUT_SHIFT_LOWER_LIMIT) {
-		output_shift_value -= 1;
+	else {
+		if (output_shift_value > OUTPUT_SHIFT_LOWER_LIMIT) {
+			output_shift_value -= 1;
+		}			
 	}
-}
 
+}
 
 /* one step calculation for yaw control loop
  * Zehang Wu
@@ -220,10 +274,10 @@ void clip_motors() {
 	}
 }
 
-/*
-* Set all motor speed to 0.
-* " "
-*/
+/**
+ * @brief      Zero all the engine values
+ * 
+ */
 void zero_motors() {
 	ae[0] = 0;
 	ae[1] = 0;
@@ -231,31 +285,9 @@ void zero_motors() {
 	ae[3] = 0;	
 }
 
-/* for safety */
-// int16_t clip_motor_value(int16_t value) {
-// 	if (value < 0) {
-// 		return 0;
-// 	}
-// 	if (value > MAX_ALLOWED_SPEED) {
-// 		return MAX_ALLOWED_SPEED;
-// 	}
-// 	return value;
-// }
-
-// int16_t operating_motor_bounds(int16_t value) {
-// 	if (value < 0) {
-// 		return 0;
-// 	}
-// 	if (value > MAX_ALLOWED_SPEED) {
-// 		return MAX_ALLOWED_SPEED;
-// 	}
-// 	return value;
-// }
-
 void update_motors(void)
 {					
 	if (fcb_state != SAFE_ST) clip_motors();
-		// printf("%3d %3d %3d %3d | \n",ae[0],ae[1],ae[2],ae[3]);
 		motor[0] = ae[0];
 		motor[1] = ae[1];
 		motor[2] = ae[2];
@@ -270,28 +302,31 @@ void update_motors(void)
 #endif
 }
 
-/* calculate actuator values(ae[*]) from pitch, roll, paw and lift
- * 'Zehang Wu'
+/**
+ * @brief      Calculate motor values based on current state, desired attitude and sensor input
+ *
+ * @param[in]  p_pitch  The pitch final
+ * @param[in]  p_roll   The roll final
+ * @param[in]  p_yaw    The yaw final
+ * @param[in]  p_lift   The lift final
+ * 
+ * @author     Zehang Wu
  */
-void calculate_motor_values(int16_t pitch_final, int16_t roll_final, int16_t yaw_final, uint16_t lift_final) 
-{
-	// ae[0] = operating_motor_bounds((lift << 2) + (pitch /320 - yaw/320));
-	// ae[1] = operating_motor_bounds((lift << 2) - (roll/320  + yaw/320));
-	// ae[2] = operating_motor_bounds((lift << 2) - (pitch/320 - yaw/320));
-	// ae[3] = operating_motor_bounds((lift << 2) + (roll/320  + yaw /320));
+void calculate_motor_values(int16_t p_pitch, int16_t p_roll, int16_t p_yaw, uint16_t p_lift) { //TODO: add min throttle (around 170) and max throttle (1000)
 
-	// clip values
-	// if (pitch_final < -MAX_DIFF_VALUE) pitch_final  = -MAX_DIFF_VALUE; 
-	// if (pitch_final >  MAX_DIFF_VALUE) pitch_final  =  MAX_DIFF_VALUE; 
-	// if (roll_final 	< -MAX_DIFF_VALUE) roll_final   = -MAX_DIFF_VALUE; 
-	// if (roll_final 	>  MAX_DIFF_VALUE) roll_final   =  MAX_DIFF_VALUE; 
-	// if (yaw_final 	< -MAX_DIFF_VALUE) yaw_final 	= -MAX_DIFF_VALUE; 
-	// if (yaw_final 	>  MAX_DIFF_VALUE) yaw_final 	=  MAX_DIFF_VALUE; 
+	// Clip values to now exceed maximum difference between values
+	if (p_pitch < -MAX_DIFF_VALUE) p_pitch  = -MAX_DIFF_VALUE; 
+	if (p_pitch >  MAX_DIFF_VALUE) p_pitch  =  MAX_DIFF_VALUE; 
+	if (p_roll 	< -MAX_DIFF_VALUE) p_roll   = -MAX_DIFF_VALUE; 
+	if (p_roll 	>  MAX_DIFF_VALUE) p_roll   =  MAX_DIFF_VALUE; 
+	if (p_yaw 	< -MAX_DIFF_VALUE) p_yaw 	= -MAX_DIFF_VALUE; 
+	if (p_yaw 	>  MAX_DIFF_VALUE) p_yaw 	=  MAX_DIFF_VALUE; 
 
-	ae[0] = BASE_LIFT + (lift_final) + pitch_final - yaw_final; //* MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[1] = BASE_LIFT + (lift_final) - roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[2] = BASE_LIFT + (lift_final) - pitch_final - yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[3] = BASE_LIFT + (lift_final) + roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[0] = BASE_LIFT + (p_lift) + p_pitch - p_yaw;
+	ae[1] = BASE_LIFT + (p_lift) - p_roll  + p_yaw;
+	ae[2] = BASE_LIFT + (p_lift) - p_pitch - p_yaw; 
+	ae[3] = BASE_LIFT + (p_lift) + p_roll  + p_yaw; 
+
 }
 
 /*
@@ -302,6 +337,14 @@ uint32_t calculate_time_diff (uint32_t start_time) {
 	return get_time_us() - start_time;
 }
 
+
+/**
+ * @brief      Ensure that attidute setpoint values do not exceed allowed range
+ *
+ * @param[in]  value  The value to be clipped
+ *
+ * @return     Clipped value in the range [-128, 127]
+ */
 int16_t clip_to_int8_values(int16_t value) {
 	if (value > 127) {
 		return 127;
@@ -312,6 +355,11 @@ int16_t clip_to_int8_values(int16_t value) {
 	return value;
 }
 
+/**
+ * @brief      Control motors based on current state, JS input and sensor input
+ * 
+ * @author     T. van Rietbergen
+ */
 void run_filters_and_control() {
 	uint16_t adjusted_lift = lift << 1; // translate range to [0-512]
 	switch(fcb_state) {
@@ -323,32 +371,40 @@ void run_filters_and_control() {
 			uint16_t panic_lift_level = (adjusted_lift < PANIC_MODE_LIFT) ? (adjusted_lift) : PANIC_MODE_LIFT;
 			calculate_motor_values(
 				pitch_control_calc(pitch_control_pointer, clip_to_int8_values(0  + pitch_trim) << 6, sq, theta), 
-				 roll_control_calc(roll_control_pointer,  clip_to_int8_values(0  + roll_trim)  << 6, sp, phi), 
-				  0,  // i think sr needs *-1 (reverse sign)
+				roll_control_calc(roll_control_pointer,   clip_to_int8_values(0  + roll_trim)  << 6, sp, phi), 
+				0,
 				panic_lift_level);
 			break;
 		case MANUAL_ST:
-			calculate_motor_values(clip_to_int8_values(pitch + pitch_trim) >> 1, clip_to_int8_values(roll + roll_trim) >> 1, clip_to_int8_values(yaw + yaw_trim) >> 1, adjusted_lift);
+			calculate_motor_values(
+				clip_to_int8_values(pitch + pitch_trim) >> 1, 
+				clip_to_int8_values(roll + roll_trim) >> 1, 
+				clip_to_int8_values(yaw + yaw_trim) >> 1, 
+				adjusted_lift);
 			break;
 		case CALIBRATION_ST:
+			zero_motors();
 			sensor_calib();
 			fcb_state = SAFE_ST;
-			zero_motors();
 			break;
 		case YAWCONTROL_ST:
-			//todo
-			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, clip_to_int8_values(yaw + yaw_trim) << 6, (sr)*-1 ), adjusted_lift); // i think sr needs *-1 (reverse sign
+			calculate_motor_values(
+				pitch, 
+				roll, 
+				yaw_control_calc(yaw_control_pointer, clip_to_int8_values(yaw + yaw_trim) << 6, (sr)*-1 ), 
+				adjusted_lift); // i think sr needs *-1 (reverse sign
 			break;
 		case FULLCONTROL_ST:
 			calculate_motor_values(
 				pitch_control_calc(pitch_control_pointer, clip_to_int8_values(pitch + pitch_trim) << 6, sq, theta), 
-				 roll_control_calc(roll_control_pointer,  clip_to_int8_values(roll  + roll_trim)  << 6, sp, phi), 
-				  yaw_control_calc(yaw_control_pointer,   clip_to_int8_values(yaw   + yaw_trim)   << 6, sr*-1 ),  // i think sr needs *-1 (reverse sign)
+				roll_control_calc(roll_control_pointer,   clip_to_int8_values(roll  + roll_trim)  << 6, sp, phi), 
+				yaw_control_calc(yaw_control_pointer,     clip_to_int8_values(yaw   + yaw_trim)   << 6, sr*-1 ),  // sr needs *-1 (reverse sign)
 				adjusted_lift);
 			break;
 		case UNKNOWN_ST:	
 			zero_motors();
 		default:
+			zero_motors();
 			printf("ERROR run_filters_and_control - unknown fcb_state: %d", fcb_state);
 			break;
 	}

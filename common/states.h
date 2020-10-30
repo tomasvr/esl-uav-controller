@@ -13,11 +13,13 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#define NUMBER_OF_JS_AXIS 4 // there are 4 axis (pitch, roll, yaw, throttle)
+// there are 4 axis (pitch, roll, yaw, throttle)
+#define NUMBER_OF_JS_AXIS 4 
 
 // Used to check status of joystick axis before lift off
 uint8_t joystick_axis_stored_values[NUMBER_OF_JS_AXIS];
 
+// The different states that PC or FCB can be in
 typedef enum {
 	SAFE_ST, 
 	PANIC_ST,

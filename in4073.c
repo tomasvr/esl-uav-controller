@@ -17,22 +17,10 @@
 #include <assert.h>
 
 uint32_t usb_comm_last_received;
-uint32_t usb_current_time;
 uint32_t ctrl_loop_time;
 
 // each packet includes 3 fragments
 uint8_t FRAG_COUNT = 0;
-
-// State variables initalization
-STATE_t fcb_state = SAFE_ST;
-STATE_t fcb_dest_state = UNKNOWN_ST;
-
-// Communication variables initalization
-COMM_TYPE g_current_comm_type = UNKNOWN_COMM;
-
-// Keep track of current js_axis_type & value
-JOYSTICK_AXIS_t js_axis_type;
-uint8_t js_total_value;
 
 int8_t pitch_trim = 0;
 int8_t roll_trim = 0;
@@ -40,6 +28,16 @@ int8_t yaw_trim = 0;
 
 uint32_t last_time_battery;
 uint32_t current_time_battery;
+
+// State variables initalization
+STATE_t fcb_state = SAFE_ST;
+
+// Communication variables initalization
+COMM_TYPE g_current_comm_type = UNKNOWN_COMM;
+
+// Keep track of current js_axis_type & value
+JOYSTICK_AXIS_t js_axis_type;
+uint8_t js_total_value;
 
 // Motor variables initalization
 MOTOR_CTRL g_current_m0_state = MOTOR_REMAIN;
@@ -55,6 +53,15 @@ CONTROLLER *roll_control_pointer = &roll_control;
 CONTROLLER pitch_control;
 CONTROLLER *pitch_control_pointer = &pitch_control;
 
+/**
+ * @brief      Returns a string representation of a state.
+ *
+ * @param[in]  p_state  The state
+ *
+ * @return     String representation of the state.
+ * 
+ * @author     T. van Rietbergen
+ */
 const char * state_to_str(STATE_t p_state) {
 	switch(p_state) {
 		case SAFE_ST:
@@ -82,11 +89,19 @@ const char * state_to_str(STATE_t p_state) {
 
 }
 
-void enter_panic_mode(bool remain_off, char caller[]){
+/**
+ * @brief      Enters a panic mode.
+ *
+ * @param[in]  remain_off  Whether drone remains off after panic mode
+ * @param      info        Reason for calling panic mode
+ *
+ * @author     T. van Rietbergen
+ */
+void enter_panic_mode(bool remain_off, char info[]){
 	if (fcb_state == SAFE_ST) {
 		return; // if in safe mode then you do not need to go to panic mode
 	}
-	printf("FCB: Entered PANIC MODE"); // called by: %s", caller);
+	printf("FCB: PANIC MODE called by: %s", info);
 	fcb_state = PANIC_ST; // make sure system is in panic state;
 	uint32_t panic_start_time = get_time_us();
 	uint32_t panic_elapsed_time = get_time_us() - panic_start_time;
@@ -95,57 +110,36 @@ void enter_panic_mode(bool remain_off, char caller[]){
 			get_dmp_data();
 		}
 		run_filters_and_control();
-		//printf("ae0  %d\n", ae[0]);
-		//printf("ae1  %d\n", ae[1]);
-		//printf("ae2  %d\n", ae[2]);
-		//printf("ae3  %d\n", ae[3]);
 		panic_elapsed_time = get_time_us() - panic_start_time;
 	}
 	lift = 0; //reset motor_lift_level
 	fcb_state = SAFE_ST;
-	if (remain_off) { //wait for reboot
-			ae[0] = 0;
-			ae[1] = 0;
-			ae[2] = 0;
-			ae[3] = 0;
-			update_motors();
-			demo_done = true;
+	run_filters_and_control();
+	if (remain_off) { 
+		demo_done = true;
 	}
 }
 
-void USB_comm_update_received() {
-	usb_current_time = get_time_us();
-	usb_comm_last_received = usb_current_time;
-}
-
+/**
+ * @brief      Check last time a USB check message has been received
+ * 
+ * @author     T. van Rietbergen
+ */
 void check_USB_connection_alive() {
-	usb_current_time = get_time_us();
-	if (usb_current_time - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: check for overflow? <- Need fix when operation time > 70 mins
+	if (get_time_us() - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: check for overflow? <- Need fix when operation time > 70 mins
 		enter_panic_mode(true, "usb_check failed \n");
 	}
 }
 
-void store_js_axis_commands(JOYSTICK_AXIS_t joystick_axis, uint8_t js_total_value) {
-	joystick_axis_stored_values[joystick_axis] = js_total_value;
-}
-
-
-int16_t clip_motor_value(int16_t value) { 
-	if (value > 1000) {
-		return 1000;
-	}
-	else if (value < 0) {
-		return 0;
-	}
-	return value;
-}
-
-/* 
- * Keyboard trimming setpoint step by step.
- * Xinyun Xu
-*/
-void keyboard_trimming(uint8_t motor_states) {
-	switch(motor_states){
+/**
+ * @brief      Process keyboard trimming command
+ *
+ * @param[in]  trim_command  The trim command
+ * 
+ * @author     Xinyun Xu
+ */
+void keyboard_trimming(uint8_t trim_command) {
+	switch(trim_command){
 		case LIFT_UP:
 			if (lift + TRIM_STEP_SIZE < 255) {
 				lift = lift + TRIM_STEP_SIZE;
@@ -175,17 +169,18 @@ void keyboard_trimming(uint8_t motor_states) {
 			yaw_trim -= TRIM_STEP_SIZE;
 			break;				
 	}
-	printf("key trimming: %d\n", motor_states);
-	printf("pitch trim:%d  roll trim: %d yaw trim %d\n", pitch_trim, roll_trim, yaw_trim);
+	printf("key trimming: %d\n", trim_command);
 }
 
 /*
- * Decode messages
- * " "
+ * Decode a received byte based on the current based
+ * on which fragment number the byte belongs to 
+ * considering the entire packet
+ * 
+ * Author: T. van Rietbergen
  */
 void messg_decode(uint8_t message_byte){
 
-	// TODO: delete the printf() after debug
 	//printf("FCB: FRAG_COUNT: %d \n", FRAG_COUNT);
 	//printf("FCB: message byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(message_byte));
 
@@ -196,7 +191,7 @@ void messg_decode(uint8_t message_byte){
 	switch(FRAG_COUNT) {
 		case 2: // Comm Type
 			/* If a new message is received, update last received message time */
-		 	USB_comm_update_received();
+			usb_comm_last_received = get_time_us();
 			//printf("message_byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(message_byte));
 			g_current_comm_type = retrieve_comm_type(message_byte); //shift right to get bits at beginning of byte
 			if (g_current_comm_type == JS_AXIS_COMM) {
@@ -210,22 +205,17 @@ void messg_decode(uint8_t message_byte){
 					enter_panic_mode(true, "ESC pressed");
 				case CTRL_COMM:
 					;	// C requires this semicolon here
-					/* only change motors if in appropriate mode */ //todo: move this logic to a central place
-					// if (fcb_state == MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
-						if (fcb_state == MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
-							uint8_t motor_states = retrieve_keyboard_motor_control(message_byte);
-							keyboard_trimming(motor_states);
-						}
-						// printf("FCB: motor states: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(motor_states));
-						else {
+					/* only change motors if in appropriate mode */ 
+					if (fcb_state == MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
+						uint8_t motor_states = retrieve_keyboard_motor_control(message_byte);
+						keyboard_trimming(motor_states);
+					}
+					else {
 						printf("Cannot control keyboard motor in current mode: %d \n", fcb_state);						
-						}
-						break;
+					}
+					break;
 				case MODE_SW_COMM:
-			 		fcb_dest_state = retrieve_mode(message_byte);
-			 		//printf("Comm type: %d, State: %d \n", g_current_comm_type, fcb_dest_state);
-					fcb_state = mode_sw_action("FCB", fcb_state, fcb_dest_state);
-					fcb_dest_state = UNKNOWN_ST;					
+					fcb_state = mode_sw_action("FCB", fcb_state, retrieve_mode(message_byte));
 					break;
 				case JS_AXIS_COMM:
 					//printf("axis: %d value: %d \n", (uint8_t)js_axis_type, message_byte);						
@@ -244,57 +234,18 @@ void messg_decode(uint8_t message_byte){
 							lift = message_byte;
 							break;					
 					}	
-					store_js_axis_commands(js_axis_type, message_byte);
+					/* Always store received JS status for checking neutral position */
+					joystick_axis_stored_values[js_axis_type] = js_total_value;
 					break;
 				case CHANGE_P_COMM:
-					switch(message_byte) {
-						case P_RATE_YAW_INC:
-			 				increase_p_rate_value(yaw_control_pointer);
-			 				printf("FCB: P RATE YAW CONTROL UP\n");
-			 				break;
-			 			case P_RATE_YAW_DEC:
-				 			printf("FCB: P RATE YAW CONTROL DOWN\n");
-			 				decrease_p_rate_value(yaw_control_pointer);
-			 				break;
-			 			case P_ANGLE_PITCHROLL_INC:
-				 			printf("FCB: P ANGLE PITCHROLL CONTROL UP\n");
-			 				increase_p_angle_value(pitch_control_pointer);
-			 				increase_p_angle_value(roll_control_pointer);
-			 				break;
-			 			case P_ANGLE_PITCHROLL_DEC:
-				 			printf("FCB: P ANGLE PITCHROLL CONTROL DOWN\n");
-			 				decrease_p_angle_value(pitch_control_pointer);
-			 				decrease_p_angle_value(roll_control_pointer);
-			 				break;
-			 			case P_RATE_PITCHROLL_INC:
-				 			printf("FCB: P RATE PITCHROLL CONTROL UP\n");
-			 				increase_p_rate_value(pitch_control_pointer);
-			 				increase_p_rate_value(roll_control_pointer);
-			 				break;
-			 			case P_RATE_PITCHROLL_DEC:
-				 			printf("FCB: P RATE PITCHROLL CONTROL DOWN\n");
-			 				decrease_p_rate_value(pitch_control_pointer);
-			 				decrease_p_rate_value(roll_control_pointer);
-			 				break;
-			 			case P_SHIFT_RIGHT_VALUE_INC:
-				 			printf("FCB: P SHIFT VALUE UP\n");
-			 				increase_shift_value(pitch_control_pointer);
-			 				break; 
-			 			case P_SHIFT_RIGHT_VALUE_DEC:
-				 			printf("FCB: P SHIFT VALUE DOWN\n");
-			 				decrease_shift_value(pitch_control_pointer);
-			 				break;				 			
-			 			default: 
-				 			printf("FCB: UKNOWN CHANGE P VALUE: \n", message_byte);
-				 			//break;
-					}					
+					adjust_parameter_value(message_byte);
 				 	break;
 				case BAT_INFO_COMM:
 					break;
 				case SYS_LOG_COMM:
 					break;
 				case USB_CHECK_COMM:
-			 		if (check_mode_sync(message_byte, fcb_state)) {
+			 		if (check_mode_sync(message_byte, fcb_state) != 0) {
 		 				printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", message_byte, fcb_state);
 		 				enter_panic_mode(false, "State mismatch");
 		 			}						
@@ -313,9 +264,12 @@ void messg_decode(uint8_t message_byte){
 	}
 }
 
-/*
- * Process the received packet.
- * J. Cui
+/**
+ * @brief      Process the received packet.
+ *
+ * @param[in]  c     Received packet byte
+ * 
+ * @author     J. Cui
  */
 void process_packet(uint8_t c){	
 	//printf("frag received: %d, FRAG_COUNT: %d \n", c, FRAG_COUNT);
@@ -337,18 +291,17 @@ void process_packet(uint8_t c){
  */
 void check_battery_volt(){
 	current_time_battery = get_time_us();
-	uint16_t battery_integer = bat_volt / 100;
-	uint16_t battery_decimal = bat_volt & 0x00FF;
 	if(current_time_battery - last_time_battery > BATTERY_CHECK_INTERVAL_THRESHOLD){
+		printf("current voltage: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
 		if(bat_volt < 1150 && bat_volt > 1100){
-			printf("CURRENT VOLTAGE: %d.%dV \n", battery_integer, battery_decimal);
+			printf("CURRENT VOLTAGE: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
 		}
 		else if(bat_volt < 1100 && bat_volt > 1050){
-			printf("WARNING, CURRENT VOLTAGE: %d.%dV \n", battery_integer, battery_decimal);
+			printf("WARNING, CURRENT VOLTAGE1: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
 			enter_panic_mode(true, "batter voltage too low");
 		}
 		else if(bat_volt < 1050){
-			printf("CRITICAL WARNING, CURRENT VOLTAGE: %d.%dV \n", battery_integer, battery_decimal);
+			printf("WARNING, CURRENT VOLTAGE2: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
 			enter_panic_mode(true, "batter voltage CRITICAL"); 
 		}
 	last_time_battery = current_time_battery;
@@ -415,7 +368,7 @@ int main(void)
 			nrf_gpio_pin_toggle(BLUE);
 			check_USB_connection_alive();
 			#ifdef ENABLE_BATT_CHECK
-			check_battery_volt();			
+			check_battery_volt();//enable panic mode when connect to drone			
 			#endif
 			adc_request_sample();
 			read_baro();
@@ -423,8 +376,8 @@ int main(void)
 			if (counter % 20 == 0) {
 			logging();
 			}
-			printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
-			printf("Py: %2d Pr: %2d Pa: %2d Ps: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle, output_shift_value);
+			//printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
+			//printf("Py: %2d Pr: %2d Pa: %2d Ps: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle, output_shift_value);
 			print_info_testing();
 		}
 
