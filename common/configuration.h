@@ -20,10 +20,12 @@
 
 /* --- FCB SETTINGS (in4073) --- */
 
-//#define ENABLE_BATT_CHECK //enables the battery check
+// #define ENABLE_BATT_CHECK //enables the battery check
 
 #define USB_COMM_INTERVAL_THRESHOLD 2000000 // in us (1000000 = 1 second) 
-#define BATTERY_CHECK_INTERVAL_THRESHOLD 5000000 
+#define BATTERY_CHECK_INTERVAL_THRESHOLD 5000000
+
+#define CALIBRATION_NUM 100
 
 #define PANIC_MODE_LIFT 250 // base lift is added this
 #define PANIC_DURATION 4000000//(in us)
