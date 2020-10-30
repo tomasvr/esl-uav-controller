@@ -180,6 +180,14 @@ void rs232_open(void){
 	tcflush(fd_RS232, TCIOFLUSH); /* flush I/O buffer */
 }
 
+/**
+ * @brief      Prints the contents of a packet in binary format to the terminal
+ *
+ * @param[in]  message  The packet to be printed
+ * @param      info     Additional information to be printed
+ * 
+ * @author     T. van Rietbergen
+ */
 void print_packet(uint32_t message, char *info) { 
 	printf("%s\n", info);
 	printf("message: "PRINTF_BINARY_PATTERN_INT8"-",PRINTF_BYTE_TO_BINARY_INT8(message >> 24));
@@ -234,6 +242,8 @@ int rs232_putchar(int c){ // change char to uint32_t
  * @param[in]  to_state  The desired state to switch to
  *
  * @return     to_state if switch is allowed, otherwise current pc_state
+ * 
+ * @author     T. van Rietbergen
  */
 uint32_t handle_mode_switch(uint32_t message, STATE_t to_state) {
 	message = append_comm_type(message, MODE_SW_COMM);

@@ -256,7 +256,6 @@ int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, i
 	int16_t error = (pitch_set_point - p_theta); // will be in range [-16xxx ... 16xxx]
 	int32_t output_angle = (error * pitch_control->kp_angle - p_sq);
 	int32_t pitch_output = output_angle * pitch_control->kp_rate;
-	// printf("pitch_output: %ld\n", pitch_output >> 8);	
 	return pitch_output >> output_shift_value; // divide by a lot to give sensible value
 }
 
@@ -384,7 +383,7 @@ void run_filters_and_control() {
 			;
 			uint16_t panic_lift_level = (adjusted_lift < PANIC_MODE_LIFT) ? (adjusted_lift) : PANIC_MODE_LIFT;
 			calculate_motor_values(
-				pitch_control_calc(pitch_control_pointer, clip_to_int8_values(0  + pitch_trim) << 6, sq, theta), 
+				pitch_control_calc(pitch_control_pointer, clip_to_int8_values(0  + pitch_trim) << 6, sq, theta), // shift left to correct scale
 				roll_control_calc(roll_control_pointer,   clip_to_int8_values(0  + roll_trim)  << 6, sp, phi), 
 				0,
 				panic_lift_level);
