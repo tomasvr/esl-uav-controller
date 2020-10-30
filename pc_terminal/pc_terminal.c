@@ -254,8 +254,8 @@ uint32_t message_encode(int c){
 	uint32_t message = BASE_MESSAGE_PACKET_BITS; 
 	switch(c){
 
-		case USB_CHECK_MESSAGE:// USB_COMM_CHECK_MESSAGE
-			message = append_comm_type(message, USB_CHECK_COMM);
+		case STATE_SYNC_MESSAGE:// STATE_SYNC_COMM
+			message = append_comm_type(message, STATE_SYNC_COMM);
 			message = append_mode(message, pc_state); 
 			break;
 		case 'a':
@@ -340,7 +340,7 @@ uint32_t message_encode(int c){
 			break;
 		case 27: 
 			// keyboard 'ESC' pressed, SWITCH TO PANIC MODE
-			message = handle_mode_switch(message, PANIC_ST);
+			message = append_comm_type(message, ESC_COMM);
 		case 48: 
 			// keyboard '0' pressed, SWITCH TO PANIC MODE
 			message = handle_mode_switch(message, SAFE_ST);
@@ -381,15 +381,14 @@ uint32_t message_encode(int c){
  * 
  * @author     T. van Rietbergen
  */
-
 void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	uint32_t message = BASE_MESSAGE_PACKET_BITS;
 	if (js_type == 129) { // button startup state (not used)
 		return;
 	}
-	if (js_type == JS_EVENT_BUTTON) { // js buttons
+	if (js_type == JS_EVENT_BUTTON && js_value == 1) { // js button pressed
 		if (js_number == 0) {
-			message = handle_mode_switch(message, PANIC_ST);
+			message = append_comm_type(message, ESC_COMM);
 		} else {
 			STATE_t to_state = js_number; // The button number indicates which state (see states.h)
 			message = handle_mode_switch(message, to_state);			
@@ -448,7 +447,7 @@ int main(int argc, char **argv)
 		fputc(c,stderr);
 
 	
-	uint32_t last_USB_check_time = GetTimeStamp();
+	uint32_t last_state_sync_time = GetTimeStamp();
 
 #ifdef ENABLE_JOYSTICK
 	// js: initializaiton
@@ -472,9 +471,9 @@ int main(int argc, char **argv)
 		 * Communication: pc -> drone
 		 */
 		current_time = GetTimeStamp();
-		if((current_time - last_USB_check_time) >= USB_SEND_CHECK_INTERVAL) {
-			rs232_putchar(message_encode(USB_CHECK_MESSAGE)); // send usb check message
-			last_USB_check_time = current_time;
+		if((current_time - last_state_sync_time) >= STATE_SYNC_CHECK_INTERVAL) {
+			rs232_putchar(message_encode(STATE_SYNC_MESSAGE)); // send state sync check message
+			last_state_sync_time = current_time;
 		}
 
 		if ((c = term_getchar_nb()) != -1){

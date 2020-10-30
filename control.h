@@ -34,6 +34,10 @@ typedef struct
 
 } CONTROLLER;
 
+void adjust_parameter_value(uint8_t message_byte);
+void change_p_value(CONTROLLER *controller, P_PARAM param, bool increase);
+void change_shift_value(bool increase);
+
 void increase_motor_speed(uint8_t motor);
 void decrease_motor_speed(uint8_t motor);
 void keyboard_ctrl_action();

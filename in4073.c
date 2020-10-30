@@ -82,11 +82,10 @@ const char * state_to_str(STATE_t p_state) {
 		case FULLCONTROL_ST:
 			return "FULLCONTROL_ST";	
 			break;
-		case UNKNOWN_ST:
+		default:
 			return "UNKNOWN_ST";	
 			break;		
 	}
-
 }
 
 /**
@@ -138,51 +137,84 @@ void check_USB_connection_alive() {
  * 
  * @author     Xinyun Xu
  */
-void keyboard_trimming(uint8_t trim_command) {
-	switch(trim_command){
-		case LIFT_UP:
-			if (lift + TRIM_STEP_SIZE < 255) {
-				lift = lift + TRIM_STEP_SIZE;
-			}
-			break;
-		case LIFT_DOWN:
-			if (lift - TRIM_STEP_SIZE > 0) {
-				lift = lift - TRIM_STEP_SIZE;
-			}
-			break;
-		case PITCH_UP:
-			pitch_trim += TRIM_STEP_SIZE;
-			break;
-		case PITCH_DOWN:
-			pitch_trim -= TRIM_STEP_SIZE;
-			break;
-		case ROLL_RIGHT:
-			roll_trim += TRIM_STEP_SIZE;
-			break;
-		case ROLL_LEFT:
-			roll_trim -= TRIM_STEP_SIZE;
-			break;
-		case YAW_RIGHT:
-			yaw_trim += TRIM_STEP_SIZE;
-			break;
-		case YAW_LEFT:
-			yaw_trim -= TRIM_STEP_SIZE;
-			break;				
+void process_trim_command(uint8_t message_byte) {
+	/* only change motors if in appropriate mode */ 
+	if (fcb_state == MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
+		uint8_t trim_command = retrieve_keyboard_motor_control(message_byte);
+		switch(trim_command){
+			case LIFT_UP:
+				if (lift + TRIM_STEP_SIZE < 255) {
+					lift = lift + TRIM_STEP_SIZE;
+				}
+				break;
+			case LIFT_DOWN:
+				if (lift - TRIM_STEP_SIZE > 0) {
+					lift = lift - TRIM_STEP_SIZE;
+				}
+				break;
+			case PITCH_UP:
+				pitch_trim += TRIM_STEP_SIZE;
+				break;
+			case PITCH_DOWN:
+				pitch_trim -= TRIM_STEP_SIZE;
+				break;
+			case ROLL_RIGHT:
+				roll_trim += TRIM_STEP_SIZE;
+				break;
+			case ROLL_LEFT:
+				roll_trim -= TRIM_STEP_SIZE;
+				break;
+			case YAW_RIGHT:
+				yaw_trim += TRIM_STEP_SIZE;
+				break;
+			case YAW_LEFT:
+				yaw_trim -= TRIM_STEP_SIZE;
+				break;				
+		}
 	}
-	printf("key trimming: %d\n", trim_command);
+	else {
+		printf("Cannot control keyboard motor in current mode: %d \n", fcb_state);						
+	}
 }
 
-/*
- * Decode a received byte based on the current based
- * on which fragment number the byte belongs to 
- * considering the entire packet
+void process_js_command(uint8_t message_byte) {
+	switch (js_axis_type) {
+		case ROLL_AXIS:
+			roll  = translate_axis(message_byte);
+			break;
+		case PITCH_AXIS:
+			pitch = translate_axis(message_byte);
+			break;
+		case YAW_AXIS:
+			yaw   = translate_axis(message_byte);
+			break;
+		case LIFT_THROTTLE:
+			message_byte = translate_throttle(message_byte);
+			lift = message_byte;
+			break;					
+	}	
+	/* Always store received JS status for checking neutral position */
+	joystick_axis_stored_values[js_axis_type] = js_total_value;
+}
+
+/**
+ * @brief      Process the state sync message which checks for state sync between PC and FCB
+ */
+void process_state_sync_message(uint8_t message_byte) {
+	if (check_mode_sync(message_byte, fcb_state) != 0) {
+		printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", message_byte, fcb_state);
+		enter_panic_mode(false, "State mismatch");
+	}		
+}
+
+/**
+ * @brief      Decode message byte based on comm type and fragment count
+ *
+ * @param[in]  message_byte  The message byte to be processed
  * 
- * Author: T. van Rietbergen
+ * @author     T. van Rietbergem
  */
 void messg_decode(uint8_t message_byte){
-
-	//printf("FCB: FRAG_COUNT: %d \n", FRAG_COUNT);
-	//printf("FCB: message byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(message_byte));
 
 	/* First byte is 	start byte 				 */
 	/* Second byte is 	comm_type byte 	(case 2) */ // ONLY FOR JS_AXIS_TYPE ARE THE LEFT MOST 2 BYTES FOR AXIS TYPE
@@ -192,63 +224,29 @@ void messg_decode(uint8_t message_byte){
 		case 2: // Comm Type
 			/* If a new message is received, update last received message time */
 			usb_comm_last_received = get_time_us();
-			//printf("message_byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(message_byte));
 			g_current_comm_type = retrieve_comm_type(message_byte); //shift right to get bits at beginning of byte
 			if (g_current_comm_type == JS_AXIS_COMM) {
 				js_axis_type = retrieve_js_axis_type(message_byte); 
 			}
 			break;
-
 		case 1: // Data
 			switch(g_current_comm_type) {
 				case ESC_COMM:
 					enter_panic_mode(true, "ESC pressed");
 				case CTRL_COMM:
-					;	// C requires this semicolon here
-					/* only change motors if in appropriate mode */ 
-					if (fcb_state == MANUAL_ST || fcb_state == YAWCONTROL_ST || fcb_state == FULLCONTROL_ST) {
-						uint8_t motor_states = retrieve_keyboard_motor_control(message_byte);
-						keyboard_trimming(motor_states);
-					}
-					else {
-						printf("Cannot control keyboard motor in current mode: %d \n", fcb_state);						
-					}
+					process_trim_command(message_byte);
 					break;
 				case MODE_SW_COMM:
 					fcb_state = mode_sw_action("FCB", fcb_state, retrieve_mode(message_byte));
 					break;
 				case JS_AXIS_COMM:
-					//printf("axis: %d value: %d \n", (uint8_t)js_axis_type, message_byte);						
-					switch (js_axis_type) {
-						case ROLL_AXIS:
-							roll  = translate_axis(message_byte);
-							break;
-						case PITCH_AXIS:
-							pitch = translate_axis(message_byte);
-							break;
-						case YAW_AXIS:
-							yaw   = translate_axis(message_byte);
-							break;
-						case LIFT_THROTTLE:
-							message_byte = translate_throttle(message_byte);
-							lift = message_byte;
-							break;					
-					}	
-					/* Always store received JS status for checking neutral position */
-					joystick_axis_stored_values[js_axis_type] = js_total_value;
+					process_js_command(message_byte);
 					break;
 				case CHANGE_P_COMM:
 					adjust_parameter_value(message_byte);
 				 	break;
-				case BAT_INFO_COMM:
-					break;
-				case SYS_LOG_COMM:
-					break;
-				case USB_CHECK_COMM:
-			 		if (check_mode_sync(message_byte, fcb_state) != 0) {
-		 				printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", message_byte, fcb_state);
-		 				enter_panic_mode(false, "State mismatch");
-		 			}						
+				case STATE_SYNC_COMM:
+					process_state_sync_message(message_byte);				
 		 			break;
 				default:
 		    		printf("ERROR (messg_decode): UNKNOWN COMM TYPE: %d \n", g_current_comm_type);
@@ -272,7 +270,6 @@ void messg_decode(uint8_t message_byte){
  * @author     J. Cui
  */
 void process_packet(uint8_t c){	
-	//printf("frag received: %d, FRAG_COUNT: %d \n", c, FRAG_COUNT);
 	if (c == 0x55 && FRAG_COUNT == 0 && fcb_state != PANIC_ST) {
 		FRAG_COUNT = 2;
 		return;
@@ -281,7 +278,7 @@ void process_packet(uint8_t c){
 		messg_decode(c);
 		FRAG_COUNT--;
 	} else {
-		printf("process key called but FRAG_COUNT < 0, FRAG_COUNT: \n", FRAG_COUNT);
+		printf("process key called but FRAG_COUNT < 0, FRAG_COUNT: %d \n", FRAG_COUNT);
 	}
 }
 
@@ -312,9 +309,10 @@ void check_battery_volt(){
 * Print info in the terminal.
 * J. Cui
 */
-void print_info_testing() {
+void print_info() {
 	printf("%10ld | ", get_time_us());
 	printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
+	//printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
 	//printf("%6d %6d %6d | ", phi, theta, psi);
 	printf("%6d %6d %6d | ", sp, sq, sr);
 	//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
@@ -348,47 +346,33 @@ int main(void)
 	controller_init(yaw_control_pointer);
 	controller_init(roll_control_pointer);
 	controller_init(pitch_control_pointer);
-	// printf(" AE0 AE1 AE2 AE3  | MODE \n");
 	while (!demo_done)
 	{
 		if (rx_queue.count) process_packet( dequeue(&rx_queue) );
-
-		// Execute commands that need to be handled in all modes
-		// if (g_current_comm_type == ESC_COMM){ // terminate program
-		// 	enter_panic_mode(true, "ESC pressed");
-		// }
 
 		if (fcb_state == PANIC_ST) {
 			enter_panic_mode(false, "FCB IN PANIC_ST");
 		}
 
-
-
 		if (check_timer_flag()) {
 			nrf_gpio_pin_toggle(BLUE);
 			check_USB_connection_alive();
 			#ifdef ENABLE_BATT_CHECK
+			adc_request_sample();
 			check_battery_volt();//enable panic mode when connect to drone			
 			#endif
-			adc_request_sample();
 			read_baro();
 
 			if (counter % 20 == 0) {
 			logging();
 			}
-			//printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
-			//printf("Py: %2d Pr: %2d Pa: %2d Ps: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle, output_shift_value);
-			print_info_testing();
+			print_info();
 		}
 
 		if (check_sensor_int_flag()) {
 			get_dmp_data();
-			ctrl_loop_time = get_time_us();
 			run_filters_and_control();
-			ctrl_loop_time = get_time_us() - ctrl_loop_time;
 		}
-
-
 		counter++;
 	}
 	printf("\n\t Goodbye \n\n");

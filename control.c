@@ -18,11 +18,13 @@
 // initalize 
 uint8_t output_shift_value = OUTPUT_SHIFT_START_VALUE;
 
-/*This funciton is used for debugging
-* if color == -1, then all leds are turned off
-* gpio_pin_set TURNS OFF led
-* gpio_pin_clear TURNS ON led
-*/
+/**
+ * @brief      Switch off all leds or all leds except one
+ *
+ * @param[in]  color  The color led to be left on
+ * 
+ * @author     T. van Rietbergem
+ */
 void switch_led(int color) {
 	nrf_gpio_pin_set(GREEN);
 	nrf_gpio_pin_set(RED);
@@ -140,6 +142,13 @@ void controller_init(CONTROLLER *controller) {
 	controller->output = 0;
 }
 
+/**
+ * @brief      Adjust parameter value based on byte form packet
+ *
+ * @param[in]  message_byte  The message byte to be procssed
+ * 
+ * @author     T. van Rietbergen
+ */
 void adjust_parameter_value(uint8_t message_byte) {
 	switch(message_byte) {
 		case P_RATE_YAW_INC:
@@ -171,7 +180,7 @@ void adjust_parameter_value(uint8_t message_byte) {
 				change_shift_value(false);
 				break;				 			
 			default: 
-				printf("FCB: UKNOWN CHANGE P VALUE: \n", message_byte);
+				printf("FCB: UKNOWN PARAM_CHANGE_t: %d \n", message_byte);
 				break;
 	}		
 }
@@ -261,11 +270,11 @@ int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int1
 	return roll_output >> output_shift_value;
 }
 
-
-/*
-* Limit the motors' speed in [170, 450].
-* " "
-*/
+/**
+ * @brief      imit the motors' speed in [MIN_ALLOWED_SPEED, MAX_ALLOWED_SPEED].
+ * 
+ * @author     { author_name }
+ */
 void clip_motors() {
 	for (int i = 0; i < 4; i++) {
 		if (ae[i] > MAX_ALLOWED_SPEED) 	ae[i] = MAX_ALLOWED_SPEED;
@@ -277,6 +286,7 @@ void clip_motors() {
 /**
  * @brief      Zero all the engine values
  * 
+ * @author     { author_name }
  */
 void zero_motors() {
 	ae[0] = 0;
@@ -285,6 +295,11 @@ void zero_motors() {
 	ae[3] = 0;	
 }
 
+/**
+ * @brief      Update motors and leds if enabled
+ * 
+ * @author     T. van rietbergen
+ */
 void update_motors(void)
 {					
 	if (fcb_state != SAFE_ST) clip_motors();
@@ -336,7 +351,6 @@ void calculate_motor_values(int16_t p_pitch, int16_t p_roll, int16_t p_yaw, uint
 uint32_t calculate_time_diff (uint32_t start_time) {
 	return get_time_us() - start_time;
 }
-
 
 /**
  * @brief      Ensure that attidute setpoint values do not exceed allowed range
