@@ -172,17 +172,14 @@ void keyboard_trimming(uint8_t trim_command) {
 	printf("key trimming: %d\n", trim_command);
 }
 
-/*
- * Decode a received byte based on the current based
- * on which fragment number the byte belongs to 
- * considering the entire packet
+/**
+ * @brief      Decode message byte based on comm type and fragment count
+ *
+ * @param[in]  message_byte  The message byte to be processed
  * 
- * Author: T. van Rietbergen
+ * @author     T. van Rietbergem
  */
 void messg_decode(uint8_t message_byte){
-
-	//printf("FCB: FRAG_COUNT: %d \n", FRAG_COUNT);
-	//printf("FCB: message byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(message_byte));
 
 	/* First byte is 	start byte 				 */
 	/* Second byte is 	comm_type byte 	(case 2) */ // ONLY FOR JS_AXIS_TYPE ARE THE LEFT MOST 2 BYTES FOR AXIS TYPE
@@ -192,7 +189,6 @@ void messg_decode(uint8_t message_byte){
 		case 2: // Comm Type
 			/* If a new message is received, update last received message time */
 			usb_comm_last_received = get_time_us();
-			//printf("message_byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(message_byte));
 			g_current_comm_type = retrieve_comm_type(message_byte); //shift right to get bits at beginning of byte
 			if (g_current_comm_type == JS_AXIS_COMM) {
 				js_axis_type = retrieve_js_axis_type(message_byte); 
@@ -218,7 +214,6 @@ void messg_decode(uint8_t message_byte){
 					fcb_state = mode_sw_action("FCB", fcb_state, retrieve_mode(message_byte));
 					break;
 				case JS_AXIS_COMM:
-					//printf("axis: %d value: %d \n", (uint8_t)js_axis_type, message_byte);						
 					switch (js_axis_type) {
 						case ROLL_AXIS:
 							roll  = translate_axis(message_byte);
@@ -272,7 +267,6 @@ void messg_decode(uint8_t message_byte){
  * @author     J. Cui
  */
 void process_packet(uint8_t c){	
-	//printf("frag received: %d, FRAG_COUNT: %d \n", c, FRAG_COUNT);
 	if (c == 0x55 && FRAG_COUNT == 0 && fcb_state != PANIC_ST) {
 		FRAG_COUNT = 2;
 		return;
@@ -315,6 +309,7 @@ void check_battery_volt(){
 void print_info_testing() {
 	printf("%10ld | ", get_time_us());
 	printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
+	//printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
 	//printf("%6d %6d %6d | ", phi, theta, psi);
 	printf("%6d %6d %6d | ", sp, sq, sr);
 	//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
@@ -348,7 +343,6 @@ int main(void)
 	controller_init(yaw_control_pointer);
 	controller_init(roll_control_pointer);
 	controller_init(pitch_control_pointer);
-	// printf(" AE0 AE1 AE2 AE3  | MODE \n");
 	while (!demo_done)
 	{
 		if (rx_queue.count) process_packet( dequeue(&rx_queue) );
@@ -362,8 +356,6 @@ int main(void)
 			enter_panic_mode(false, "FCB IN PANIC_ST");
 		}
 
-
-
 		if (check_timer_flag()) {
 			nrf_gpio_pin_toggle(BLUE);
 			check_USB_connection_alive();
@@ -376,8 +368,6 @@ int main(void)
 			if (counter % 20 == 0) {
 			logging();
 			}
-			//printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
-			//printf("Py: %2d Pr: %2d Pa: %2d Ps: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle, output_shift_value);
 			print_info_testing();
 		}
 

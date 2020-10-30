@@ -18,11 +18,13 @@
 // initalize 
 uint8_t output_shift_value = OUTPUT_SHIFT_START_VALUE;
 
-/*This funciton is used for debugging
-* if color == -1, then all leds are turned off
-* gpio_pin_set TURNS OFF led
-* gpio_pin_clear TURNS ON led
-*/
+/**
+ * @brief      Switch off all leds or all leds except one
+ *
+ * @param[in]  color  The color led to be left on
+ * 
+ * @author     T. van Rietbergem
+ */
 void switch_led(int color) {
 	nrf_gpio_pin_set(GREEN);
 	nrf_gpio_pin_set(RED);
@@ -261,11 +263,11 @@ int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int1
 	return roll_output >> output_shift_value;
 }
 
-
-/*
-* Limit the motors' speed in [170, 450].
-* " "
-*/
+/**
+ * @brief      imit the motors' speed in [MIN_ALLOWED_SPEED, MAX_ALLOWED_SPEED].
+ * 
+ * @author     { author_name }
+ */
 void clip_motors() {
 	for (int i = 0; i < 4; i++) {
 		if (ae[i] > MAX_ALLOWED_SPEED) 	ae[i] = MAX_ALLOWED_SPEED;
@@ -277,6 +279,7 @@ void clip_motors() {
 /**
  * @brief      Zero all the engine values
  * 
+ * @author     { author_name }
  */
 void zero_motors() {
 	ae[0] = 0;
@@ -285,6 +288,11 @@ void zero_motors() {
 	ae[3] = 0;	
 }
 
+/**
+ * @brief      Update motors and leds if enabled
+ * 
+ * @author     T. van rietbergen
+ */
 void update_motors(void)
 {					
 	if (fcb_state != SAFE_ST) clip_motors();
