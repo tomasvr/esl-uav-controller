@@ -137,6 +137,44 @@ void controller_init(CONTROLLER *controller) {
 	controller->output = 0;
 }
 
+void adjust_parameter_value(uint8_t message_byte) {
+	switch(message_byte) {
+		case P_RATE_YAW_INC:
+				increase_p_rate_value(yaw_control_pointer);
+				break;
+			case P_RATE_YAW_DEC:
+				decrease_p_rate_value(yaw_control_pointer);
+				break;
+			case P_ANGLE_PITCHROLL_INC:
+				increase_p_angle_value(pitch_control_pointer);
+				increase_p_angle_value(roll_control_pointer);
+				break;
+			case P_ANGLE_PITCHROLL_DEC:
+				decrease_p_angle_value(pitch_control_pointer);
+				decrease_p_angle_value(roll_control_pointer);
+				break;
+			case P_RATE_PITCHROLL_INC:
+				increase_p_rate_value(pitch_control_pointer);
+				increase_p_rate_value(roll_control_pointer);
+				break;
+			case P_RATE_PITCHROLL_DEC:
+				decrease_p_rate_value(pitch_control_pointer);
+				decrease_p_rate_value(roll_control_pointer);
+				break;
+			case P_SHIFT_RIGHT_VALUE_INC:
+				increase_shift_value(pitch_control_pointer);
+				break; 
+			case P_SHIFT_RIGHT_VALUE_DEC:
+				decrease_shift_value(pitch_control_pointer);
+				break;				 			
+			default: 
+				printf("FCB: UKNOWN CHANGE P VALUE: \n", message_byte);
+				break;
+	}		
+}
+
+
+
 
 void  increase_p_rate_value(CONTROLLER *controller) {
 	if (controller->kp_rate < CONTROLLER_P_UPPER_LIMIT) 
