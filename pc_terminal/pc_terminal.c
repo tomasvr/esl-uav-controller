@@ -323,9 +323,19 @@ uint32_t message_encode(int c){
 			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_ANGLE_PITCHROLL_DEC);
 			break;
+		case 'y':
+			// keyboard 'l' pressed, decrease P2 roll/pitch control
+			message = append_comm_type(message, CHANGE_P_COMM); 
+			message = append_parameter_change(message, P_SHIFT_RIGHT_VALUE_INC);
+			break;
+		case 'h':
+			// keyboard 'l' pressed, decrease P2 roll/pitch control
+			message = append_comm_type(message, CHANGE_P_COMM); 
+			message = append_parameter_change(message, P_SHIFT_RIGHT_VALUE_DEC);
+			break;
 		case 27: 
 			// keyboard 'ESC' pressed, SWITCH TO PANIC MODE
-			message = append_comm_type(message, ESC_COMM);
+			message = handle_mode_switch(message, PANIC_ST);
 		case 48: 
 			// keyboard '0' pressed, SWITCH TO PANIC MODE
 			message = handle_mode_switch(message, SAFE_ST);
@@ -352,7 +362,7 @@ uint32_t message_encode(int c){
 			break;		
 		default:
 			;
-			//printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
+			printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
 	}
 	//print_packet(message, "PC: Send message: ");
 	return message;
@@ -364,10 +374,17 @@ uint32_t message_encode(int c){
 */
 void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	uint32_t message = 0b00000000000000000000000001010101; // base message
+	if (js_type == 129) { // button startup state (not used)
+		return;
+	}
 	if (js_type == JS_EVENT_BUTTON) { // js buttons
-		if (js_number == 0) message = append_comm_type(message, ESC_COMM);
-		STATE_t to_state = js_number; // The button number indicates which state (see states.h)
-		message = handle_mode_switch(message, to_state);
+		if (js_number == 0) {
+			message = handle_mode_switch(message, PANIC_ST);
+		} else {
+			STATE_t to_state = js_number; // The button number indicates which state (see states.h)
+			message = handle_mode_switch(message, to_state);			
+		}
+		print_packet(message, "PC: Send message: ");
 		rs232_putchar(message);
 	}
 	else if ( (js_type == JS_EVENT_AXIS) || (js_type == 130)) { // js axis (130 occurs at startup)
@@ -380,12 +397,18 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 			//printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value_smaller);
 			last_js_axis_send_time = current_time;
 			rs232_putchar(message);
+			// store js value to check neutral position on pc side
+			if (axis_number_from_js == LIFT_THROTTLE) {
+				joystick_axis_stored_values[axis_number_from_js] = translate_throttle(js_value_smaller);
+			} else {
+				joystick_axis_stored_values[axis_number_from_js] = translate_axis(js_value_smaller);
+			}
 		}
-	} else {
+	} 
+	else {
 		printf("ERROR in send_js_message: UKNOWN IF BUTTON OR AXIS (js_type)\n");
 		return;
 	}
-	// rs232_putchar(message);
 }
 
 /* 
@@ -405,7 +428,7 @@ uint32_t GetTimeStamp() {
     gettimeofday(&tv,NULL);
     return tv.tv_sec*(uint32_t)1000000+tv.tv_usec; //TODO: check for overflow? <-- (32 bit allows for about 70 minutes before overflow, fix this later?)
 }
-
+ 
 /*----------------------------------------------------------------
  * main -- execute terminal
  *----------------------------------------------------------------

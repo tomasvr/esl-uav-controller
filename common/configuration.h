@@ -14,18 +14,21 @@
 #define PACKET_SEND_INTERVAL 20000 // (in us)
 
 // defines whether joystick is plugged in
-// #define ENABLE_JOYSTICK
+#define ENABLE_JOYSTICK
 // defines joystick USB port (can be found using 'findusb' script)
 #define JS_DEV	"/dev/input/js0"
 
 /* --- FCB SETTINGS (in4073) --- */
 
+//#define ENABLE_BATT_CHECK //enables the battery check
+
 #define USB_COMM_INTERVAL_THRESHOLD 2000000 // in us (1000000 = 1 second) 
 #define BATTERY_CHECK_INTERVAL_THRESHOLD 5000000 
 
-#define MOTOR_MAX_CHANGE 50
-#define MOTOR_UPPER_LIMIT 1000
+#define PANIC_MODE_LIFT 250 // base lift is added this
+#define PANIC_DURATION 4000000//(in us)
 
+#define MOTOR_MAX_CHANGE 50
 #define TRIM_STEP_SIZE 1
 
 #define JS_AXIS_MID_VALUE 		127		// used to be 32767
@@ -35,11 +38,15 @@
 /* CONTROL.H SETTINGS */
 
 // values to test with
-#define CONTROL_OUTPUT_SHIFT_VALUE 10
-#define MAX_DIFF_VALUE 200
+//#define CONTROL_OUTPUT_SHIFT_VALUE 10
+#define OUTPUT_SHIFT_START_VALUE 10
+#define OUTPUT_SHIFT_UPPER_LIMIT 15
+#define OUTPUT_SHIFT_LOWER_LIMIT 0 // never less than 0
+
+#define MAX_DIFF_VALUE 
 
 #define DEBUG_LED
-#define UPPER_LIMIT 1000
+#define BASE_LIFT 	100
 
 #define CONTROLLER_P_STEP_SIZE 1
 #define CONTROLLER_P_UPPER_LIMIT 15
