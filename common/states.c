@@ -6,10 +6,17 @@
 
 #include "states.h"
 
+/**
+ * @brief      Checks whether all JS values are 0 (or close enough)
+ *
+ * @return     True if all are 0 (or close enough), false otherwise
+ * 
+ * @author     T. van Rietbergen
+ */
 int js_axis_values_zeroed() {
 	int all_values_are_zero = 1;
 	for (int i = 0; i < NUMBER_OF_JS_AXIS; i++) {
-		if(joystick_axis_stored_values[i] > 3) { //IMPORTANT: AT STARTUP JS AXIS IS RANDOMLY 1 WHILE IN NEUTRAL, SO: > 3
+		if(joystick_axis_stored_values[i] > 3) { // due to small deviations, sometimes JS value is slightly higher than 0 even in netural mode, hence '3'
 			all_values_are_zero = 0;
 		}
 		printf(" %d: %d ", i, joystick_axis_stored_values[i]);

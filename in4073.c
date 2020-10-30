@@ -128,17 +128,16 @@ void enter_panic_mode(bool remain_off, char info[]){
 	}
 }
 
-/*
- *
- *
+/**
+ * @brief      Check last time a USB check message has been received
+ * 
+ * @author     T. van Rietbergen
  */
 void check_USB_connection_alive() {
 	if (get_time_us() - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: check for overflow? <- Need fix when operation time > 70 mins
 		enter_panic_mode(true, "usb_check failed \n");
 	}
 }
-
-
 
 /**
  * @brief      Process keyboard trimming command
@@ -190,7 +189,6 @@ void keyboard_trimming(uint8_t trim_command) {
  */
 void messg_decode(uint8_t message_byte){
 
-	// TODO: delete the printf() after debug
 	//printf("FCB: FRAG_COUNT: %d \n", FRAG_COUNT);
 	//printf("FCB: message byte: "PRINTF_BINARY_PATTERN_INT8"\n",PRINTF_BYTE_TO_BINARY_INT8(message_byte));
 
@@ -255,7 +253,7 @@ void messg_decode(uint8_t message_byte){
 				case SYS_LOG_COMM:
 					break;
 				case USB_CHECK_COMM:
-			 		if (check_mode_sync(message_byte, fcb_state != 0)) {
+			 		if (check_mode_sync(message_byte, fcb_state) != 0) {
 		 				printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", message_byte, fcb_state);
 		 				enter_panic_mode(false, "State mismatch");
 		 			}						
@@ -274,9 +272,12 @@ void messg_decode(uint8_t message_byte){
 	}
 }
 
-/*
- * Process the received packet.
- * Author: J. Cui
+/**
+ * @brief      Process the received packet.
+ *
+ * @param[in]  c     Received packet byte
+ * 
+ * @author     J. Cui
  */
 void process_packet(uint8_t c){	
 	//printf("frag received: %d, FRAG_COUNT: %d \n", c, FRAG_COUNT);
@@ -292,10 +293,6 @@ void process_packet(uint8_t c){
 	}
 }
 
-/*
- * Check battery voltage.
- * "aruthor"
- */
 void check_battery_volt(){
 	current_time_battery = get_time_us();
 	if(current_time_battery - last_time_battery > BATTERY_CHECK_INTERVAL_THRESHOLD){

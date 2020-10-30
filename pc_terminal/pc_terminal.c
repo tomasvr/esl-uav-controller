@@ -61,7 +61,6 @@ int	button[12];
 bool time2poll;
 
 STATE_t pc_state = SAFE_ST;
-STATE_t g_dest_state = UNKNOWN_ST;
 
 #include <stdio.h>
 #include <termios.h>
@@ -228,14 +227,20 @@ int rs232_putchar(int c){ // change char to uint32_t
 	return result;
 }
 
+/**
+ * @brief      Handles mode switch message
+ *
+ * @param[in]  message   The message
+ * @param[in]  to_state  The desired state to switch to
+ *
+ * @return     to_state if switch is allowed, otherwise current pc_state
+ */
 uint32_t handle_mode_switch(uint32_t message, STATE_t to_state) {
 	message = append_comm_type(message, MODE_SW_COMM);
 	message = append_mode(message, to_state); 
 
-	pc_state = mode_sw_action("TERM", pc_state, to_state); // TODO: check js position before update pc_state
-	// printf('The TRM state is: %d\n', pc_state);
+	pc_state = mode_sw_action("TERM", pc_state, to_state);
 	
-	g_dest_state = UNKNOWN_ST;
 	if (pc_state == CALIBRATION_ST) pc_state = SAFE_ST;
 	if (pc_state == PANIC_ST) pc_state = SAFE_ST;
 	return message;
@@ -249,7 +254,7 @@ uint32_t message_encode(int c){
 	uint32_t message = BASE_MESSAGE_PACKET_BITS; 
 	switch(c){
 
-		case USB_CHECK_MESSAGE:// USB_COMM_CHECK_MESSAGE 				//TODO: take other number than 99? (i chose it randomly)
+		case USB_CHECK_MESSAGE:// USB_COMM_CHECK_MESSAGE
 			message = append_comm_type(message, USB_CHECK_COMM);
 			message = append_mode(message, pc_state); 
 			break;
@@ -324,12 +329,12 @@ uint32_t message_encode(int c){
 			message = append_parameter_change(message, P_ANGLE_PITCHROLL_DEC);
 			break;
 		case 'y':
-			// keyboard 'l' pressed, decrease P2 roll/pitch control
+			// keyboard 'y' pressed, decrease control sensitivity
 			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_SHIFT_RIGHT_VALUE_INC);
 			break;
 		case 'h':
-			// keyboard 'l' pressed, decrease P2 roll/pitch control
+			// keyboard 'h' pressed, increase control sensitivity
 			message = append_comm_type(message, CHANGE_P_COMM); 
 			message = append_parameter_change(message, P_SHIFT_RIGHT_VALUE_DEC);
 			break;
@@ -364,16 +369,20 @@ uint32_t message_encode(int c){
 			;
 			printf("ERROR: KEYBOARD PRESS NOT RECOGNISED: %c, (message_encode) ", c);
 	}
-	//print_packet(message, "PC: Send message: ");
 	return message;
 }
 
-/* 
-* Encode joystick commands.
-* "aruthor"
-*/
+/**
+ * @brief      Generate JS control message on JS event
+ *
+ * @param[in]  js_type    The js type (button or axis, on initalization or event)
+ * @param[in]  js_number  The js number (button or axis number)
+ * @param[in]  js_value   The js value (value of button or axis)
+ * 
+ * @author     T. van Rietbergen
+ */
 void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
-	uint32_t message = 0b00000000000000000000000001010101; // base message
+	uint32_t message = BASE_MESSAGE_PACKET_BITS;
 	if (js_type == 129) { // button startup state (not used)
 		return;
 	}
@@ -394,7 +403,6 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 			message = append_js_axis_type(message, axis_number_from_js);
 			uint8_t js_value_smaller = (js_value >> 8);
 			message |= (js_value_smaller << 16);
-			//printf("PC: Sending JS: type %d, number %d, value %d\n", js_type, js_number, js_value_smaller);
 			last_js_axis_send_time = current_time;
 			rs232_putchar(message);
 			// store js value to check neutral position on pc side
@@ -409,14 +417,6 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 		printf("ERROR in send_js_message: UKNOWN IF BUTTON OR AXIS (js_type)\n");
 		return;
 	}
-}
-
-/* 
-* Send USB check message.
-* "aruthor"
-*/
-void send_USB_check_message() {
-	rs232_putchar(message_encode(USB_CHECK_MESSAGE));
 }
 
 /* 
@@ -470,11 +470,9 @@ int main(int argc, char **argv)
 		/*
 		 * Communication: pc -> drone
 		 */
-		// Send USB connection message
 		current_time = GetTimeStamp();
-
 		if((current_time - last_USB_check_time) >= USB_SEND_CHECK_INTERVAL) {
-			send_USB_check_message();
+			rs232_putchar(message_encode(USB_CHECK_MESSAGE)); // send usb check message
 			last_USB_check_time = current_time;
 		}
 
@@ -491,13 +489,11 @@ int main(int argc, char **argv)
  			rs232_putchar(message_encode(c));
 			if (pc_state == PANIC_ST) pc_state = SAFE_ST;
 		}
-
 		if ((c = rs232_getchar_nb()) != -1) term_putchar(c);
 
 		/*
 		 * Communication: js -> pc
 		 */
-
 #ifdef ENABLE_JOYSTICK
 		current_time = GetTimeStamp();
 		while (read(fd, &js, sizeof(struct js_event)) == sizeof(struct js_event)) {
@@ -512,7 +508,6 @@ int main(int argc, char **argv)
 
 	counter++;	
 	}
-
 	term_exitio();
 	rs232_close();
 	term_puts("\n<exit>\n");

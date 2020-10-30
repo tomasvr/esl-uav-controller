@@ -173,9 +173,6 @@ void adjust_parameter_value(uint8_t message_byte) {
 	}		
 }
 
-
-
-
 void  increase_p_rate_value(CONTROLLER *controller) {
 	if (controller->kp_rate < CONTROLLER_P_UPPER_LIMIT) 
 		controller->kp_rate += CONTROLLER_P_STEP_SIZE;
@@ -259,10 +256,11 @@ void clip_motors() {
 	}
 }
 
-/*
-* Set all motor speed to 0.
-* "aruthor"
-*/
+/**
+ * @brief      Zero all the engine values
+ * 
+ * @author     T. van rietbergen
+ */
 void zero_motors() {
 	ae[0] = 0;
 	ae[1] = 0;
@@ -318,13 +316,13 @@ void calculate_motor_values(int16_t pitch_final, int16_t roll_final, int16_t yaw
 	// ae[2] = operating_motor_bounds((lift << 2) - (pitch/320 - yaw/320));
 	// ae[3] = operating_motor_bounds((lift << 2) + (roll/320  + yaw /320));
 
-	// clip values
-	// if (pitch_final < -MAX_DIFF_VALUE) pitch_final  = -MAX_DIFF_VALUE; 
-	// if (pitch_final >  MAX_DIFF_VALUE) pitch_final  =  MAX_DIFF_VALUE; 
-	// if (roll_final 	< -MAX_DIFF_VALUE) roll_final   = -MAX_DIFF_VALUE; 
-	// if (roll_final 	>  MAX_DIFF_VALUE) roll_final   =  MAX_DIFF_VALUE; 
-	// if (yaw_final 	< -MAX_DIFF_VALUE) yaw_final 	= -MAX_DIFF_VALUE; 
-	// if (yaw_final 	>  MAX_DIFF_VALUE) yaw_final 	=  MAX_DIFF_VALUE; 
+	//clip values
+	if (pitch_final < -MAX_DIFF_VALUE) pitch_final  = -MAX_DIFF_VALUE; 
+	if (pitch_final >  MAX_DIFF_VALUE) pitch_final  =  MAX_DIFF_VALUE; 
+	if (roll_final 	< -MAX_DIFF_VALUE) roll_final   = -MAX_DIFF_VALUE; 
+	if (roll_final 	>  MAX_DIFF_VALUE) roll_final   =  MAX_DIFF_VALUE; 
+	if (yaw_final 	< -MAX_DIFF_VALUE) yaw_final 	= -MAX_DIFF_VALUE; 
+	if (yaw_final 	>  MAX_DIFF_VALUE) yaw_final 	=  MAX_DIFF_VALUE; 
 
 	ae[0] = BASE_LIFT + (lift_final) + pitch_final - yaw_final; //* MAX_ALLOWED_DIFF_MOTOR / 256;
 	ae[1] = BASE_LIFT + (lift_final) - roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
@@ -365,9 +363,9 @@ void run_filters_and_control() {
 			calculate_motor_values(clip_to_int8_values(pitch + pitch_trim) >> 1, clip_to_int8_values(roll + roll_trim) >> 1, clip_to_int8_values(yaw + yaw_trim) >> 1, adjusted_lift);
 			break;
 		case CALIBRATION_ST:
+			zero_motors();
 			sensor_calib();
 			fcb_state = SAFE_ST;
-			zero_motors();
 			break;
 		case YAWCONTROL_ST:
 			//todo
@@ -383,6 +381,7 @@ void run_filters_and_control() {
 		case UNKNOWN_ST:	
 			zero_motors();
 		default:
+			zero_motors();
 			printf("ERROR run_filters_and_control - unknown fcb_state: %d", fcb_state);
 			break;
 	}

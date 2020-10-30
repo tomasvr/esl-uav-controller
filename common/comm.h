@@ -9,9 +9,7 @@
 #include "states.h"
 #include <inttypes.h>
 
-#define BASE_MESSAGE_PACKET_BITS 0b00000000000000000000000001010101
-
-/* Used for keyboard control */
+/* Trimming command translation to byte format */
 #define LIFT_UP 	0b01010101
 #define LIFT_DOWN 	0b10101010  
 #define PITCH_DOWN  0b10000100
@@ -21,7 +19,7 @@
 #define YAW_LEFT 	0b10011001
 #define YAW_RIGHT 	0b01100110
 
-// the command types during communication
+// The different communication (packet) types sent over UART
 typedef enum {
 	UNKNOWN_COMM,
 	CTRL_COMM, // keyboard command
@@ -34,6 +32,7 @@ typedef enum {
 	USB_CHECK_COMM,
 } COMM_TYPE;
 
+// The different JS axis appearing in JS command packets
 typedef enum {
 		ROLL_AXIS,
 		PITCH_AXIS,
@@ -41,6 +40,7 @@ typedef enum {
 		LIFT_THROTTLE,	
 } JOYSTICK_AXIS_t;
 
+// The different types of parameter changes appearing in parameter change packetes
 typedef enum {
 		P_RATE_YAW_INC,
 		P_RATE_YAW_DEC,
