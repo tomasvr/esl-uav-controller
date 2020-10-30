@@ -26,10 +26,8 @@ typedef enum {
 	MODE_SW_COMM,
 	JS_AXIS_COMM, // joystick commands
 	CHANGE_P_COMM,
-	BAT_INFO_COMM,
-	SYS_LOG_COMM,
 	ESC_COMM,
-	USB_CHECK_COMM,
+	STATE_SYNC_COMM,
 } COMM_TYPE;
 
 // The different JS axis appearing in JS command packets

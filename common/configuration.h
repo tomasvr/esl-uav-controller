@@ -7,8 +7,8 @@
 
 /* --- PC TERMINAL SETTINGS --- */
 
-#define USB_SEND_CHECK_INTERVAL 1000000 // Control how often USB check messages are send (in us)
-#define USB_CHECK_MESSAGE 0 // Message ID for check USB type message (no need to change)
+#define STATE_SYNC_CHECK_INTERVAL 1000000 // Control how often state sync messages are send (in us)
+#define STATE_SYNC_MESSAGE 0 // Message ID for state sync check type message (no need to change)
 
 #define PACKET_LENGTH 3 //in bytes
 #define PACKET_SEND_INTERVAL 20000 // (in us)
@@ -77,6 +77,7 @@
 
 /* STATES.H SETTINGS */
 
-//empty
+// there are 4 axis (pitch, roll, yaw, throttle)
+#define NUMBER_OF_JS_AXIS 4 
 
 #endif
