@@ -441,5 +441,4 @@ int main(void)
 	printf("\n\t Goodbye \n\n");
 	nrf_delay_ms(100);
 	NVIC_SystemReset();
->>>>>>> 30e03dd2d02f2c52467cd8e7b5b3b586574aec1a
 }
