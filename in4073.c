@@ -97,14 +97,12 @@ void enter_panic_mode(bool remain_off, char caller[]){
 	lift = 0; //reset motor_lift_level
 	fcb_state = SAFE_ST;
 	if (remain_off) { //wait for reboot
-		while(1) {
 			ae[0] = 0;
 			ae[1] = 0;
 			ae[2] = 0;
 			ae[3] = 0;
 			update_motors();
 			demo_done = true;
-		}
 	}
 }
 

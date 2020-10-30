@@ -180,7 +180,7 @@ int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t
 	int16_t error = (yaw_set_point - sr);
 	int32_t yaw_output = error * yaw_control->kp_rate;
 	yaw_control->output = yaw_control->kp_rate * error;
-	return yaw_output >> output_shift_value;
+	return yaw_output >> (output_shift_value - 4);
 }
 
 /* one step calculation for pitch control loop

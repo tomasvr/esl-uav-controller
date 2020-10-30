@@ -26,7 +26,7 @@
 #define BATTERY_CHECK_INTERVAL_THRESHOLD 5000000 
 
 #define PANIC_MODE_LIFT 250 // base lift is added this
-#define PANIC_DURATION 6000000//(in us)
+#define PANIC_DURATION 4000000//(in us)
 
 #define MOTOR_MAX_CHANGE 50
 #define TRIM_STEP_SIZE 1
@@ -43,10 +43,10 @@
 #define OUTPUT_SHIFT_UPPER_LIMIT 15
 #define OUTPUT_SHIFT_LOWER_LIMIT 0 // never less than 0
 
-#define MAX_DIFF_VALUE 200
+#define MAX_DIFF_VALUE 
 
 #define DEBUG_LED
-#define BASE_LIFT 	150
+#define BASE_LIFT 	100
 
 #define CONTROLLER_P_STEP_SIZE 1
 #define CONTROLLER_P_UPPER_LIMIT 15
