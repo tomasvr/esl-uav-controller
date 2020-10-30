@@ -176,7 +176,7 @@ void keyboard_trimming(uint8_t motor_states) {
 
 /*
  * Decode messages
- * "aruthor"
+ * " "
  */
 void messg_decode(uint8_t message_byte){
 
@@ -332,7 +332,7 @@ uint32_t current_time_battery;
 
 /*
  * Check battery voltage.
- * "aruthor"
+ * " "
  */
 void check_battery_volt(){
 	current_time_battery = get_time_us();

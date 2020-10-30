@@ -211,7 +211,7 @@ int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int1
 
 /*
 * Limit the motors' speed in [170, 450].
-* "aruthor"
+* " "
 */
 void clip_motors() {
 	for (int i = 0; i < 4; i++) {
@@ -223,7 +223,7 @@ void clip_motors() {
 
 /*
 * Set all motor speed to 0.
-* "aruthor"
+* " "
 */
 void zero_motors() {
 	ae[0] = 0;
@@ -294,6 +294,10 @@ void calculate_motor_values(int16_t pitch_final, int16_t roll_final, int16_t yaw
 	ae[3] = BASE_LIFT + (lift_final) + roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
 }
 
+/*
+* Calculate the time duration(T = current_time - start_time)
+* J. Cui 
+*/
 uint32_t calculate_time_diff (uint32_t start_time) {
 	return get_time_us() - start_time;
 }
