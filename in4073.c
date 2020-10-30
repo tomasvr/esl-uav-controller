@@ -422,12 +422,10 @@ int main(void)
 
 			if (counter % 20 == 0) {
 			logging();
-			readout();
 			}
-			// printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
-			// printf("Py: %2d Pr: %2d Pa: %2d Ps: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle, output_shift_value);
-			// plot_info();
-			// print_info_testing();
+			printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
+			printf("Py: %2d Pr: %2d Pa: %2d Ps: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle, output_shift_value);
+			print_info_testing();
 		}
 
 		if (check_sensor_int_flag()) {
