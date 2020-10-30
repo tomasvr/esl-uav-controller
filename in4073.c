@@ -181,7 +181,7 @@ void keyboard_trimming(uint8_t motor_states) {
 
 /*
  * Decode messages
- * "aruthor"
+ * " "
  */
 void messg_decode(uint8_t message_byte){
 

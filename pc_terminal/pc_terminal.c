@@ -370,7 +370,7 @@ uint32_t message_encode(int c){
 
 /* 
 * Encode joystick commands.
-* "aruthor"
+* " "
 */
 void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 	uint32_t message = 0b00000000000000000000000001010101; // base message
@@ -413,7 +413,7 @@ void send_js_message(uint8_t js_type, uint8_t js_number, uint32_t js_value) {
 
 /* 
 * Send USB check message.
-* "aruthor"
+* " "
 */
 void send_USB_check_message() {
 	rs232_putchar(message_encode(USB_CHECK_MESSAGE));

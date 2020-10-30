@@ -17,7 +17,10 @@ int js_axis_values_zeroed() {
 	return all_values_are_zero;
 }
 
-
+/*
+* Do switch the mode for pc and dorne
+* J. Cui
+*/
 STATE_t mode_sw_action(char caller[], STATE_t state, STATE_t to_state) {
 
 	if(is_allowed[state][to_state])
