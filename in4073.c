@@ -346,11 +346,6 @@ int main(void)
 	{
 		if (rx_queue.count) process_packet( dequeue(&rx_queue) );
 
-		// Execute commands that need to be handled in all modes
-		// if (g_current_comm_type == ESC_COMM){ // terminate program
-		// 	enter_panic_mode(true, "ESC pressed");
-		// }
-
 		if (fcb_state == PANIC_ST) {
 			enter_panic_mode(false, "FCB IN PANIC_ST");
 		}
