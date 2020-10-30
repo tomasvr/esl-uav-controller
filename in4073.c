@@ -177,6 +177,13 @@ void process_trim_command(uint8_t message_byte) {
 	}
 }
 
+/**
+ * @brief      Process JS command from packet
+ *
+ * @param[in]  message_byte  The message byte
+ * 
+ * @author     T. van Rietbergen
+ */
 void process_js_command(uint8_t message_byte) {
 	switch (js_axis_type) {
 		case ROLL_AXIS:
