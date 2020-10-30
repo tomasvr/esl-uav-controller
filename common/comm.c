@@ -135,7 +135,7 @@ uint32_t append_mode(uint32_t packet, STATE_t mode){
  * 
  * @author     T. van Rietbergen
  */
-uint32_t append_parameter_change(uint32_t packet, PID_PARAMETER_CHANGE_t parameter){ 
+uint32_t append_parameter_change(uint32_t packet, PARAM_CHANGE_t parameter){ 
 	uint32_t param_uint32 = parameter;
 	packet |= param_uint32 << BIT_LOCATION_PARAM;			
 	return packet;
@@ -205,6 +205,6 @@ STATE_t retrieve_mode(uint8_t packet_byte){
  * 
  * @author     T. van Rietbergen
  */
-PID_PARAMETER_CHANGE_t retrieve_parameter_change(uint8_t packet_byte){ 
+PARAM_CHANGE_t retrieve_parameter_change(uint8_t packet_byte){ 
 	return packet_byte;
 }

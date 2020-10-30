@@ -13,6 +13,11 @@ typedef enum {
 		MOTOR_UNKNOWN
 } MOTOR_CTRL;
 
+typedef enum {
+	RATE,
+	ANGLE
+} P_PARAM;
+
 extern MOTOR_CTRL g_current_m0_state;
 extern MOTOR_CTRL g_current_m1_state;
 extern MOTOR_CTRL g_current_m2_state;
