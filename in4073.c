@@ -13,40 +13,11 @@
  *------------------------------------------------------------------
  */
 
-// TODO: delete the macros after debug
-/* --- PRINTF_BYTE_TO_BINARY macro's --- */
-// #define PRINTF_BINARY_PATTERN_INT8 "%c%c%c%c%c%c%c%c"
-// #define PRINTF_BYTE_TO_BINARY_INT8(i)    \
-//     (((i) & 0x80ll) ? '1' : '0'), \
-//     (((i) & 0x40ll) ? '1' : '0'), \
-//     (((i) & 0x20ll) ? '1' : '0'), \
-//     (((i) & 0x10ll) ? '1' : '0'), \
-//     (((i) & 0x08ll) ? '1' : '0'), \
-//     (((i) & 0x04ll) ? '1' : '0'), \
-//     (((i) & 0x02ll) ? '1' : '0'), \
-//     (((i) & 0x01ll) ? '1' : '0')
-// #define PRINTF_BINARY_PATTERN_INT16 \
-//     PRINTF_BINARY_PATTERN_INT8              PRINTF_BINARY_PATTERN_INT8
-// #define PRINTF_BYTE_TO_BINARY_INT16(i) \
-//     PRINTF_BYTE_TO_BINARY_INT8((i) >> 8),   PRINTF_BYTE_TO_BINARY_INT8(i)
-// #define PRINTF_BINARY_PATTERN_INT32 \
-//     PRINTF_BINARY_PATTERN_INT16             PRINTF_BINARY_PATTERN_INT16
-// #define PRINTF_BYTE_TO_BINARY_INT32(i) \
-//     PRINTF_BYTE_TO_BINARY_INT16((i) >> 16), PRINTF_BYTE_TO_BINARY_INT16(i)
-// #define PRINTF_BINARY_PATTERN_INT64    \
-//     PRINTF_BINARY_PATTERN_INT32             PRINTF_BINARY_PATTERN_INT32
-// #define PRINTF_BYTE_TO_BINARY_INT64(i) \
-//     PRINTF_BYTE_TO_BINARY_INT32((i) >> 32), PRINTF_BYTE_TO_BINARY_INT32(i)
-/* --- end macros --- */
-
-
 #include "in4073.h"
 #include <assert.h>
 
-  
-
 uint32_t usb_comm_last_received;
-uint32_t current_time;
+uint32_t usb_current_time;
 uint32_t ctrl_loop_time;
 
 // each packet includes 3 fragments
@@ -77,46 +48,72 @@ CONTROLLER *roll_control_pointer = &roll_control;
 CONTROLLER pitch_control;
 CONTROLLER *pitch_control_pointer = &pitch_control;
 
-void enter_panic_mode(bool cable_detached, char caller[]){
+const char * state_to_str(STATE_t p_state) {
+	switch(p_state) {
+		case SAFE_ST:
+			return "SAFE_ST";	
+			break;
+		case PANIC_ST:
+			return "PANIC_ST";	
+			break;
+		case MANUAL_ST:
+			return "MANUAL_ST";	
+			break;
+		case CALIBRATION_ST:
+			return "CALIBRATION_ST";	
+			break;
+		case YAWCONTROL_ST:
+			return "YAWCONTROL_ST";	
+			break;
+		case FULLCONTROL_ST:
+			return "FULLCONTROL_ST";	
+			break;
+		case UNKNOWN_ST:
+			return "UNKNOWN_ST";	
+			break;		
+	}
+
+}
+
+void enter_panic_mode(bool remain_off, char caller[]){
 	if (fcb_state == SAFE_ST) {
 		return; // if in safe mode then you do not need to go to panic mode
 	}
-	printf("FCB: QR: Entered PANIC MODE called by: %s", caller);
-	uint16_t temp = lift;
-	uint16_t motor_speed = (temp << 2);
-	while (motor_speed > 0) {
-		motor_speed = motor_speed - 10; 
-		if (motor_speed < 10) {
-			motor_speed = 0;
+	printf("FCB: Entered PANIC MODE"); // called by: %s", caller);
+	fcb_state = PANIC_ST; // make sure system is in panic state;
+	uint32_t panic_start_time = get_time_us();
+	uint32_t panic_elapsed_time = get_time_us() - panic_start_time;
+	while(panic_elapsed_time < PANIC_DURATION) {
+		if (check_sensor_int_flag()) {
+			get_dmp_data();
 		}
-		ae[0] = motor_speed;
-		ae[1] = motor_speed;
-		ae[2] = motor_speed;
-		ae[3] = motor_speed;
-		printf("motor speed: %d\n", motor_speed);
-		update_motors(); //or run filters_and_control() ? <- enter panic mode does not need control, so update_motors() is enough
-		nrf_delay_ms(100);
+		run_filters_and_control();
+		//printf("ae0  %d\n", ae[0]);
+		//printf("ae1  %d\n", ae[1]);
+		//printf("ae2  %d\n", ae[2]);
+		//printf("ae3  %d\n", ae[3]);
+		panic_elapsed_time = get_time_us() - panic_start_time;
 	}
 	lift = 0; //reset motor_lift_level
 	fcb_state = SAFE_ST;
-	if (cable_detached) { //wait for reboot
-		while(1) {
-			motor[0] = 0;
-			motor[1] = 0;
-			motor[2] = 0;
-			motor[3] = 0;
-		}
+	if (remain_off) { //wait for reboot
+			ae[0] = 0;
+			ae[1] = 0;
+			ae[2] = 0;
+			ae[3] = 0;
+			update_motors();
+			demo_done = true;
 	}
 }
 
 void USB_comm_update_received() {
-	current_time = get_time_us();
-	usb_comm_last_received = current_time;
+	usb_current_time = get_time_us();
+	usb_comm_last_received = usb_current_time;
 }
 
 void check_USB_connection_alive() {
-	current_time = get_time_us();
-	if (current_time - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: check for overflow? <- Need fix when operation time > 70 mins
+	usb_current_time = get_time_us();
+	if (usb_current_time - usb_comm_last_received > USB_COMM_INTERVAL_THRESHOLD) { //TODO: check for overflow? <- Need fix when operation time > 70 mins
 		enter_panic_mode(true, "usb_check failed \n");
 	}
 }
@@ -136,17 +133,7 @@ int16_t clip_motor_value(int16_t value) {
 	return value;
 }
 
-/* Translate js axis to range: 0-255 instead of 0 in the middle */
-uint8_t translate_throttle(int8_t throttle) {
-	printf("throttle %d\n", throttle);
-	if(throttle <= JS_AXIS_MID_VALUE){
-		throttle = JS_AXIS_MID_VALUE - throttle;
-	}
-	else {
-		throttle = JS_AXIS_MAX_VALUE - throttle + JS_AXIS_MID_VALUE;
-	}
-	return throttle;
-}
+
 
 int8_t pitch_trim = 0;
 int8_t roll_trim = 0;
@@ -155,12 +142,14 @@ int8_t yaw_trim = 0;
 void keyboard_trimming(uint8_t motor_states) {
 	switch(motor_states){
 		case LIFT_UP:
-			lift = clip_motor_value(lift + TRIM_STEP_SIZE);
-			//lift = clip_motor_value(lift << 2) / 4;
+			if (lift + TRIM_STEP_SIZE < 255) {
+				lift = lift + TRIM_STEP_SIZE;
+			}
 			break;
 		case LIFT_DOWN:
-			lift = clip_motor_value(lift - TRIM_STEP_SIZE);
-			//lift = clip_motor_value(lift << 2) / 4;
+			if (lift - TRIM_STEP_SIZE > 0) {
+				lift = lift - TRIM_STEP_SIZE;
+			}
 			break;
 		case PITCH_UP:
 			pitch_trim += TRIM_STEP_SIZE;
@@ -184,16 +173,6 @@ void keyboard_trimming(uint8_t motor_states) {
 	printf("key trimming: %d\n", motor_states);
 	printf("pitch trim:%d  roll trim: %d yaw trim %d\n", pitch_trim, roll_trim, yaw_trim);
 }
-
-int8_t translate_unsigned_to_signed(uint8_t value) {
-	int8_t signed_valued;
-	if (value <= 127) {
-		signed_valued = value;
-		return signed_valued;
-	}
-	signed_valued = value - 255;
-	return signed_valued;
-} 
 
 /*
  * Decode messages
@@ -223,8 +202,7 @@ void messg_decode(uint8_t message_byte){
 		case 1: // Data
 			switch(g_current_comm_type) {
 				case ESC_COMM:
-					demo_done = false;
-					return;
+					enter_panic_mode(true, "ESC pressed");
 				case CTRL_COMM:
 					;	// C requires this semicolon here
 					/* only change motors if in appropriate mode */ //todo: move this logic to a central place
@@ -248,13 +226,13 @@ void messg_decode(uint8_t message_byte){
 					//printf("axis: %d value: %d \n", (uint8_t)js_axis_type, message_byte);						
 					switch (js_axis_type) {
 						case ROLL_AXIS:
-							roll  = translate_unsigned_to_signed(message_byte);
+							roll  = translate_axis(message_byte);
 							break;
 						case PITCH_AXIS:
-							pitch = translate_unsigned_to_signed(message_byte);
+							pitch = translate_axis(message_byte);
 							break;
 						case YAW_AXIS:
-							yaw   = translate_unsigned_to_signed(message_byte);
+							yaw   = translate_axis(message_byte);
 							break;
 						case LIFT_THROTTLE:
 							message_byte = translate_throttle(message_byte);
@@ -293,8 +271,17 @@ void messg_decode(uint8_t message_byte){
 			 				decrease_p_rate_value(pitch_control_pointer);
 			 				decrease_p_rate_value(roll_control_pointer);
 			 				break;
+			 			case P_SHIFT_RIGHT_VALUE_INC:
+				 			printf("FCB: P SHIFT VALUE UP\n");
+			 				increase_shift_value(pitch_control_pointer);
+			 				break; 
+			 			case P_SHIFT_RIGHT_VALUE_DEC:
+				 			printf("FCB: P SHIFT VALUE DOWN\n");
+			 				decrease_shift_value(pitch_control_pointer);
+			 				break;				 			
 			 			default: 
 				 			printf("FCB: UKNOWN CHANGE P VALUE: \n", message_byte);
+				 			//break;
 					}					
 				 	break;
 				case BAT_INFO_COMM:
@@ -304,7 +291,7 @@ void messg_decode(uint8_t message_byte){
 				case USB_CHECK_COMM:
 			 		if (check_mode_sync(message_byte, fcb_state)) {
 		 				printf("ERROR: STATE MISMATCH - PC state: %d, FCB state: %d \n", message_byte, fcb_state);
-		 				enter_panic_mode(false, 'State mismatch');
+		 				enter_panic_mode(false, "State mismatch");
 		 			}						
 		 			break;
 				default:
@@ -326,6 +313,7 @@ void messg_decode(uint8_t message_byte){
  * J. Cui
  */
 void process_packet(uint8_t c){	
+	//printf("frag received: %d, FRAG_COUNT: %d \n", c, FRAG_COUNT);
 	if (c == 0x55 && FRAG_COUNT == 0 && fcb_state != PANIC_ST) {
 		FRAG_COUNT = 2;
 		return;
@@ -369,20 +357,16 @@ void check_battery_volt(){
 * Print info in the terminal.
 * J. Cui
 */
-void print_log_in_ter() {
+void print_info_testing() {
 	printf("%10ld | ", get_time_us());
 	printf("%3d %3d %3d %3d  | ",ae[0],ae[1],ae[2],ae[3]);
-	printf("%6d %6d %6d | ", phi, theta, psi);
+	//printf("%6d %6d %6d | ", phi, theta, psi);
 	printf("%6d %6d %6d | ", sp, sq, sr);
 	//printf("%4d | %4ld | %6ld   | ", bat_volt, temperature, pressure);
-
 	printf("Py: %2d Pr: %2d Pa: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle);
-	printf("pitch: %4d ", pitch);
-	printf("setp: %4d sp: %4d err: %4d output: %4d ", pitch_control.set_point, sp, pitch_control.err, pitch_control.output);
-	printf("%4d |", fcb_state - 1);
-	printf("%4d \n", ctrl_loop_time);
-	clear_timer_flag();
-	//printf("%4d \n", motor_lift_level);
+	//printf("setp: %4d sp: %4d err: %4d output: %4d ", pitch_control.set_point, sp, pitch_control.err, pitch_control.output);
+	//printf("%4ld", ctrl_loop_time);
+	printf(" mode: %s | \n", state_to_str(fcb_state));
 }
 
 /*------------------------------------------------------------------
@@ -406,33 +390,41 @@ int main(void)
 
 	usb_comm_last_received = get_time_us();
 	
-	motor_lift_level = 0;
-	
 	controller_init(yaw_control_pointer);
 	controller_init(roll_control_pointer);
 	controller_init(pitch_control_pointer);
-
 	// printf(" AE0 AE1 AE2 AE3  | MODE \n");
 	while (!demo_done)
 	{
 		if (rx_queue.count) process_packet( dequeue(&rx_queue) );
 
-		if (counter % 100 == 0) check_USB_connection_alive();
-		//check_battery_volt();//enable panic mode when connect to drone
+		// Execute commands that need to be handled in all modes
+		// if (g_current_comm_type == ESC_COMM){ // terminate program
+		// 	enter_panic_mode(true, "ESC pressed");
+		// }
+
+		if (fcb_state == PANIC_ST) {
+			enter_panic_mode(false, "FCB IN PANIC_ST");
+		}
+
+
 
 		if (check_timer_flag()) {
-			if (counter % 20 == 0) {
-				nrf_gpio_pin_toggle(BLUE);
- 			}
+			nrf_gpio_pin_toggle(BLUE);
+			check_USB_connection_alive();
+			#ifdef ENABLE_BATT_CHECK
+			check_battery_volt();//enable panic mode when connect to drone			
+			#endif
 			adc_request_sample();
 			read_baro();
 
 			if (counter % 20 == 0) {
 			logging();
 			}
-			printf("trim p: %2d r: %2d y: %2d | ", pitch_trim, roll_trim, yaw_trim);
-			printf("Py: %2d  Pr: %2d  Pa: %2d | ", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle);
+			printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
+			printf("Py: %2d Pr: %2d Pa: %2d Ps: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle, output_shift_value);
 			plot_info();
+			print_info_testing();
 		}
 
 		if (check_sensor_int_flag()) {
@@ -442,12 +434,7 @@ int main(void)
 			ctrl_loop_time = get_time_us() - ctrl_loop_time;
 		}
 
-		// Execute commands that need to be handled in all modes
-		if (g_current_comm_type == ESC_COMM){ // terminate program
-			demo_done = true;
-			g_current_comm_type = UNKNOWN_COMM;
-			enter_panic_mode(false, "ESC pressed");
-		}
+
 		counter++;
 	}
 	printf("\n\t Goodbye \n\n");

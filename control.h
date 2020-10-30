@@ -53,5 +53,7 @@ void sensor_calib(void);
 void controller_init(CONTROLLER *controller);
 void increase_p_value(CONTROLLER *controller);
 void decrease_p_value(CONTROLLER *controller);
-
+void increase_shift_value();
+void decrease_shift_value();
+void intialize_parameters();
 #endif // CONTROL_H__

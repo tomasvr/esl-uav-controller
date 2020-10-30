@@ -14,11 +14,14 @@
 #include "in4073.h"
 #include "control.h"
 
+
+// initalize 
+uint8_t output_shift_value = OUTPUT_SHIFT_START_VALUE;
+
 /*This funciton is used for debugging
 * if color == -1, then all leds are turned off
 * gpio_pin_set TURNS OFF led
 * gpio_pin_clear TURNS ON led
-* "aruthor"
 */
 void switch_led(int color) {
 	nrf_gpio_pin_set(GREEN);
@@ -134,6 +137,7 @@ void controller_init(CONTROLLER *controller) {
 	controller->output = 0;
 }
 
+
 void  increase_p_rate_value(CONTROLLER *controller) {
 	if (controller->kp_rate < CONTROLLER_P_UPPER_LIMIT) 
 		controller->kp_rate += CONTROLLER_P_STEP_SIZE;
@@ -154,15 +158,29 @@ void decrease_p_angle_value(CONTROLLER *controller) {
 		controller->kp_angle-= CONTROLLER_P_STEP_SIZE;
 }
 
+void increase_shift_value() {
+	if (output_shift_value < OUTPUT_SHIFT_UPPER_LIMIT) {
+		output_shift_value += 1;
+	}
+}
+
+void decrease_shift_value() {
+	if (output_shift_value > OUTPUT_SHIFT_LOWER_LIMIT) {
+		output_shift_value -= 1;
+	}
+}
+
 
 /* one step calculation for yaw control loop
  * Zehang Wu
  */
 int16_t yaw_control_calc(CONTROLLER *yaw_control, int16_t yaw_set_point, int16_t sr) {
-	yaw_control->set_point = yaw_set_point;
-	yaw_control->err = yaw_control->set_point - sr;
-	yaw_control->output = yaw_control->kp_rate * yaw_control->err;
-	return yaw_control->output >> CONTROL_OUTPUT_SHIFT_VALUE;
+	// yaw_control->set_point = yaw_set_point;
+	// yaw_control->err = yaw_control->set_point - sr;
+	int16_t error = (yaw_set_point - sr);
+	int32_t yaw_output = error * yaw_control->kp_rate;
+	yaw_control->output = yaw_control->kp_rate * error;
+	return yaw_output >> (output_shift_value - 4);
 }
 
 /* one step calculation for pitch control loop
@@ -174,23 +192,20 @@ int16_t pitch_control_calc(CONTROLLER *pitch_control, int16_t pitch_set_point, i
 	int32_t output_angle = (error * pitch_control->kp_angle - p_sq);
 	int32_t pitch_output = output_angle * pitch_control->kp_rate;
 	pitch_control->output = pitch_output;
-	//printf("setpoint: %ld, theta: %ld, error: %ld | ", pitch_set_point, theta, error);
-	//printf("sq: %ld, output_angle: %ld | ", sq, output_angle);
 	//printf("pitch_output: %ld\n", pitch_output >> 8);	
-	return pitch_output >> CONTROL_OUTPUT_SHIFT_VALUE; // divide by a lot to give sensible value
+	return pitch_output >> output_shift_value; // divide by a lot to give sensible value
 }
 
 /* one step calculation for roll control loop
  * Zehang Wu
  */
 int16_t roll_control_calc(CONTROLLER *roll_control, int16_t roll_set_point, int16_t p_sp, int16_t p_phi) {
-	// old way
 	// int16_t output = ((roll_set_point - phi) * roll_control->kp_angle - sp) * roll_control->kp_rate;
 	int16_t error = (roll_set_point - p_phi); // will be in range [-16xxx ... 16xxx]
 	int32_t output_angle = (error * roll_control->kp_angle - p_sp);
 	int32_t roll_output = output_angle * roll_control->kp_rate;
 	roll_control->output = roll_output;
-	return roll_output >> CONTROL_OUTPUT_SHIFT_VALUE;
+	return roll_output >> output_shift_value;
 }
 
 
@@ -250,8 +265,8 @@ void update_motors(void)
 #ifdef DEBUG_LED
 		// The 4 LEDS represent motor speed, blue = max speed, red = minimal speed
 		if (motor[0] == 0) switch_led(-1);
-		else if (motor[0] < 350) switch_led(RED);
-		else if (motor[0] >= 350 && motor[0] < 700) switch_led(YELLOW);
+		else if (motor[0] < 200) switch_led(RED);
+		else if (motor[0] >= 200 && motor[0] < 400) switch_led(YELLOW);
 		else switch_led(GREEN);
 #endif
 }
@@ -266,17 +281,17 @@ void calculate_motor_values(int16_t pitch_final, int16_t roll_final, int16_t yaw
 	// ae[3] = operating_motor_bounds((lift << 2) + (roll/320  + yaw /320));
 
 	// clip values
-	if (pitch_final < -MAX_DIFF_VALUE) pitch_final  = -MAX_DIFF_VALUE; 
-	if (pitch_final >  MAX_DIFF_VALUE) pitch_final  =  MAX_DIFF_VALUE; 
-	if (roll_final 	< -MAX_DIFF_VALUE) roll_final   = -MAX_DIFF_VALUE; 
-	if (roll_final 	>  MAX_DIFF_VALUE) roll_final   =  MAX_DIFF_VALUE; 
-	if (yaw_final 	< -MAX_DIFF_VALUE) yaw_final 	= -MAX_DIFF_VALUE; 
-	if (yaw_final 	>  MAX_DIFF_VALUE) yaw_final 	=  MAX_DIFF_VALUE; 
+	// if (pitch_final < -MAX_DIFF_VALUE) pitch_final  = -MAX_DIFF_VALUE; 
+	// if (pitch_final >  MAX_DIFF_VALUE) pitch_final  =  MAX_DIFF_VALUE; 
+	// if (roll_final 	< -MAX_DIFF_VALUE) roll_final   = -MAX_DIFF_VALUE; 
+	// if (roll_final 	>  MAX_DIFF_VALUE) roll_final   =  MAX_DIFF_VALUE; 
+	// if (yaw_final 	< -MAX_DIFF_VALUE) yaw_final 	= -MAX_DIFF_VALUE; 
+	// if (yaw_final 	>  MAX_DIFF_VALUE) yaw_final 	=  MAX_DIFF_VALUE; 
 
-	ae[0] = (lift_final << 1) + 150 + pitch_final - yaw_final; //* MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[1] = (lift_final << 1) + 150 - roll_final  - yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[2] = (lift_final << 1) + 150 - pitch_final + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
-	ae[3] = (lift_final << 1) + 150 + roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[0] = BASE_LIFT + (lift_final) + pitch_final - yaw_final; //* MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[1] = BASE_LIFT + (lift_final) - roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[2] = BASE_LIFT + (lift_final) - pitch_final - yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
+	ae[3] = BASE_LIFT + (lift_final) + roll_final  + yaw_final; // * MAX_ALLOWED_DIFF_MOTOR / 256;
 }
 
 uint32_t calculate_time_diff (uint32_t start_time) {
@@ -294,16 +309,22 @@ int16_t clip_to_int8_values(int16_t value) {
 }
 
 void run_filters_and_control() {
+	uint16_t adjusted_lift = lift << 1; // translate range to [0-512]
 	switch(fcb_state) {
 		case SAFE_ST:
 			zero_motors();
 			break;
 		case PANIC_ST:
-			//todo
-			enter_panic_mode(false, "PANIC STATE"); //enter panic mode for any reason other than cable
+			;
+			uint16_t panic_lift_level = (adjusted_lift < PANIC_MODE_LIFT) ? (adjusted_lift) : PANIC_MODE_LIFT;
+			calculate_motor_values(
+				pitch_control_calc(pitch_control_pointer, clip_to_int8_values(0  + pitch_trim) << 6, sq, theta), 
+				 roll_control_calc(roll_control_pointer,  clip_to_int8_values(0  + roll_trim)  << 6, sp, phi), 
+				  0,  // i think sr needs *-1 (reverse sign)
+				panic_lift_level);
 			break;
 		case MANUAL_ST:
-			calculate_motor_values(pitch, roll, yaw, lift);
+			calculate_motor_values(clip_to_int8_values(pitch + pitch_trim) >> 1, clip_to_int8_values(roll + roll_trim) >> 1, clip_to_int8_values(yaw + yaw_trim) >> 1, adjusted_lift);
 			break;
 		case CALIBRATION_ST:
 			sensor_calib();
@@ -312,13 +333,14 @@ void run_filters_and_control() {
 			break;
 		case YAWCONTROL_ST:
 			//todo
-			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, yaw << 8, (sr)*-1 ), lift); // i think sr needs *-1 (reverse sign
+			calculate_motor_values(pitch, roll, yaw_control_calc(yaw_control_pointer, clip_to_int8_values(yaw + yaw_trim) << 6, (sr)*-1 ), adjusted_lift); // i think sr needs *-1 (reverse sign
 			break;
+		case FULLCONTROL_ST:
 			calculate_motor_values(
 				pitch_control_calc(pitch_control_pointer, clip_to_int8_values(pitch + pitch_trim) << 6, sq, theta), 
 				 roll_control_calc(roll_control_pointer,  clip_to_int8_values(roll  + roll_trim)  << 6, sp, phi), 
-				  yaw_control_calc(yaw_control_pointer,   clip_to_int8_values(yaw   + yaw_trim)   << 8, sr*-1 ),  // i think sr needs *-1 (reverse sign)
-				lift);
+				  yaw_control_calc(yaw_control_pointer,   clip_to_int8_values(yaw   + yaw_trim)   << 6, sr*-1 ),  // i think sr needs *-1 (reverse sign)
+				adjusted_lift);
 			break;
 		case UNKNOWN_ST:	
 			zero_motors();

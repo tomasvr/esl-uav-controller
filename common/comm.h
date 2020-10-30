@@ -48,9 +48,14 @@ typedef enum {
 		P_ANGLE_PITCHROLL_DEC,
 		P_RATE_PITCHROLL_INC,
 		P_RATE_PITCHROLL_DEC,
+		P_SHIFT_RIGHT_VALUE_INC,
+		P_SHIFT_RIGHT_VALUE_DEC
 } PID_PARAMETER_CHANGE_t;
 
 int check_mode_sync (uint8_t state, STATE_t fcb_state);
+
+int8_t translate_axis(uint8_t value); 
+uint8_t translate_throttle(int8_t throttle);
 
 uint32_t append_mode(uint32_t message, STATE_t mode);
 

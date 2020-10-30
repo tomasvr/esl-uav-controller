@@ -25,6 +25,28 @@ int check_mode_sync (uint8_t pc_state, STATE_t fcb_state){
 	return 1;
 }
 
+/* Translate js axis to range: [-127, 127] (unsigned to signed) */
+int8_t translate_axis(uint8_t value) {
+	int8_t signed_valued;
+	if (value <= 127) {
+		signed_valued = value;
+		return signed_valued;
+	}
+	signed_valued = value - 255;
+	return signed_valued;
+} 
+
+/* Translate js axis to range: 0-255 instead of 0 in the middle */
+uint8_t translate_throttle(int8_t throttle) {
+	if(throttle <= JS_AXIS_MID_VALUE){
+		throttle = JS_AXIS_MID_VALUE - throttle;
+	}
+	else {
+		throttle = JS_AXIS_MAX_VALUE - throttle + JS_AXIS_MID_VALUE;
+	}
+	return throttle;
+}
+
 /*  
 * Append functions, append required bits for a message. (PC side)
 * "aruthor"
