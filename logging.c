@@ -1,23 +1,17 @@
-/* 
-
-	logging.c - contains implementation for logging facility on FCB
-
-*/
-
 #include "logging.h"
 #include "in4073.h"
 
-// bool write_to_log(uint8_t data) {
-// 	return false;
-// };
+
 
 uint8_t address_init = START_ADDRESS;
 uint8_t address_current = START_ADDRESS;
 uint8_t address_readout = START_ADDRESS;
 
-// int16_t m0 = ae[0]; int16_t m1 = ae[1]; 
-// int16_t m2 = ae[2]; int16_t m3 = ae[3];
-
+/* 
+ * Implementation for logging facility on FCB
+ * Flash logging address limit judgement
+ * Xinyun Xu
+*/
 bool flash_stuff()
 {
 	if(address_current < END_ADDRESS)
@@ -26,6 +20,10 @@ bool flash_stuff()
 		return false;
 }
 
+/* 
+ * Flash readout address limit judgement
+ * Xinyun Xu
+*/
 bool flash_read()
 {
 	if(address_readout < END_ADDRESS) 
@@ -34,6 +32,11 @@ bool flash_read()
 		return false;
 }
 
+/* 
+ * Implementation for logging facility on FCB
+ * Data logging into flash
+ * Xinyun Xu
+*/
 void data_logging()
 {
 	uint32_t timestamp = get_time_us();
@@ -55,6 +58,10 @@ void data_logging()
 	address_current += 4;
 }
 
+/* 
+ * Readout logging data from flash
+ * Xinyun Xu
+*/
 void data_readout()
 {
 	uint32_t timestamp = get_time_us();
@@ -83,12 +90,20 @@ void data_readout()
 	
 }
 
+/* 
+ * Logging Implementation
+ * Xinyun Xu
+*/
 void logging(){
 	if(flash_chip_erase() && flash_read()){
 		data_logging();
 	}
 }
 
+/* 
+ * Readout Implementation
+ * Xinyun Xu
+*/
 void readout(){
 	if(flash_read()){
 	data_readout();

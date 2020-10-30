@@ -32,7 +32,6 @@ void switch_led(int color) {
 
 
 // variable declaration for Calibration
-bool DMP = true;
 bool calib_done = false;
 int16_t sensor_sum 	= 0;
 uint8_t calib_counter 	= 0;
@@ -44,8 +43,9 @@ int16_t sp_calib = 0, 	sq_calib = 0, 	sr_calib = 0;
 int16_t sax_calib = 0, 	say_calib = 0, 	saz_calib = 0;
 
 /*
-*
-*/
+ * Sensor calibration process.
+ * Xinyun Xu
+ */
 void sensor_calc(uint8_t num) {
 	do{
 		angle_calib[0] 	+= phi; 
@@ -100,16 +100,19 @@ void sensor_calc(uint8_t num) {
 	else calib_done = false; // not calibrated yet
 }
 
+/*
+ * Sensor calibration num operation.
+ * Xinyun Xu
+ */
 void sensor_calib() {
-	sensor_calc(100); 
+	sensor_calc(CALIBRATION_NUM); 
 	if (calib_done) printf("\n CALIB DONE!\n");
-	
-	if(DMP){
-		dmp_set_gyro_bias(gyro_calib);
-		dmp_set_accel_bias(acce_calib);
-	}
 }
 
+/*
+ * Sensor offset remove.
+ * Xinyun Xu
+ */
 void offset_remove() {
 	phi 	-= phi_calib; 
 	theta 	-= theta_calib; 

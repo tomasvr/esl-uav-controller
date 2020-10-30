@@ -14,16 +14,18 @@
 #define PACKET_SEND_INTERVAL 20000 // (in us)
 
 // defines whether joystick is plugged in
-#define ENABLE_JOYSTICK
+// #define ENABLE_JOYSTICK
 // defines joystick USB port (can be found using 'findusb' script)
 #define JS_DEV	"/dev/input/js0"
 
 /* --- FCB SETTINGS (in4073) --- */
 
-//#define ENABLE_BATT_CHECK //enables the battery check
+#define ENABLE_BATT_CHECK //enables the battery check
 
 #define USB_COMM_INTERVAL_THRESHOLD 2000000 // in us (1000000 = 1 second) 
-#define BATTERY_CHECK_INTERVAL_THRESHOLD 5000000 
+#define BATTERY_CHECK_INTERVAL_THRESHOLD 5000000
+
+#define CALIBRATION_NUM 100
 
 #define PANIC_MODE_LIFT 250 // base lift is added this
 #define PANIC_DURATION 4000000//(in us)

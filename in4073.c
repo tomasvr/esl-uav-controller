@@ -34,6 +34,13 @@ COMM_TYPE g_current_comm_type = UNKNOWN_COMM;
 JOYSTICK_AXIS_t js_axis_type;
 uint8_t js_total_value;
 
+int8_t pitch_trim = 0;
+int8_t roll_trim = 0;
+int8_t yaw_trim = 0;
+
+uint32_t last_time_battery;
+uint32_t current_time_battery;
+
 // Motor variables initalization
 MOTOR_CTRL g_current_m0_state = MOTOR_REMAIN;
 MOTOR_CTRL g_current_m1_state = MOTOR_REMAIN;
@@ -133,12 +140,10 @@ int16_t clip_motor_value(int16_t value) {
 	return value;
 }
 
-
-
-int8_t pitch_trim = 0;
-int8_t roll_trim = 0;
-int8_t yaw_trim = 0;
-
+/* 
+ * Keyboard trimming setpoint step by step.
+ * Xinyun Xu
+*/
 void keyboard_trimming(uint8_t motor_states) {
 	switch(motor_states){
 		case LIFT_UP:
@@ -326,27 +331,24 @@ void process_packet(uint8_t c){
 	}
 }
 
-// TODO: change placement?
-uint32_t last_time_battery;
-uint32_t current_time_battery;
-
 /*
  * Check battery voltage.
- * "aruthor"
+ * Xinyun Xu
  */
 void check_battery_volt(){
 	current_time_battery = get_time_us();
+	uint16_t battery_integer = bat_volt / 100;
+	uint16_t battery_decimal = bat_volt & 0x00FF;
 	if(current_time_battery - last_time_battery > BATTERY_CHECK_INTERVAL_THRESHOLD){
-		printf("current voltage: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
 		if(bat_volt < 1150 && bat_volt > 1100){
-			printf("CURRENT VOLTAGE: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
+			printf("CURRENT VOLTAGE: %d.%dV \n", battery_integer, battery_decimal);
 		}
 		else if(bat_volt < 1100 && bat_volt > 1050){
-			printf("WARNING, CURRENT VOLTAGE1: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
+			printf("WARNING, CURRENT VOLTAGE: %d.%dV \n", battery_integer, battery_decimal);
 			enter_panic_mode(true, "batter voltage too low");
 		}
 		else if(bat_volt < 1050){
-			printf("WARNING, CURRENT VOLTAGE2: %d.%dV \n", bat_volt/100, bat_volt&0x00FF);
+			printf("CRITICAL WARNING, CURRENT VOLTAGE: %d.%dV \n", battery_integer, battery_decimal);
 			enter_panic_mode(true, "batter voltage CRITICAL"); 
 		}
 	last_time_battery = current_time_battery;
@@ -413,18 +415,19 @@ int main(void)
 			nrf_gpio_pin_toggle(BLUE);
 			check_USB_connection_alive();
 			#ifdef ENABLE_BATT_CHECK
-			check_battery_volt();//enable panic mode when connect to drone			
+			check_battery_volt();			
 			#endif
 			adc_request_sample();
 			read_baro();
 
 			if (counter % 20 == 0) {
 			logging();
+			readout();
 			}
-			printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
-			printf("Py: %2d Pr: %2d Pa: %2d Ps: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle, output_shift_value);
-			plot_info();
-			print_info_testing();
+			// printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
+			// printf("Py: %2d Pr: %2d Pa: %2d Ps: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle, output_shift_value);
+			// plot_info();
+			// print_info_testing();
 		}
 
 		if (check_sensor_int_flag()) {
