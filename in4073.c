@@ -181,7 +181,7 @@ void keyboard_trimming(uint8_t motor_states) {
 
 /*
  * Decode messages
- * "aruthor"
+ * " "
  */
 void messg_decode(uint8_t message_byte){
 
@@ -422,11 +422,10 @@ int main(void)
 
 			if (counter % 20 == 0) {
 			logging();
-			readout();
 			}
-			// printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
-			// printf("Py: %2d Pr: %2d Pa: %2d Ps: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle, output_shift_value);
-			// print_info_testing();
+			printf("trim p: %2d r: %2d y: %2d", pitch_trim, roll_trim, yaw_trim);
+			printf("Py: %2d Pr: %2d Pa: %2d Ps: %2d", yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle, output_shift_value);
+			print_info_testing();
 		}
 
 		if (check_sensor_int_flag()) {
@@ -442,4 +441,5 @@ int main(void)
 	printf("\n\t Goodbye \n\n");
 	nrf_delay_ms(100);
 	NVIC_SystemReset();
+>>>>>>> 30e03dd2d02f2c52467cd8e7b5b3b586574aec1a
 }

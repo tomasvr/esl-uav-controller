@@ -49,7 +49,7 @@ uint8_t translate_throttle(int8_t throttle) {
 
 /*  
 * Append functions, append required bits for a message. (PC side)
-* "aruthor"
+* " "
 */
 uint32_t append_keyboard_motor_control (uint32_t message, uint8_t motor_states){
 	message |= motor_states << BIT_LOCATION_MOTOR_STATES;
@@ -82,7 +82,7 @@ uint32_t append_parameter_change(uint32_t message, PID_PARAMETER_CHANGE_t parame
 
 /* 
 * Retrieve required info from a message. (Drone side) 
-* "aruthor"
+* " "
 */
 uint8_t retrieve_keyboard_motor_control (uint8_t message_byte){ //TODO: change message to pointer for better performancee
 	//todo
