@@ -44,6 +44,12 @@ struct motor_log {
 	int16_t motor_3;
 };//16bytes
 
+struct P_values_log {
+	uint8_t P;
+	uint8_t P1;
+	uint8_t P2;
+};//3bytes
+
 void logging(void);
 void readout(void);
 
