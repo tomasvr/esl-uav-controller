@@ -55,7 +55,11 @@ void data_logging()
 
 	struct motor_log motor_logging = {ae[0], ae[1], ae[2], ae[3]};
 	if(flash_write_bytes(address_current, (uint8_t*) &motor_logging, 16))
-	address_current += 4;
+	address_current += 16;
+
+	struct P_values_log P_values_logging = {yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle};
+	if(flash_write_bytes(address_current, (uint8_t*) &P_values_logging, 3))
+	address_current += 3;
 }
 
 /* 
@@ -84,10 +88,12 @@ void data_readout()
 	struct motor_log motor_logging = {ae[0], ae[1], ae[2], ae[3]};
 	if(flash_read_bytes(address_readout, (uint8_t*) &motor_logging, 16))
 	//printf("%3d %3d %3d %3d\n", motor_logging.motor_0, motor_logging.motor_1, motor_logging.motor_2, motor_logging.motor_3);
-	address_readout += 4;
+	address_readout += 16;
 	
 
-	
+	struct P_values_log P_values_logging = {yaw_control.kp_rate, pitch_control.kp_rate, pitch_control.kp_angle};
+	if(flash_read_bytes(address_readout, (uint8_t*) &P_values_logging, 3))
+	address_readout += 3;
 }
 
 /* 
